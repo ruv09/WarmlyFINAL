@@ -13,9 +13,10 @@ export default function App() {
   const [tab, setTab] = useState('home');
   const [state, setState] = usePersistedState();
 
-  const quoteOfDay = useMemo(() => (
-    state.aiEnabled ? buildAiLikePhrase(state.mood) : getFallbackQuoteByDate()
-  ), [state.aiEnabled, state.mood]);
+  const quoteOfDay = useMemo(
+    () => (state.aiEnabled ? buildAiLikePhrase(state.mood) : getFallbackQuoteByDate()),
+    [state.aiEnabled, state.mood],
+  );
 
   const addFav = () => {
     setState((prev) => ({ ...prev, favorites: prev.favorites.includes(quoteOfDay) ? prev.favorites : [...prev.favorites, quoteOfDay] }));
