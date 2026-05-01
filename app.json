@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Warmly",
+    "slug": "warmly",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"]
+  }
+}
