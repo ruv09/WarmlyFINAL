@@ -7,8 +7,7 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web",
-    "check:conflicts": "rg -n '^<<<<<<<|^=======|^>>>>>>>' . --glob '!node_modules/**' --glob '!backend/node_modules/**' || true"
+    "web": "expo start --web"
   },
   "dependencies": {
     "expo": "~53.0.0",
