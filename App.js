@@ -19,17 +19,29 @@ export default function App() {
   );
 
   const addFav = () => {
-    setState((prev) => ({ ...prev, favorites: prev.favorites.includes(quoteOfDay) ? prev.favorites : [...prev.favorites, quoteOfDay] }));
+    setState((prev) => ({
+      ...prev,
+      favorites: prev.favorites.includes(quoteOfDay)
+        ? prev.favorites
+        : [...prev.favorites, quoteOfDay],
+    }));
   };
 
   const removeFav = (q) => {
-    setState((prev) => ({ ...prev, favorites: prev.favorites.filter((x) => x !== q) }));
+    setState((prev) => ({
+      ...prev,
+      favorites: prev.favorites.filter((x) => x !== q),
+    }));
   };
 
   return (
     <SafeAreaView style={styles.bg}>
-      {tab === 'home' && <HomeScreen quoteOfDay={quoteOfDay} onAddFav={addFav} goMood={() => setTab('mood')} />}
-      {tab === 'mood' && <MoodScreen mood={state.mood} setMood={(m) => setState((prev) => ({ ...prev, mood: m }))} />}
+      {tab === 'home' && (
+        <HomeScreen quoteOfDay={quoteOfDay} onAddFav={addFav} goMood={() => setTab('mood')} />
+      )}
+      {tab === 'mood' && (
+        <MoodScreen mood={state.mood} setMood={(m) => setState((prev) => ({ ...prev, mood: m }))} />
+      )}
       {tab === 'fav' && <FavoritesScreen favorites={state.favorites} removeFav={removeFav} />}
       {tab === 'settings' && <SettingsScreen state={state} setState={setState} />}
       <BottomNav tab={tab} setTab={setTab} />
