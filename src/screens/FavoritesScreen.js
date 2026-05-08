@@ -9,7 +9,7 @@ export default function FavoritesScreen({ favorites, removeFav }) {
       {favorites.length === 0 ? <Text style={styles.empty}>Пока ничего не сохранено</Text> : null}
       {favorites.map((q, i) => (
         <View key={`${q}-${i}`} style={styles.card}>
-          <Text style={styles.quote}>“{q}”</Text>
+          <Text style={styles.quote}>"{q}"</Text>
           <TouchableOpacity onPress={() => removeFav(q)}><Text style={styles.btn}>Удалить</Text></TouchableOpacity>
         </View>
       ))}
