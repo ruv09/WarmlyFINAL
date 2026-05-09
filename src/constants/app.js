@@ -1,6 +1,7 @@
 export const STORAGE_KEY = 'warmly_state';
 
 export const COLORS = {
+codex/review-warmlyfinal-github-repository-kth12e
   bg: '#F8F4EF',
   surface: '#FFFFFF',
   peach: '#D29A6A',
@@ -27,13 +28,36 @@ export const MOOD_ITEMS = [
   { key: 'tired', emoji: '🥱', label: 'Устал(а)', color: '#E8F1E8' },
   { key: 'anxious', emoji: '😟', label: 'Тревожно', color: '#F8E4E4' },
   { key: 'sad', emoji: '😔', label: 'Грустно', color: '#EAE4F8' },
+=======
+  bg: '#F5F2F2',
+  peach: '#FF8E72',
+  text: '#222D37',
+  card: '#F7F4F0',
+  muted: '#95A3AD',
+};
+
+export const FALLBACK_QUOTES = [
+  'Каждый новый день — это новая глава в книге твоей жизни. Напиши её красиво.',
+  'Ты справляешься лучше, чем тебе кажется.',
+  'Иногда отдых — это тоже прогресс.',
+];
+
+export const MOOD_ITEMS = [
+  { key: 'bad', emoji: '😔', label: 'Плохо' },
+  { key: 'normal', emoji: '😐', label: 'Нормально' },
+  { key: 'good', emoji: '😊', label: 'Хорошо' },
+ main
 ];
 
 export const TAB_LABELS = {
   home: 'Главная',
   mood: 'Настроение',
   fav: 'Избранное',
+codex/review-warmlyfinal-github-repository-kth12e
   settings: 'Профиль',
+
+  settings: 'Настройки',
+main
 };
 
 export const DEFAULT_STATE = {
@@ -43,6 +67,9 @@ export const DEFAULT_STATE = {
   morning: '08:00',
   evening: '22:00',
   aiEnabled: false,
+ codex/review-warmlyfinal-github-repository-kth12e
   note: '',
   name: 'Анастасия',
+
+main
 };
