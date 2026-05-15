@@ -7,6 +7,7 @@ const STORAGE_KEY = "warmly_state_v3";
 
 export interface AppState {
   name: string;
+  isOnboarded: boolean;
   mood: MoodKey | null;
   moodNote: string;
   moodNoteSubmitted: boolean;
@@ -19,7 +20,8 @@ export interface AppState {
 }
 
 const DEFAULT_STATE: AppState = {
-  name: "Настасья",
+  name: "",
+  isOnboarded: false,
   mood: null,
   moodNote: "",
   moodNoteSubmitted: false,
