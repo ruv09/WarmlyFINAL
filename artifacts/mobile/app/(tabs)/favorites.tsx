@@ -14,12 +14,29 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 
+const cardShadow = Platform.select({
+  web: { boxShadow: "0px 4px 24px rgba(0,0,0,0.07)" } as object,
+  default: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.07,
+    shadowRadius: 24,
+    elevation: 4,
+  },
+});
+
+function pluralQuotes(n: number): string {
+  if (n === 1) return "цитата";
+  if (n >= 2 && n <= 4) return "цитаты";
+  return "цитат";
+}
+
 export default function FavoritesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { state, removeFavorite } = useApp();
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 60 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 90;
 
   const handleRemove = (quote: string) => {
@@ -27,79 +44,134 @@ export default function FavoritesScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
-  const styles = StyleSheet.create({
+  const s = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    content: { paddingTop: topPad + 24, paddingBottom: bottomPad, paddingHorizontal: 20, gap: 12 },
-    title: { fontSize: 28, fontFamily: "Inter_700Bold", color: colors.foreground, marginBottom: 4 },
-    count: { fontSize: 14, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginBottom: 12 },
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: 18,
-      padding: 20,
-      borderWidth: 1,
-      borderColor: colors.border,
+    content: {
+      paddingTop: topPad + 20,
+      paddingBottom: bottomPad,
+      paddingHorizontal: 22,
       gap: 16,
     },
+    title: {
+      fontSize: 32,
+      fontFamily: "Inter_700Bold",
+      color: colors.foreground,
+      letterSpacing: -0.5,
+    },
+    countText: {
+      fontSize: 14,
+      fontFamily: "Inter_400Regular",
+      color: colors.mutedForeground,
+      marginTop: -8,
+    },
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: 24,
+      padding: 24,
+      gap: 18,
+      ...cardShadow,
+    },
     quoteText: {
-      fontSize: 16,
+      fontSize: 17,
       fontFamily: "Inter_400Regular",
       color: colors.foreground,
-      lineHeight: 26,
+      lineHeight: 28,
       fontStyle: "italic",
     },
-    cardFooter: { flexDirection: "row", justifyContent: "flex-end" },
+    quoteMark: {
+      fontSize: 48,
+      color: colors.primary,
+      fontFamily: "Inter_700Bold",
+      lineHeight: 40,
+      opacity: 0.2,
+    },
+    cardFooter: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+    },
     removeBtn: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 5,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 12,
+      gap: 6,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 100,
       backgroundColor: colors.muted,
     },
-    removeBtnText: { fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground },
-    empty: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingTop: 80 },
-    emptyIcon: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
-      backgroundColor: colors.peachSoft,
+    removeBtnText: {
+      fontSize: 13,
+      fontFamily: "Inter_500Medium",
+      color: colors.mutedForeground,
+    },
+    emptyWrapper: {
+      flex: 1,
       alignItems: "center",
       justifyContent: "center",
+      gap: 16,
+      paddingTop: 80,
     },
-    emptyTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold", color: colors.foreground },
-    emptyText: { fontSize: 14, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center", lineHeight: 22 },
+    emptyCircle: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: colors.amber,
+      alignItems: "center",
+      justifyContent: "center",
+      ...cardShadow,
+    },
+    emptyTitle: {
+      fontSize: 22,
+      fontFamily: "Inter_700Bold",
+      color: colors.foreground,
+    },
+    emptyText: {
+      fontSize: 15,
+      fontFamily: "Inter_400Regular",
+      color: colors.mutedForeground,
+      textAlign: "center",
+      lineHeight: 24,
+    },
   });
 
   if (state.favorites.length === 0) {
     return (
-      <ScrollView style={styles.container} contentContainerStyle={[styles.content, { flex: 1 }]}>
-        <Text style={styles.title}>Избранное</Text>
-        <View style={styles.empty}>
-          <View style={styles.emptyIcon}>
-            <Ionicons name="heart-outline" size={28} color={colors.primary} />
+      <ScrollView style={s.container} contentContainerStyle={[s.content, { flex: 1 }]}>
+        <Text style={s.title}>Избранное</Text>
+        <View style={s.emptyWrapper}>
+          <View style={s.emptyCircle}>
+            <Ionicons name="heart-outline" size={32} color={colors.primary} />
           </View>
-          <Text style={styles.emptyTitle}>Пока пусто</Text>
-          <Text style={styles.emptyText}>Сохраняй цитаты с главного экрана,{"\n"}и они появятся здесь</Text>
+          <Text style={s.emptyTitle}>Пока пусто</Text>
+          <Text style={s.emptyText}>
+            Нажми на сердечко на главном экране,{"\n"}и цитата появится здесь
+          </Text>
         </View>
       </ScrollView>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>Избранное</Text>
-      <Text style={styles.count}>{state.favorites.length} {state.favorites.length === 1 ? "цитата" : state.favorites.length < 5 ? "цитаты" : "цитат"}</Text>
+    <ScrollView
+      style={s.container}
+      contentContainerStyle={s.content}
+      showsVerticalScrollIndicator={false}
+    >
+      <Text style={s.title}>Избранное</Text>
+      <Text style={s.countText}>
+        {state.favorites.length} {pluralQuotes(state.favorites.length)} сохранено
+      </Text>
+
       {state.favorites.map((quote, i) => (
-        <View key={i} style={styles.card}>
-          <Text style={styles.quoteText}>«{quote}»</Text>
-          <View style={styles.cardFooter}>
+        <View key={i} style={s.card}>
+          <Text style={s.quoteMark}>"</Text>
+          <Text style={s.quoteText}>{quote}</Text>
+          <View style={s.cardFooter}>
             <Pressable
-              style={({ pressed }) => [styles.removeBtn, pressed && { opacity: 0.7 }]}
+              style={({ pressed }) => [s.removeBtn, pressed && { opacity: 0.7 }]}
               onPress={() => handleRemove(quote)}
             >
               <Ionicons name="trash-outline" size={14} color={colors.mutedForeground} />
-              <Text style={styles.removeBtnText}>Удалить</Text>
+              <Text style={s.removeBtnText}>Удалить</Text>
             </Pressable>
           </View>
         </View>
