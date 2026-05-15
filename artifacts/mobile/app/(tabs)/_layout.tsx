@@ -35,7 +35,7 @@ function NativeTabLayout() {
 function ClassicTabLayout() {
   const colors = useColors();
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colors.background === "#1A1714";
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
 
@@ -45,9 +45,13 @@ function ClassicTabLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
         headerShown: false,
+        animation: "none",
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : colors.background,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: isIOS ? "transparent" : isDark ? colors.card : colors.background,
           borderTopWidth: 1,
           borderTopColor: colors.border,
           elevation: 0,
@@ -62,10 +66,14 @@ function ClassicTabLayout() {
             />
           ) : isWeb ? (
             <View
-              style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]}
+              style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? colors.card : colors.background }]}
             />
           ) : null,
-        tabBarLabelStyle: { fontFamily: "Inter_500Medium", fontSize: 11, marginBottom: 4 },
+        tabBarLabelStyle: {
+          fontFamily: "Inter_500Medium",
+          fontSize: 11,
+          marginBottom: 4,
+        },
       }}
     >
       <Tabs.Screen

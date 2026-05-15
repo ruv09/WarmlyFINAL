@@ -2,36 +2,53 @@ const colors = {
   light: {
     text: "#2F2B28",
     tint: "#D29A6A",
-
     background: "#F8F4EF",
     foreground: "#2F2B28",
-
     card: "#FFFCF8",
     cardForeground: "#2F2B28",
-
     primary: "#D29A6A",
     primaryForeground: "#FFFFFF",
-
     secondary: "#F4E7D8",
     secondaryForeground: "#2F2B28",
-
     muted: "#F2EDE7",
     mutedForeground: "#8B8178",
-
     accent: "#F4E7D8",
     accentForeground: "#2F2B28",
-
     destructive: "#E05A4A",
     destructiveForeground: "#FFFFFF",
-
     border: "#EDE5DC",
     input: "#EDE5DC",
-
     surface: "#FFFFFF",
     mint: "#DDF3EC",
     rose: "#F8E4E4",
     lavender: "#EAE4F8",
     peachSoft: "#F4E7D8",
+  },
+
+  dark: {
+    text: "#F0EBE5",
+    tint: "#D29A6A",
+    background: "#1A1714",
+    foreground: "#F0EBE5",
+    card: "#242019",
+    cardForeground: "#F0EBE5",
+    primary: "#D29A6A",
+    primaryForeground: "#1A1714",
+    secondary: "#352B20",
+    secondaryForeground: "#F0EBE5",
+    muted: "#2A2520",
+    mutedForeground: "#9B948D",
+    accent: "#352B20",
+    accentForeground: "#F0EBE5",
+    destructive: "#E05A4A",
+    destructiveForeground: "#FFFFFF",
+    border: "#36302A",
+    input: "#36302A",
+    surface: "#242019",
+    mint: "#1A2922",
+    rose: "#2A1A1A",
+    lavender: "#1E1B2A",
+    peachSoft: "#352B20",
   },
 
   radius: 16,

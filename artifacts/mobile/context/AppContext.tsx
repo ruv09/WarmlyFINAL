@@ -3,11 +3,13 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 import type { MoodKey } from "@/utils/phrases";
 
-const STORAGE_KEY = "warmly_state_v2";
+const STORAGE_KEY = "warmly_state_v3";
 
 export interface AppState {
   name: string;
   mood: MoodKey | null;
+  moodNote: string;
+  moodNoteSubmitted: boolean;
   favorites: string[];
   notifications: boolean;
   morning: string;
@@ -19,6 +21,8 @@ export interface AppState {
 const DEFAULT_STATE: AppState = {
   name: "Настасья",
   mood: null,
+  moodNote: "",
+  moodNoteSubmitted: false,
   favorites: [],
   notifications: true,
   morning: "08:00",

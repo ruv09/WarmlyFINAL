@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/context/AppContext";
+import { type AppTheme, useTheme } from "@/context/ThemeContext";
 import { useColors } from "@/hooks/useColors";
 
 function Avatar({ name, colors }: { name: string; colors: ReturnType<typeof useColors> }) {
@@ -23,7 +24,6 @@ function Avatar({ name, colors }: { name: string; colors: ReturnType<typeof useC
     .map((w) => w[0])
     .join("")
     .toUpperCase();
-
   return (
     <View style={{
       width: 72, height: 72, borderRadius: 36,
@@ -38,10 +38,17 @@ function Avatar({ name, colors }: { name: string; colors: ReturnType<typeof useC
   );
 }
 
+const THEME_OPTIONS: { value: AppTheme; label: string; icon: string }[] = [
+  { value: "light", label: "Светлая", icon: "sunny-outline" },
+  { value: "dark", label: "Тёмная", icon: "moon-outline" },
+  { value: "system", label: "Системная", icon: "phone-portrait-outline" },
+];
+
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { state, updateField } = useApp();
+  const { theme, setTheme } = useTheme();
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(state.name);
 
@@ -56,24 +63,21 @@ export default function ProfileScreen() {
     setEditingName(false);
   };
 
-  const styles = StyleSheet.create({
+  const s = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    content: { paddingTop: topPad + 24, paddingBottom: bottomPad, paddingHorizontal: 20, gap: 24 },
+    content: { paddingTop: topPad + 24, paddingBottom: bottomPad, paddingHorizontal: 20, gap: 20 },
     profileHeader: { alignItems: "center", gap: 12 },
     userName: { fontSize: 22, fontFamily: "Inter_700Bold", color: colors.foreground },
     editNameBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
     editNameText: { fontSize: 13, fontFamily: "Inter_500Medium", color: colors.primary },
     section: {
-      backgroundColor: colors.card,
-      borderRadius: 18,
-      borderWidth: 1,
-      borderColor: colors.border,
-      overflow: "hidden",
+      backgroundColor: colors.card, borderRadius: 18,
+      borderWidth: 1, borderColor: colors.border, overflow: "hidden",
     },
     sectionTitle: {
-      fontSize: 12, fontFamily: "Inter_600SemiBold",
-      color: colors.mutedForeground, textTransform: "uppercase",
-      letterSpacing: 0.8, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8,
+      fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground,
+      textTransform: "uppercase", letterSpacing: 0.8,
+      paddingHorizontal: 20, paddingTop: 16, paddingBottom: 10,
     },
     row: {
       flexDirection: "row", alignItems: "center", justifyContent: "space-between",
@@ -98,29 +102,35 @@ export default function ProfileScreen() {
       paddingVertical: 10, alignItems: "center",
     },
     saveBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#FFFFFF" },
-    aiChip: {
-      paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
-      backgroundColor: state.aiEnabled ? colors.peachSoft : colors.muted,
+    themeRow: {
+      flexDirection: "row", gap: 8, paddingHorizontal: 20, paddingBottom: 16,
     },
-    aiChipText: { fontSize: 12, fontFamily: "Inter_500Medium", color: state.aiEnabled ? colors.primary : colors.mutedForeground },
+    themeOption: {
+      flex: 1, alignItems: "center", gap: 6, paddingVertical: 12,
+      borderRadius: 14, borderWidth: 2, borderColor: "transparent",
+      backgroundColor: colors.muted,
+    },
+    themeOptionActive: { borderColor: colors.primary, backgroundColor: colors.peachSoft },
+    themeOptionLabel: { fontSize: 11, fontFamily: "Inter_500Medium", color: colors.mutedForeground },
+    themeOptionLabelActive: { color: colors.primary },
   });
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.profileHeader}>
+    <ScrollView style={s.container} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+      <View style={s.profileHeader}>
         <Avatar name={state.name} colors={colors} />
-        <Text style={styles.userName}>{state.name}</Text>
-        <Pressable style={styles.editNameBtn} onPress={() => { setEditingName(!editingName); setNameInput(state.name); }}>
+        <Text style={s.userName}>{state.name}</Text>
+        <Pressable style={s.editNameBtn} onPress={() => { setEditingName(!editingName); setNameInput(state.name); }}>
           <Ionicons name="pencil-outline" size={14} color={colors.primary} />
-          <Text style={styles.editNameText}>Изменить имя</Text>
+          <Text style={s.editNameText}>Изменить имя</Text>
         </Pressable>
       </View>
 
       {editingName && (
-        <View style={styles.section}>
-          <View style={styles.nameEditRow}>
+        <View style={s.section}>
+          <View style={s.nameEditRow}>
             <TextInput
-              style={styles.nameInput}
+              style={s.nameInput}
               value={nameInput}
               onChangeText={setNameInput}
               placeholder="Твоё имя"
@@ -129,47 +139,70 @@ export default function ProfileScreen() {
               returnKeyType="done"
               onSubmitEditing={saveName}
             />
-            <Pressable style={({ pressed }) => [styles.saveBtn, pressed && { opacity: 0.85 }]} onPress={saveName}>
-              <Text style={styles.saveBtnText}>Сохранить</Text>
+            <Pressable style={({ pressed }) => [s.saveBtn, pressed && { opacity: 0.85 }]} onPress={saveName}>
+              <Text style={s.saveBtnText}>Сохранить</Text>
             </Pressable>
           </View>
         </View>
       )}
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Цитаты</Text>
-        <View style={[styles.row, { borderTopWidth: 0 }]}>
-          <View style={styles.rowLeft}>
-            <View style={[styles.iconBg, { backgroundColor: colors.peachSoft }]}>
-              <Ionicons name="sparkles-outline" size={16} color={colors.primary} />
-            </View>
-            <Text style={styles.rowLabel}>ИИ-фразы</Text>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <View style={styles.aiChip}>
-              <Text style={styles.aiChipText}>{state.aiEnabled ? "Включено" : "Выключено"}</Text>
-            </View>
-            <Switch
-              value={state.aiEnabled}
-              onValueChange={(v) => {
-                updateField("aiEnabled", v);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              }}
-              trackColor={{ false: colors.muted, true: colors.peachSoft }}
-              thumbColor={state.aiEnabled ? colors.primary : colors.mutedForeground}
-            />
-          </View>
+      {/* Theme */}
+      <View style={s.section}>
+        <Text style={s.sectionTitle}>Тема оформления</Text>
+        <View style={s.themeRow}>
+          {THEME_OPTIONS.map((opt) => {
+            const isActive = theme === opt.value;
+            return (
+              <Pressable
+                key={opt.value}
+                style={({ pressed }) => [s.themeOption, isActive && s.themeOptionActive, pressed && { opacity: 0.8 }]}
+                onPress={() => {
+                  setTheme(opt.value);
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+              >
+                <Ionicons name={opt.icon as any} size={22} color={isActive ? colors.primary : colors.mutedForeground} />
+                <Text style={[s.themeOptionLabel, isActive && s.themeOptionLabelActive]}>{opt.label}</Text>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Уведомления</Text>
-        <View style={[styles.row, { borderTopWidth: 0 }]}>
-          <View style={styles.rowLeft}>
-            <View style={[styles.iconBg, { backgroundColor: "#DDF3EC" }]}>
+      {/* Quotes */}
+      <View style={s.section}>
+        <Text style={s.sectionTitle}>Цитаты</Text>
+        <View style={[s.row, { borderTopWidth: 0 }]}>
+          <View style={s.rowLeft}>
+            <View style={[s.iconBg, { backgroundColor: colors.peachSoft }]}>
+              <Ionicons name="sparkles-outline" size={16} color={colors.primary} />
+            </View>
+            <View>
+              <Text style={s.rowLabel}>ИИ-фразы</Text>
+              <Text style={[s.rowValue, { fontSize: 12 }]}>Персональные фразы по настроению</Text>
+            </View>
+          </View>
+          <Switch
+            value={state.aiEnabled}
+            onValueChange={(v) => {
+              updateField("aiEnabled", v);
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
+            trackColor={{ false: colors.border, true: colors.peachSoft }}
+            thumbColor={state.aiEnabled ? colors.primary : colors.mutedForeground}
+          />
+        </View>
+      </View>
+
+      {/* Notifications */}
+      <View style={s.section}>
+        <Text style={s.sectionTitle}>Уведомления</Text>
+        <View style={[s.row, { borderTopWidth: 0 }]}>
+          <View style={s.rowLeft}>
+            <View style={[s.iconBg, { backgroundColor: colors.mint }]}>
               <Ionicons name="notifications-outline" size={16} color="#4CAF82" />
             </View>
-            <Text style={styles.rowLabel}>Напоминания</Text>
+            <Text style={s.rowLabel}>Напоминания</Text>
           </View>
           <Switch
             value={state.notifications}
@@ -177,43 +210,44 @@ export default function ProfileScreen() {
               updateField("notifications", v);
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }}
-            trackColor={{ false: colors.muted, true: colors.peachSoft }}
+            trackColor={{ false: colors.border, true: colors.peachSoft }}
             thumbColor={state.notifications ? colors.primary : colors.mutedForeground}
           />
         </View>
         {state.notifications && (
           <>
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <View style={[styles.iconBg, { backgroundColor: "#FCE8C5" }]}>
+            <View style={s.row}>
+              <View style={s.rowLeft}>
+                <View style={[s.iconBg, { backgroundColor: "#FCE8C5" }]}>
                   <Ionicons name="sunny-outline" size={16} color="#D29A6A" />
                 </View>
-                <Text style={styles.rowLabel}>Утреннее</Text>
+                <Text style={s.rowLabel}>Утреннее</Text>
               </View>
-              <Text style={styles.rowValue}>{state.morning}</Text>
+              <Text style={s.rowValue}>{state.morning}</Text>
             </View>
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <View style={[styles.iconBg, { backgroundColor: "#EAE4F8" }]}>
+            <View style={s.row}>
+              <View style={s.rowLeft}>
+                <View style={[s.iconBg, { backgroundColor: colors.lavender }]}>
                   <Ionicons name="moon-outline" size={16} color="#9B85D4" />
                 </View>
-                <Text style={styles.rowLabel}>Вечернее</Text>
+                <Text style={s.rowLabel}>Вечернее</Text>
               </View>
-              <Text style={styles.rowValue}>{state.evening}</Text>
+              <Text style={s.rowValue}>{state.evening}</Text>
             </View>
           </>
         )}
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>О приложении</Text>
-        <View style={[styles.row, { borderTopWidth: 0 }]}>
-          <Text style={styles.rowLabel}>Версия</Text>
-          <Text style={styles.rowValue}>1.0.0</Text>
+      {/* About */}
+      <View style={s.section}>
+        <Text style={s.sectionTitle}>О приложении</Text>
+        <View style={[s.row, { borderTopWidth: 0 }]}>
+          <Text style={s.rowLabel}>Версия</Text>
+          <Text style={s.rowValue}>1.0.0</Text>
         </View>
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Сделано с теплом</Text>
-          <Text style={styles.rowValue}>💛</Text>
+        <View style={s.row}>
+          <Text style={s.rowLabel}>Сделано с теплом</Text>
+          <Text style={s.rowValue}>💛</Text>
         </View>
       </View>
     </ScrollView>
