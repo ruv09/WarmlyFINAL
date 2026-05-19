@@ -16,6 +16,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider, useApp } from "@/context/AppContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { scheduleDailyNotifications } from "@/services/notifications";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -24,12 +25,19 @@ const queryClient = new QueryClient();
 function RootLayoutNav() {
   const { state, isLoaded } = useApp();
 
+  // Redirect to welcome if not onboarded yet
   useEffect(() => {
     if (!isLoaded) return;
     if (!state.isOnboarded) {
       router.replace("/welcome");
     }
   }, [isLoaded, state.isOnboarded]);
+
+  // Initialise push notifications once state is loaded
+  useEffect(() => {
+    if (!isLoaded || !state.isOnboarded) return;
+    scheduleDailyNotifications(state.notifications).catch(() => {});
+  }, [isLoaded, state.isOnboarded, state.notifications]);
 
   return (
     <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
@@ -61,7 +69,7 @@ export default function RootLayout() {
         <ErrorBoundary>
           <QueryClientProvider client={queryClient}>
             <AppProvider>
-              <GestureHandlerRootView>
+              <GestureHandlerRootView style={{ flex: 1 }}>
                 <KeyboardProvider>
                   <RootLayoutNav />
                 </KeyboardProvider>

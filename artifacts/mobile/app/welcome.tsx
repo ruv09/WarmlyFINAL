@@ -10,13 +10,13 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useResponsive } from "@/utils/responsive";
 
 const cardShadow = Platform.select({
   web: { boxShadow: "0px 8px 32px rgba(0,0,0,0.08)" } as object,
@@ -24,7 +24,7 @@ const cardShadow = Platform.select({
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
-    shadowRadius: 32,
+    shadowRadius: 28,
     elevation: 6,
   },
 });
@@ -32,20 +32,24 @@ const cardShadow = Platform.select({
 export default function WelcomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { rf, hPad, isSmall } = useResponsive();
   const { updateField } = useApp();
   const [name, setName] = useState("");
   const [focused, setFocused] = useState(false);
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const inputRef = useRef<TextInput>(null);
 
+  const topPad = Platform.OS === "web" ? 60 : insets.top;
+  const bottomPad = Platform.OS === "web" ? 40 : insets.bottom + 24;
+
   const handleStart = () => {
     if (!name.trim()) {
       Animated.sequence([
-        Animated.timing(shakeAnim, { toValue: 8, duration: 60, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: -8, duration: 60, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: 6, duration: 60, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: -6, duration: 60, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: 0, duration: 60, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 10, duration: 55, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -10, duration: 55, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 7, duration: 55, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -7, duration: 55, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 0, duration: 55, useNativeDriver: true }),
       ]).start();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       inputRef.current?.focus();
@@ -58,126 +62,97 @@ export default function WelcomeScreen() {
     router.replace("/(tabs)");
   };
 
-  const topPad = Platform.OS === "web" ? 60 : insets.top;
-  const bottomPad = Platform.OS === "web" ? 40 : insets.bottom + 24;
-
   const s = StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.background },
     container: {
       flex: 1,
-      paddingTop: topPad,
+      paddingTop: topPad + 10,
       paddingBottom: bottomPad,
-      paddingHorizontal: 28,
+      paddingHorizontal: hPad,
       justifyContent: "space-between",
     },
-    top: { gap: 0, flex: 1, justifyContent: "center", alignItems: "center" },
-    decorRow: {
-      flexDirection: "row",
-      gap: 10,
-      marginBottom: 32,
-    },
+    top: { flex: 1, justifyContent: "center", alignItems: "center", gap: 0 },
+    decorRow: { flexDirection: "row", gap: isSmall ? 8 : 10, marginBottom: isSmall ? 24 : 32 },
     decorCircle: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
-      alignItems: "center",
-      justifyContent: "center",
+      width: isSmall ? 48 : 56, height: isSmall ? 48 : 56, borderRadius: isSmall ? 24 : 28,
+      alignItems: "center", justifyContent: "center",
     },
-    decorEmoji: { fontSize: 28 },
+    decorEmoji: { fontSize: isSmall ? 24 : 28 },
     logoText: {
-      fontSize: 52,
+      fontSize: rf(isSmall ? 44 : 52),
       fontFamily: "Inter_700Bold",
       color: colors.foreground,
       letterSpacing: -2,
       textAlign: "center",
     },
     tagline: {
-      fontSize: 16,
+      fontSize: rf(15),
       fontFamily: "Inter_400Regular",
       color: colors.mutedForeground,
       textAlign: "center",
       marginTop: 8,
-      lineHeight: 24,
+      lineHeight: rf(24),
     },
     divider: {
-      width: 40,
-      height: 3,
-      borderRadius: 10,
-      backgroundColor: colors.primary,
-      alignSelf: "center",
-      marginTop: 28,
-      opacity: 0.5,
+      width: 36, height: 3, borderRadius: 10,
+      backgroundColor: colors.primary, alignSelf: "center",
+      marginTop: isSmall ? 20 : 28, opacity: 0.5,
     },
-    bottom: { gap: 16 },
+    bottom: { gap: 12, paddingTop: 8 },
     card: {
-      backgroundColor: colors.card,
-      borderRadius: 28,
-      padding: 28,
-      gap: 20,
-      ...cardShadow,
+      backgroundColor: colors.card, borderRadius: 26,
+      padding: isSmall ? 22 : 28, gap: 16, ...cardShadow,
     },
     cardTitle: {
-      fontSize: 22,
+      fontSize: rf(isSmall ? 19 : 22),
       fontFamily: "Inter_700Bold",
       color: colors.foreground,
-      letterSpacing: -0.4,
+      letterSpacing: -0.3,
     },
     cardSubtitle: {
-      fontSize: 14,
+      fontSize: rf(13),
       fontFamily: "Inter_400Regular",
       color: colors.mutedForeground,
-      marginTop: -12,
-      lineHeight: 22,
+      marginTop: -8,
+      lineHeight: rf(20),
     },
     input: {
-      fontSize: 18,
+      fontSize: rf(17),
       fontFamily: "Inter_500Medium",
       color: colors.foreground,
       backgroundColor: colors.muted,
-      borderRadius: 16,
-      paddingHorizontal: 20,
-      paddingVertical: 16,
+      borderRadius: 14,
+      paddingHorizontal: 18,
+      paddingVertical: isSmall ? 13 : 16,
       borderWidth: 2,
       borderColor: focused ? colors.primary : "transparent",
     },
     startBtn: {
       backgroundColor: colors.primary,
       borderRadius: 100,
-      paddingVertical: 17,
+      paddingVertical: isSmall ? 14 : 17,
       alignItems: "center",
     },
-    startBtnText: {
-      fontSize: 17,
-      fontFamily: "Inter_700Bold",
-      color: "#FFFFFF",
-      letterSpacing: 0.2,
-    },
-    skipBtn: {
-      alignItems: "center",
-      paddingVertical: 12,
-    },
-    skipText: {
-      fontSize: 13,
-      fontFamily: "Inter_400Regular",
-      color: colors.mutedForeground,
-    },
+    startBtnText: { fontSize: rf(16), fontFamily: "Inter_700Bold", color: "#FFFFFF", letterSpacing: 0.2 },
+    skipBtn: { alignItems: "center", paddingVertical: 10 },
+    skipText: { fontSize: rf(13), fontFamily: "Inter_400Regular", color: colors.mutedForeground },
   });
 
   const decorItems = [
-    { bg: colors.rose, emoji: "🌸" },
-    { bg: colors.amber, emoji: "☀️" },
-    { bg: colors.mint, emoji: "🌿" },
+    { bg: colors.rose,    emoji: "🌸" },
+    { bg: colors.amber,   emoji: "☀️" },
+    { bg: colors.mint,    emoji: "🌿" },
     { bg: colors.lavender, emoji: "💜" },
   ];
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    <Pressable style={s.flex} onPress={Keyboard.dismiss}>
       <KeyboardAvoidingView
         style={s.flex}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={s.container}>
-          {/* Logo area */}
+          {/* Logo */}
           <View style={s.top}>
             <View style={s.decorRow}>
               {decorItems.map((item, i) => (
@@ -191,7 +166,7 @@ export default function WelcomeScreen() {
             <View style={s.divider} />
           </View>
 
-          {/* Name input card */}
+          {/* Card */}
           <View style={s.bottom}>
             <View style={s.card}>
               <Text style={s.cardTitle}>Как тебя зовут?</Text>
@@ -214,7 +189,6 @@ export default function WelcomeScreen() {
                   autoCorrect={false}
                 />
               </Animated.View>
-
               <Pressable
                 style={({ pressed }) => [s.startBtn, pressed && { opacity: 0.85 }]}
                 onPress={handleStart}
@@ -236,6 +210,6 @@ export default function WelcomeScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </TouchableWithoutFeedback>
+    </Pressable>
   );
 }

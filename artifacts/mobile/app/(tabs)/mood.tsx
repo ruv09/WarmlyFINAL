@@ -2,7 +2,6 @@ import * as Haptics from "expo-haptics";
 import React, { useRef, useState } from "react";
 import {
   Animated,
-  Dimensions,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -17,10 +16,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useResponsive } from "@/utils/responsive";
 import { MOOD_ITEMS, type MoodKey } from "@/utils/phrases";
-
-const { width } = Dimensions.get("window");
-const CIRCLE_SIZE = (width - 22 * 2 - 16 * 2) / 3;
 
 const cardShadow = Platform.select({
   web: { boxShadow: "0px 4px 24px rgba(0,0,0,0.07)" } as object,
@@ -28,54 +25,41 @@ const cardShadow = Platform.select({
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.07,
-    shadowRadius: 24,
+    shadowRadius: 20,
     elevation: 4,
   },
 });
 
 const supportPhrases: Record<MoodKey, string[]> = {
-  good: [
-    "Это здорово! Сохрани эту энергию и поделись теплом с близкими 💛",
-    "Твоя радость заразительна — пусть она длится как можно дольше 🌟",
-  ],
-  calm: [
-    "Спокойствие — это твоя суперсила. Береги этот внутренний мир 🌿",
-    "Тихий день — это тоже подарок. Ты в гармонии с собой ✨",
-  ],
-  neutral: [
-    "Нейтральный день — отличное время для наблюдения и размышлений 🍃",
-    "Не каждый день должен быть особенным — это тоже нормально 💙",
-  ],
-  tired: [
-    "Ты много сделал(а) сегодня. Теперь позволь себе отдохнуть — ты это заслужил(а) 🌙",
-    "Усталость — знак того, что ты старался(ась). Восстановление так же важно 🫂",
-  ],
-  anxious: [
-    "Сделай три глубоких вдоха. Ты справляешься — шаг за шагом. Мы рядом 💛",
-    "Тревога не определяет тебя. Ты сильнее, чем кажется прямо сейчас 🌤",
-  ],
-  sad: [
-    "Грустить — это нормально. Твои чувства важны, и они пройдут. Ты не один(а) 🤍",
-    "Даже в самый серый день есть маленький свет. Ты справишься 🕯",
-  ],
-};
-
-const moodDarkColors: Record<MoodKey, string> = {
-  good: "#3A2D18",
-  calm: "#1A2922",
-  neutral: "#2A2520",
-  tired: "#1E2820",
-  anxious: "#2A1A1A",
-  sad: "#1E1B2A",
+  good:    ["Это здорово! Сохрани эту энергию и поделись теплом с близкими 💛", "Твоя радость заразительна — пусть она длится как можно дольше 🌟"],
+  calm:    ["Спокойствие — это твоя суперсила. Береги этот внутренний мир 🌿", "Тихий день — это тоже подарок. Ты в гармонии с собой ✨"],
+  neutral: ["Нейтральный день — отличное время для наблюдения и размышлений 🍃", "Не каждый день должен быть особенным — это тоже нормально 💙"],
+  tired:   ["Ты много сделал(а) сегодня. Теперь позволь себе отдохнуть — ты это заслужил(а) 🌙", "Усталость — знак того, что ты старался(ась). Восстановление так же важно 🫂"],
+  anxious: ["Сделай три глубоких вдоха. Ты справляешься — шаг за шагом 💛", "Тревога не определяет тебя. Ты сильнее, чем кажется прямо сейчас 🌤"],
+  sad:     ["Грустить — это нормально. Твои чувства важны. Ты не один(а) 🤍", "Даже в самый серый день есть маленький свет. Ты справишься 🕯"],
 };
 
 const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
+const moodDarkColors: Record<MoodKey, string> = {
+  good: "#3A2D18", calm: "#1A2922", neutral: "#2A2520",
+  tired: "#1E2820", anxious: "#2A1A1A", sad: "#1E1B2A",
+};
+
 export default function MoodScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { rf, hPad, isSmall, width } = useResponsive();
   const { state, updateField } = useApp();
   const isDark = colors.background === "#131110";
+
+  // Responsive circle size — computed from live window width
+  const cols = 3;
+  const gap = 12;
+  const circleSize = Math.max(
+    Math.floor((width - hPad * 2 - gap * (cols - 1)) / cols),
+    72,
+  );
 
   const [noteText, setNoteText] = useState(state.moodNote ?? "");
   const [submitted, setSubmitted] = useState(state.moodNoteSubmitted ?? false);
@@ -83,7 +67,7 @@ export default function MoodScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const topPad = Platform.OS === "web" ? 60 : insets.top;
-  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 90;
+  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 88;
 
   const handleMood = (key: MoodKey) => {
     if (state.mood === key) return;
@@ -103,8 +87,7 @@ export default function MoodScreen() {
     updateField("moodNote", noteText.trim());
     updateField("moodNoteSubmitted", true);
     setSubmitted(true);
-    const phrase = pick(supportPhrases[state.mood]);
-    setSupportPhrase(phrase);
+    setSupportPhrase(pick(supportPhrases[state.mood]));
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
   };
@@ -114,138 +97,52 @@ export default function MoodScreen() {
     content: {
       paddingTop: topPad + 20,
       paddingBottom: bottomPad,
-      paddingHorizontal: 22,
-      gap: 24,
+      paddingHorizontal: hPad,
+      gap: isSmall ? 18 : 22,
     },
-    title: {
-      fontSize: 32,
-      fontFamily: "Inter_700Bold",
-      color: colors.foreground,
-      letterSpacing: -0.5,
-    },
-    subtitle: {
-      fontSize: 15,
-      fontFamily: "Inter_400Regular",
-      color: colors.mutedForeground,
-      marginTop: -16,
-    },
-    grid: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 16,
-    },
-    circleWrapper: {
-      width: CIRCLE_SIZE,
-      alignItems: "center",
-      gap: 8,
-    },
+    title: { fontSize: rf(isSmall ? 26 : 30), fontFamily: "Inter_700Bold", color: colors.foreground, letterSpacing: -0.5 },
+    subtitle: { fontSize: rf(14), fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginTop: -10 },
+    grid: { flexDirection: "row", flexWrap: "wrap", gap },
+    circleWrapper: { width: circleSize, alignItems: "center", gap: 6 },
     circle: {
-      width: CIRCLE_SIZE,
-      height: CIRCLE_SIZE,
-      borderRadius: CIRCLE_SIZE / 2,
-      alignItems: "center",
-      justifyContent: "center",
-      borderWidth: 2.5,
-      borderColor: "transparent",
+      width: circleSize, height: circleSize,
+      borderRadius: circleSize / 2,
+      alignItems: "center", justifyContent: "center",
+      borderWidth: 2.5, borderColor: "transparent",
     },
-    circleSelected: {
-      borderColor: colors.primary,
-    },
-    moodEmoji: { fontSize: 34 },
-    moodLabel: {
-      fontSize: 12,
-      fontFamily: "Inter_500Medium",
-      color: colors.mutedForeground,
-      textAlign: "center",
-    },
-    moodLabelSelected: {
-      color: colors.primary,
-      fontFamily: "Inter_600SemiBold",
-    },
+    circleSelected: { borderColor: colors.primary },
+    moodEmoji: { fontSize: Math.min(circleSize * 0.48, 36) },
+    moodLabel: { fontSize: rf(11), fontFamily: "Inter_500Medium", color: colors.mutedForeground, textAlign: "center" },
+    moodLabelSelected: { color: colors.primary, fontFamily: "Inter_600SemiBold" },
     noteCard: {
-      backgroundColor: colors.card,
-      borderRadius: 24,
-      padding: 24,
-      gap: 16,
-      ...cardShadow,
+      backgroundColor: colors.card, borderRadius: 22,
+      padding: isSmall ? 18 : 22, gap: 14, ...cardShadow,
     },
-    noteTitle: {
-      fontSize: 18,
-      fontFamily: "Inter_700Bold",
-      color: colors.foreground,
-    },
-    noteSubtitle: {
-      fontSize: 14,
-      fontFamily: "Inter_400Regular",
-      color: colors.mutedForeground,
-      marginTop: -8,
-      lineHeight: 22,
-    },
+    noteTitle: { fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.foreground },
+    noteSubtitle: { fontSize: rf(13), fontFamily: "Inter_400Regular", color: colors.mutedForeground, lineHeight: rf(20), marginTop: -6 },
     noteInput: {
-      fontSize: 15,
-      fontFamily: "Inter_400Regular",
-      color: colors.foreground,
-      backgroundColor: colors.muted,
-      borderRadius: 16,
-      padding: 16,
-      minHeight: 110,
-      textAlignVertical: "top",
+      fontSize: rf(15), fontFamily: "Inter_400Regular", color: colors.foreground,
+      backgroundColor: colors.muted, borderRadius: 14,
+      padding: 14, minHeight: 100, textAlignVertical: "top",
     },
-    submitBtn: {
-      backgroundColor: colors.primary,
-      borderRadius: 100,
-      paddingVertical: 14,
-      alignItems: "center",
-    },
-    submitBtnText: {
-      fontSize: 15,
-      fontFamily: "Inter_600SemiBold",
-      color: "#FFFFFF",
-    },
+    submitBtn: { backgroundColor: colors.primary, borderRadius: 100, paddingVertical: 13, alignItems: "center" },
+    submitBtnText: { fontSize: rf(15), fontFamily: "Inter_600SemiBold", color: "#FFFFFF" },
     submittedNote: {
-      fontSize: 15,
-      fontFamily: "Inter_400Regular",
-      color: colors.foreground,
-      fontStyle: "italic",
-      lineHeight: 24,
+      fontSize: rf(14), fontFamily: "Inter_400Regular", color: colors.foreground,
+      fontStyle: "italic", lineHeight: rf(22),
     },
-    editLink: {
-      fontSize: 13,
-      fontFamily: "Inter_500Medium",
-      color: colors.primary,
-    },
+    editLink: { fontSize: rf(13), fontFamily: "Inter_500Medium", color: colors.primary },
     supportCard: {
-      borderRadius: 24,
-      padding: 24,
-      gap: 10,
-      backgroundColor: isDark ? colors.muted : colors.amber,
-      ...cardShadow,
+      borderRadius: 22, padding: isSmall ? 18 : 22, gap: 8,
+      backgroundColor: isDark ? colors.muted : colors.amber, ...cardShadow,
     },
     supportLabel: {
-      fontSize: 11,
-      fontFamily: "Inter_600SemiBold",
-      color: colors.primary,
-      textTransform: "uppercase",
-      letterSpacing: 1,
+      fontSize: rf(11), fontFamily: "Inter_600SemiBold", color: colors.primary,
+      textTransform: "uppercase", letterSpacing: 1,
     },
-    supportText: {
-      fontSize: 17,
-      fontFamily: "Inter_500Medium",
-      color: colors.foreground,
-      lineHeight: 28,
-    },
-    emptyState: {
-      alignItems: "center",
-      paddingVertical: 24,
-      gap: 8,
-    },
-    emptyText: {
-      fontSize: 14,
-      fontFamily: "Inter_400Regular",
-      color: colors.mutedForeground,
-      textAlign: "center",
-      lineHeight: 22,
-    },
+    supportText: { fontSize: rf(16), fontFamily: "Inter_500Medium", color: colors.foreground, lineHeight: rf(26) },
+    emptyState: { alignItems: "center", paddingVertical: 20, gap: 8 },
+    emptyText: { fontSize: rf(14), fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center", lineHeight: rf(22) },
   });
 
   return (
@@ -259,39 +156,33 @@ export default function MoodScreen() {
         <Text style={s.title}>Как ты себя{"\n"}чувствуешь?</Text>
         <Text style={s.subtitle}>Твоё настроение помогает нам быть рядом</Text>
 
-        {/* Mood circles */}
         <View style={s.grid}>
           {MOOD_ITEMS.map((item) => {
             const isSelected = state.mood === item.key;
-            const bgColor = isDark ? moodDarkColors[item.key] : item.color;
+            const bg = isDark ? moodDarkColors[item.key] : item.color;
             return (
               <View key={item.key} style={s.circleWrapper}>
                 <Pressable
                   style={({ pressed }) => [
                     s.circle,
-                    { backgroundColor: bgColor },
+                    { backgroundColor: bg },
                     isSelected && s.circleSelected,
-                    pressed && { opacity: 0.8, transform: [{ scale: 0.95 }] },
+                    pressed && { opacity: 0.8, transform: [{ scale: 0.94 }] },
                   ]}
                   onPress={() => handleMood(item.key)}
                 >
                   <Text style={s.moodEmoji}>{item.emoji}</Text>
                 </Pressable>
-                <Text style={[s.moodLabel, isSelected && s.moodLabelSelected]}>
-                  {item.label}
-                </Text>
+                <Text style={[s.moodLabel, isSelected && s.moodLabelSelected]}>{item.label}</Text>
               </View>
             );
           })}
         </View>
 
-        {/* Note input */}
         {state.mood && !submitted && (
           <View style={s.noteCard}>
             <Text style={s.noteTitle}>Расскажи подробнее</Text>
-            <Text style={s.noteSubtitle}>
-              Что произошло сегодня? Записывай всё — это помогает
-            </Text>
+            <Text style={s.noteSubtitle}>Что произошло сегодня? Записывай всё — это помогает</Text>
             <TextInput
               style={s.noteInput}
               placeholder="Напиши всё, что хочешь..."
@@ -299,7 +190,6 @@ export default function MoodScreen() {
               value={noteText}
               onChangeText={setNoteText}
               multiline
-              returnKeyType="default"
             />
             <Pressable
               style={({ pressed }) => [s.submitBtn, pressed && { opacity: 0.85 }]}
@@ -310,8 +200,7 @@ export default function MoodScreen() {
           </View>
         )}
 
-        {/* Submitted note */}
-        {submitted && state.moodNote && (
+        {submitted && state.moodNote ? (
           <View style={s.noteCard}>
             <Text style={s.noteTitle}>Твоя запись</Text>
             <Text style={s.submittedNote}>«{state.moodNote}»</Text>
@@ -319,22 +208,19 @@ export default function MoodScreen() {
               <Text style={s.editLink}>Изменить запись</Text>
             </Pressable>
           </View>
-        )}
+        ) : null}
 
-        {/* Support phrase */}
-        {supportPhrase && (
+        {supportPhrase ? (
           <Animated.View style={[s.supportCard, { opacity: fadeAnim }]}>
             <Text style={s.supportLabel}>Warmly говорит</Text>
             <Text style={s.supportText}>{supportPhrase}</Text>
           </Animated.View>
-        )}
+        ) : null}
 
         {!state.mood && (
           <View style={s.emptyState}>
             <Text style={{ fontSize: 32 }}>🌱</Text>
-            <Text style={s.emptyText}>
-              Регулярная оценка настроения{"\n"}помогает лучше понимать себя
-            </Text>
+            <Text style={s.emptyText}>Регулярная оценка настроения{"\n"}помогает лучше понимать себя</Text>
           </View>
         )}
       </ScrollView>
