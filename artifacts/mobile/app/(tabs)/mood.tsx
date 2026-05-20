@@ -2,7 +2,7 @@ import * as Haptics from "expo-haptics";
 import React, { useRef, useState } from "react";
 import {
   Animated,
-  Dimensions,
+  useWindowDimensions,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -18,9 +18,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { MOOD_ITEMS, type MoodKey } from "@/utils/phrases";
-
-const { width } = Dimensions.get("window");
-const CIRCLE_SIZE = (width - 22 * 2 - 16 * 2) / 3;
 
 const cardShadow = Platform.select({
   web: { boxShadow: "0px 4px 24px rgba(0,0,0,0.07)" } as object,
@@ -76,6 +73,11 @@ export default function MoodScreen() {
   const insets = useSafeAreaInsets();
   const { state, updateField } = useApp();
   const isDark = colors.background === "#131110";
+  const { width } = useWindowDimensions();
+  const gridHorizontalPadding = 22 * 2;
+  const gridGap = 16 * 2;
+  const rawCircleSize = (width - gridHorizontalPadding - gridGap) / 3;
+  const circleSize = Math.max(84, Math.min(rawCircleSize, 132));
 
   const [noteText, setNoteText] = useState(state.moodNote ?? "");
   const [submitted, setSubmitted] = useState(state.moodNoteSubmitted ?? false);
@@ -135,14 +137,14 @@ export default function MoodScreen() {
       gap: 16,
     },
     circleWrapper: {
-      width: CIRCLE_SIZE,
+      width: circleSize,
       alignItems: "center",
       gap: 8,
     },
     circle: {
-      width: CIRCLE_SIZE,
-      height: CIRCLE_SIZE,
-      borderRadius: CIRCLE_SIZE / 2,
+      width: circleSize,
+      height: circleSize,
+      borderRadius: circleSize / 2,
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 2.5,

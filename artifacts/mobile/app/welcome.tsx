@@ -12,6 +12,7 @@ import {
   TextInput,
   TouchableWithoutFeedback,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -33,6 +34,8 @@ export default function WelcomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { updateField } = useApp();
+  const { width } = useWindowDimensions();
+  const isCompact = width < 360;
   const [name, setName] = useState("");
   const [focused, setFocused] = useState(false);
   const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -67,7 +70,7 @@ export default function WelcomeScreen() {
       flex: 1,
       paddingTop: topPad,
       paddingBottom: bottomPad,
-      paddingHorizontal: 28,
+      paddingHorizontal: isCompact ? 20 : 28,
       justifyContent: "space-between",
     },
     top: { gap: 0, flex: 1, justifyContent: "center", alignItems: "center" },
@@ -77,15 +80,15 @@ export default function WelcomeScreen() {
       marginBottom: 32,
     },
     decorCircle: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      width: isCompact ? 48 : 56,
+      height: isCompact ? 48 : 56,
+      borderRadius: isCompact ? 24 : 28,
       alignItems: "center",
       justifyContent: "center",
     },
-    decorEmoji: { fontSize: 28 },
+    decorEmoji: { fontSize: isCompact ? 24 : 28 },
     logoText: {
-      fontSize: 52,
+      fontSize: isCompact ? 42 : 52,
       fontFamily: "Inter_700Bold",
       color: colors.foreground,
       letterSpacing: -2,

@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 
+import { ensureDailyAiNotification } from "@/utils/notifications";
 import type { MoodKey } from "@/utils/phrases";
 
 const STORAGE_KEY = "warmly_state_v3";
@@ -47,6 +48,7 @@ const AppContext = createContext<AppContextType | null>(null);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(DEFAULT_STATE);
   const [isLoaded, setIsLoaded] = useState(false);
+  const lastNotificationSignature = useRef("");
 
   useEffect(() => {
     (async () => {
@@ -67,6 +69,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!isLoaded) return;
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
   }, [state, isLoaded]);
+
+  // Keep a single daily local notification in sync with user settings.
+  // We intentionally run this only after state is hydrated from storage so
+  // Android keeps a stable schedule across restarts without duplicates.
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const signature = JSON.stringify({
+      notifications: state.notifications,
+      aiEnabled: state.aiEnabled,
+      mood: state.mood,
+      hour: state.morning,
+    });
+
+    if (signature === lastNotificationSignature.current) return;
+    lastNotificationSignature.current = signature;
+
+    ensureDailyAiNotification({
+      enabled: state.notifications,
+      aiEnabled: state.aiEnabled,
+      mood: state.mood,
+      preferredHour: state.morning,
+    }).catch(() => {});
+  }, [isLoaded, state.notifications, state.aiEnabled, state.mood, state.morning]);
 
   const updateField = <K extends keyof AppState>(key: K, value: AppState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));

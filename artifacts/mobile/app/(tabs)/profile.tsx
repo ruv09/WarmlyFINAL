@@ -140,7 +140,7 @@ export default function ProfileScreen() {
       borderTopColor: colors.border,
     },
     rowFirst: { borderTopWidth: 0 },
-    rowLeft: { flexDirection: "row", alignItems: "center", gap: 14 },
+    rowLeft: { flexDirection: "row", alignItems: "center", gap: 14, flex: 1, paddingRight: 12 },
     iconCircle: {
       width: 36,
       height: 36,
@@ -148,8 +148,8 @@ export default function ProfileScreen() {
       alignItems: "center",
       justifyContent: "center",
     },
-    rowLabel: { fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground },
-    rowSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground },
+    rowLabel: { fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, flexShrink: 1 },
+    rowSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground, flexShrink: 1 },
     rowValue: { fontSize: 14, fontFamily: "Inter_400Regular", color: colors.mutedForeground },
     nameEditPad: {
       paddingHorizontal: 22,
