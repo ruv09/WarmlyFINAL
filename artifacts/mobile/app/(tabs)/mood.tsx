@@ -71,7 +71,7 @@ const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 export default function MoodScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { state, updateField } = useApp();
+  const { state, updateField, addMoodHistory } = useApp();
   const isDark = colors.background === "#131110";
   const { width } = useWindowDimensions();
   const gridHorizontalPadding = 22 * 2;
@@ -102,8 +102,10 @@ export default function MoodScreen() {
   const handleSubmit = () => {
     if (!noteText.trim() || !state.mood) return;
     Keyboard.dismiss();
-    updateField("moodNote", noteText.trim());
+    const note = noteText.trim();
+    updateField("moodNote", note);
     updateField("moodNoteSubmitted", true);
+    addMoodHistory({ mood: state.mood, note });
     setSubmitted(true);
     const phrase = pick(supportPhrases[state.mood]);
     setSupportPhrase(phrase);

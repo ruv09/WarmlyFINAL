@@ -2,7 +2,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 
 import { ensureDailyAiNotification } from "@/utils/notifications";
+ codex-bifkd4
+import { buildUniqueAiPhrase, type MoodKey } from "@/utils/phrases";
+
 import type { MoodKey } from "@/utils/phrases";
+main
 
 const STORAGE_KEY = "warmly_state_v3";
 
@@ -18,6 +22,10 @@ export interface AppState {
   evening: string;
   aiEnabled: boolean;
   note: string;
+  dailyAiPhrase: string;
+  dailyAiPhraseDate: string;
+  recentAiPhrases: string[];
+  moodHistory: Array<{ id: string; mood: MoodKey; note: string; createdAt: string }>;
 }
 
 const DEFAULT_STATE: AppState = {
@@ -32,12 +40,17 @@ const DEFAULT_STATE: AppState = {
   evening: "22:00",
   aiEnabled: false,
   note: "",
+  dailyAiPhrase: "",
+  dailyAiPhraseDate: "",
+  recentAiPhrases: [],
+  moodHistory: [],
 };
 
 interface AppContextType {
   state: AppState;
   setState: React.Dispatch<React.SetStateAction<AppState>>;
   updateField: <K extends keyof AppState>(key: K, value: AppState[K]) => void;
+  addMoodHistory: (entry: { mood: MoodKey; note: string }) => void;
   addFavorite: (quote: string) => void;
   removeFavorite: (quote: string) => void;
   isLoaded: boolean;
@@ -49,6 +62,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(DEFAULT_STATE);
   const [isLoaded, setIsLoaded] = useState(false);
   const lastNotificationSignature = useRef("");
+codex-bifkd4
+
+  const ensureDailyPhrase = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    setState((prev) => {
+      if (!prev.aiEnabled) return prev;
+      if (prev.dailyAiPhraseDate === today && prev.dailyAiPhrase) return prev;
+      const phrase = buildUniqueAiPhrase(prev.mood, prev.recentAiPhrases);
+      return {
+        ...prev,
+        dailyAiPhrase: phrase,
+        dailyAiPhraseDate: today,
+        recentAiPhrases: [...prev.recentAiPhrases.slice(-49), phrase],
+      };
+    });
+  };
+ main
 
   useEffect(() => {
     (async () => {
@@ -94,6 +124,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }).catch(() => {});
   }, [isLoaded, state.notifications, state.aiEnabled, state.mood, state.morning]);
 
+codex-bifkd4
+  useEffect(() => {
+    if (!isLoaded) return;
+    ensureDailyPhrase();
+  }, [isLoaded, state.aiEnabled, state.mood]);
+
+main
   const updateField = <K extends keyof AppState>(key: K, value: AppState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
   };
@@ -105,6 +142,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+  const addMoodHistory = (entry: { mood: MoodKey; note: string }) => {
+    setState((prev) => ({
+      ...prev,
+      moodHistory: [
+        {
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          mood: entry.mood,
+          note: entry.note,
+          createdAt: new Date().toISOString(),
+        },
+        ...prev.moodHistory,
+      ],
+    }));
+  };
+
   const removeFavorite = (quote: string) => {
     setState((prev) => ({
       ...prev,
@@ -113,7 +165,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AppContext.Provider value={{ state, setState, updateField, addFavorite, removeFavorite, isLoaded }}>
+    <AppContext.Provider value={{ state, setState, updateField, addMoodHistory, addFavorite, removeFavorite, isLoaded }}>
       {children}
     </AppContext.Provider>
   );

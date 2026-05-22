@@ -24,6 +24,8 @@ export const MOOD_ITEMS = [
 
 export type MoodKey = (typeof MOOD_ITEMS)[number]["key"];
 
+const RECENT_PHRASE_WINDOW = 7;
+
 const openings: Record<string, string[]> = {
   good: [
     "Сохрани это тепло — и поделись им.",
@@ -76,6 +78,16 @@ const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 export const buildAiPhrase = (mood: MoodKey | null): string => {
   const moodOpenings = mood ? openings[mood] ?? openings.default : openings.default;
   return `${pick(moodOpenings)} ${pick(middles)} ${pick(endings)}`;
+};
+
+export const buildUniqueAiPhrase = (mood: MoodKey | null, recentPhrases: string[]): string => {
+  const blocked = new Set(recentPhrases.slice(-RECENT_PHRASE_WINDOW));
+  const attempts = 30;
+  for (let i = 0; i < attempts; i += 1) {
+    const candidate = buildAiPhrase(mood);
+    if (!blocked.has(candidate)) return candidate;
+  }
+  return buildAiPhrase(mood);
 };
 
 export const getFallbackQuote = (date: Date = new Date()): string => {

@@ -58,8 +58,8 @@ export default function HomeScreen() {
   const [saved, setSaved] = useState(false);
 
   const quote = useMemo(
-    () => (state.aiEnabled ? buildAiPhrase(state.mood) : getFallbackQuote()),
-    [state.aiEnabled, state.mood],
+    () => (state.aiEnabled ? state.dailyAiPhrase || buildAiPhrase(state.mood) : getFallbackQuote()),
+    [state.aiEnabled, state.dailyAiPhrase, state.mood],
   );
 
   const isFav = state.favorites.includes(quote);
