@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 
-import type { MoodKey } from "@/utils/phrases";
+import { ensureDailyAiNotification } from "@/utils/notifications";
+import { buildUniqueAiPhrase, type MoodKey } from "@/utils/phrases";
 
 const STORAGE_KEY = "warmly_state_v3";
 
@@ -17,6 +18,10 @@ export interface AppState {
   evening: string;
   aiEnabled: boolean;
   note: string;
+  dailyAiPhrase: string;
+  dailyAiPhraseDate: string;
+  recentAiPhrases: string[];
+  moodHistory: Array<{ id: string; mood: MoodKey; note: string; createdAt: string }>;
 }
 
 const DEFAULT_STATE: AppState = {
@@ -31,12 +36,17 @@ const DEFAULT_STATE: AppState = {
   evening: "22:00",
   aiEnabled: false,
   note: "",
+  dailyAiPhrase: "",
+  dailyAiPhraseDate: "",
+  recentAiPhrases: [],
+  moodHistory: [],
 };
 
 interface AppContextType {
   state: AppState;
   setState: React.Dispatch<React.SetStateAction<AppState>>;
   updateField: <K extends keyof AppState>(key: K, value: AppState[K]) => void;
+  addMoodHistory: (entry: { mood: MoodKey; note: string }) => void;
   addFavorite: (quote: string) => void;
   removeFavorite: (quote: string) => void;
   isLoaded: boolean;
@@ -47,6 +57,22 @@ const AppContext = createContext<AppContextType | null>(null);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(DEFAULT_STATE);
   const [isLoaded, setIsLoaded] = useState(false);
+  const lastNotificationSignature = useRef("");
+
+  const ensureDailyPhrase = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    setState((prev) => {
+      if (!prev.aiEnabled) return prev;
+      if (prev.dailyAiPhraseDate === today && prev.dailyAiPhrase) return prev;
+      const phrase = buildUniqueAiPhrase(prev.mood, prev.recentAiPhrases);
+      return {
+        ...prev,
+        dailyAiPhrase: phrase,
+        dailyAiPhraseDate: today,
+        recentAiPhrases: [...prev.recentAiPhrases.slice(-49), phrase],
+      };
+    });
+  };
 
   useEffect(() => {
     (async () => {
@@ -68,6 +94,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
   }, [state, isLoaded]);
 
+  // Keep a single daily local notification in sync with user settings.
+  // We intentionally run this only after state is hydrated from storage so
+  // Android keeps a stable schedule across restarts without duplicates.
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const signature = JSON.stringify({
+      notifications: state.notifications,
+      aiEnabled: state.aiEnabled,
+      mood: state.mood,
+      hour: state.morning,
+    });
+
+    if (signature === lastNotificationSignature.current) return;
+    lastNotificationSignature.current = signature;
+
+    ensureDailyAiNotification({
+      enabled: state.notifications,
+      aiEnabled: state.aiEnabled,
+      mood: state.mood,
+      preferredHour: state.morning,
+    }).catch(() => {});
+  }, [isLoaded, state.notifications, state.aiEnabled, state.mood, state.morning]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    ensureDailyPhrase();
+  }, [isLoaded, state.aiEnabled, state.mood]);
+
   const updateField = <K extends keyof AppState>(key: K, value: AppState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
   };
@@ -79,6 +134,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+  const addMoodHistory = (entry: { mood: MoodKey; note: string }) => {
+    setState((prev) => ({
+      ...prev,
+      moodHistory: [
+        {
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          mood: entry.mood,
+          note: entry.note,
+          createdAt: new Date().toISOString(),
+        },
+        ...prev.moodHistory,
+      ],
+    }));
+  };
+
   const removeFavorite = (quote: string) => {
     setState((prev) => ({
       ...prev,
@@ -87,7 +157,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AppContext.Provider value={{ state, setState, updateField, addFavorite, removeFavorite, isLoaded }}>
+    <AppContext.Provider value={{ state, setState, updateField, addMoodHistory, addFavorite, removeFavorite, isLoaded }}>
       {children}
     </AppContext.Provider>
   );
