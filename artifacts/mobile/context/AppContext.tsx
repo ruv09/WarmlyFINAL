@@ -2,11 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 
 import { ensureDailyAiNotification } from "@/utils/notifications";
- codex-bifkd4
 import { buildUniqueAiPhrase, type MoodKey } from "@/utils/phrases";
 
-import type { MoodKey } from "@/utils/phrases";
-main
 
 const STORAGE_KEY = "warmly_state_v3";
 
@@ -62,7 +59,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(DEFAULT_STATE);
   const [isLoaded, setIsLoaded] = useState(false);
   const lastNotificationSignature = useRef("");
-codex-bifkd4
 
   const ensureDailyPhrase = () => {
     const today = new Date().toISOString().slice(0, 10);
@@ -78,7 +74,6 @@ codex-bifkd4
       };
     });
   };
- main
 
   useEffect(() => {
     (async () => {
@@ -124,13 +119,11 @@ codex-bifkd4
     }).catch(() => {});
   }, [isLoaded, state.notifications, state.aiEnabled, state.mood, state.morning]);
 
-codex-bifkd4
   useEffect(() => {
     if (!isLoaded) return;
     ensureDailyPhrase();
   }, [isLoaded, state.aiEnabled, state.mood]);
 
-main
   const updateField = <K extends keyof AppState>(key: K, value: AppState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
   };
