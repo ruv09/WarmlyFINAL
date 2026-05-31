@@ -1,12 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { ensureDailyAiNotification } from "@/utils/notifications";
- codex-bifkd4
 import { buildUniqueAiPhrase, type MoodKey } from "@/utils/phrases";
-
-import type { MoodKey } from "@/utils/phrases";
-main
 
 const STORAGE_KEY = "warmly_state_v3";
 
@@ -25,7 +27,12 @@ export interface AppState {
   dailyAiPhrase: string;
   dailyAiPhraseDate: string;
   recentAiPhrases: string[];
-  moodHistory: Array<{ id: string; mood: MoodKey; note: string; createdAt: string }>;
+  moodHistory: Array<{
+    id: string;
+    mood: MoodKey;
+    note: string;
+    createdAt: string;
+  }>;
 }
 
 const DEFAULT_STATE: AppState = {
@@ -62,7 +69,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(DEFAULT_STATE);
   const [isLoaded, setIsLoaded] = useState(false);
   const lastNotificationSignature = useRef("");
-codex-bifkd4
 
   const ensureDailyPhrase = () => {
     const today = new Date().toISOString().slice(0, 10);
@@ -78,7 +84,6 @@ codex-bifkd4
       };
     });
   };
- main
 
   useEffect(() => {
     (async () => {
@@ -122,23 +127,32 @@ codex-bifkd4
       mood: state.mood,
       preferredHour: state.morning,
     }).catch(() => {});
-  }, [isLoaded, state.notifications, state.aiEnabled, state.mood, state.morning]);
+  }, [
+    isLoaded,
+    state.notifications,
+    state.aiEnabled,
+    state.mood,
+    state.morning,
+  ]);
 
-codex-bifkd4
   useEffect(() => {
     if (!isLoaded) return;
     ensureDailyPhrase();
   }, [isLoaded, state.aiEnabled, state.mood]);
 
-main
-  const updateField = <K extends keyof AppState>(key: K, value: AppState[K]) => {
+  const updateField = <K extends keyof AppState>(
+    key: K,
+    value: AppState[K],
+  ) => {
     setState((prev) => ({ ...prev, [key]: value }));
   };
 
   const addFavorite = (quote: string) => {
     setState((prev) => ({
       ...prev,
-      favorites: prev.favorites.includes(quote) ? prev.favorites : [...prev.favorites, quote],
+      favorites: prev.favorites.includes(quote)
+        ? prev.favorites
+        : [...prev.favorites, quote],
     }));
   };
 
@@ -165,7 +179,17 @@ main
   };
 
   return (
-    <AppContext.Provider value={{ state, setState, updateField, addMoodHistory, addFavorite, removeFavorite, isLoaded }}>
+    <AppContext.Provider
+      value={{
+        state,
+        setState,
+        updateField,
+        addMoodHistory,
+        addFavorite,
+        removeFavorite,
+        isLoaded,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );
