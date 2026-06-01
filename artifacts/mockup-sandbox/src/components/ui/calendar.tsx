@@ -140,9 +140,13 @@ codex/continue-with-the-project-1rb603
           return (
             <div
               data-slot="calendar"
+codex/continue-the-discussion-4wozgx
+              ref={rootRef as React.Ref<HTMLDivElement>}
+
 codex/continue-the-discussion
               ref={rootRef as React.Ref<HTMLDivElement>}
               ref={divRef}
+main
 main
 main
               className={cn(className)}

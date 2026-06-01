@@ -10,8 +10,11 @@ import React, {
 import { ensureDailyAiNotification } from "@/utils/notifications";
 import { buildUniqueAiPhrase, type MoodKey } from "@/utils/phrases";
 
+codex/continue-the-discussion-4wozgx
+
 codex/continue-with-the-project-1rb603
 
+ main
  main
 const STORAGE_KEY = "warmly_state_v3";
 
@@ -108,9 +111,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
   }, [state, isLoaded]);
 
-  // Keep a single daily local notification in sync with user settings.
+  // Keep the rolling local notification plan in sync with user settings.
   // We intentionally run this only after state is hydrated from storage so
-  // Android keeps a stable schedule across restarts without duplicates.
+  // native schedules are replaced without duplicates.
   useEffect(() => {
     if (!isLoaded) return;
 
@@ -118,7 +121,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       notifications: state.notifications,
       aiEnabled: state.aiEnabled,
       mood: state.mood,
-      hour: state.morning,
+      morning: state.morning,
+      evening: state.evening,
+      date: new Date().toISOString().slice(0, 10),
     });
 
     if (signature === lastNotificationSignature.current) return;
@@ -129,6 +134,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       aiEnabled: state.aiEnabled,
       mood: state.mood,
       preferredHour: state.morning,
+      preferredEvening: state.evening,
+      recentPhrases: state.recentAiPhrases,
     }).catch(() => {});
   }, [
     isLoaded,
@@ -136,6 +143,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.aiEnabled,
     state.mood,
     state.morning,
+codex/continue-the-discussion-4wozgx
+    state.evening,
+    state.recentAiPhrases,
+
+main
   ]);
 
   useEffect(() => {
@@ -143,13 +155,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ensureDailyPhrase();
   }, [isLoaded, state.aiEnabled, state.mood]);
 
+codex/continue-the-discussion-4wozgx
+
 codex/continue-with-the-project-1rb603
+main
   const updateField = <K extends keyof AppState>(
     key: K,
     value: AppState[K],
   ) => {
+codex/continue-the-discussion-4wozgx
+
 
   const updateField = <K extends keyof AppState>(key: K, value: AppState[K]) => {
+ main
  main
     setState((prev) => ({ ...prev, [key]: value }));
   };
