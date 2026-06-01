@@ -10,6 +10,12 @@ import React, {
 import { ensureDailyAiNotification } from "@/utils/notifications";
 import { buildUniqueAiPhrase, type MoodKey } from "@/utils/phrases";
 
+codex/continue-the-discussion-4wozgx
+
+codex/continue-with-the-project-1rb603
+
+ main
+ main
 const STORAGE_KEY = "warmly_state_v3";
 
 export interface AppState {
@@ -137,8 +143,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     state.aiEnabled,
     state.mood,
     state.morning,
+codex/continue-the-discussion-4wozgx
     state.evening,
     state.recentAiPhrases,
+
+main
   ]);
 
   useEffect(() => {
@@ -146,10 +155,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ensureDailyPhrase();
   }, [isLoaded, state.aiEnabled, state.mood]);
 
+codex/continue-the-discussion-4wozgx
+
+codex/continue-with-the-project-1rb603
+main
   const updateField = <K extends keyof AppState>(
     key: K,
     value: AppState[K],
   ) => {
+codex/continue-the-discussion-4wozgx
+
+
+  const updateField = <K extends keyof AppState>(key: K, value: AppState[K]) => {
+ main
+ main
     setState((prev) => ({ ...prev, [key]: value }));
   };
 
