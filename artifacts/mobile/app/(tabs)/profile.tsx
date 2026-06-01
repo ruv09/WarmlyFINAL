@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
 import {
+  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -16,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/context/AppContext";
 import { type AppTheme, useTheme } from "@/context/ThemeContext";
 import { useColors } from "@/hooks/useColors";
+import { scheduleNotificationTestScenario } from "@/utils/notifications";
 
 const cardShadow = Platform.select({
   web: { boxShadow: "0px 4px 24px rgba(0,0,0,0.07)" } as object,
@@ -28,7 +30,13 @@ const cardShadow = Platform.select({
   },
 });
 
-function Avatar({ name, colors }: { name: string; colors: ReturnType<typeof useColors> }) {
+function Avatar({
+  name,
+  colors,
+}: {
+  name: string;
+  colors: ReturnType<typeof useColors>;
+}) {
   const initials = name
     .split(" ")
     .slice(0, 2)
@@ -39,20 +47,33 @@ function Avatar({ name, colors }: { name: string; colors: ReturnType<typeof useC
   return (
     <View
       style={{
-        width: 80, height: 80, borderRadius: 40,
+        width: 80,
+        height: 80,
+        borderRadius: 40,
         backgroundColor: colors.amber,
-        alignItems: "center", justifyContent: "center",
+        alignItems: "center",
+        justifyContent: "center",
         ...cardShadow,
       }}
     >
-      <Text style={{ fontSize: 28, fontFamily: "Inter_700Bold", color: colors.primary }}>
+      <Text
+        style={{
+          fontSize: 28,
+          fontFamily: "Inter_700Bold",
+          color: colors.primary,
+        }}
+      >
         {initials || "W"}
       </Text>
     </View>
   );
 }
 
-const THEME_OPTIONS: { value: AppTheme; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+const THEME_OPTIONS: {
+  value: AppTheme;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
   { value: "light", label: "Светлая", icon: "sunny-outline" },
   { value: "dark", label: "Тёмная", icon: "moon-outline" },
   { value: "system", label: "Системная", icon: "phone-portrait-outline" },
@@ -65,6 +86,7 @@ export default function ProfileScreen() {
   const { theme, setTheme } = useTheme();
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(state.name);
+  const [isSchedulingTest, setIsSchedulingTest] = useState(false);
 
   const topPad = Platform.OS === "web" ? 60 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 90;
@@ -75,6 +97,31 @@ export default function ProfileScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     setEditingName(false);
+  };
+
+  const runNotificationTest = async () => {
+    if (isSchedulingTest) return;
+
+    setIsSchedulingTest(true);
+    try {
+      const result = await scheduleNotificationTestScenario({
+        mood: state.mood,
+        recentPhrases: state.recentAiPhrases,
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        "Тест запущен",
+        `Запланировано уведомлений: ${result.count}. Первое придёт примерно через ${result.firstDelaySeconds} секунд. Для полной проверки сверни приложение или заблокируй экран.`,
+      );
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert(
+        "Не удалось запустить тест",
+        "Проверь, что уведомления разрешены для Expo Go / Warmly в настройках iOS.",
+      );
+    } finally {
+      setIsSchedulingTest(false);
+    }
   };
 
   const s = StyleSheet.create({
@@ -113,7 +160,11 @@ export default function ProfileScreen() {
       borderRadius: 100,
       backgroundColor: colors.muted,
     },
-    editBtnText: { fontSize: 13, fontFamily: "Inter_500Medium", color: colors.primary },
+    editBtnText: {
+      fontSize: 13,
+      fontFamily: "Inter_500Medium",
+      color: colors.primary,
+    },
     section: {
       backgroundColor: colors.card,
       borderRadius: 24,
@@ -140,7 +191,13 @@ export default function ProfileScreen() {
       borderTopColor: colors.border,
     },
     rowFirst: { borderTopWidth: 0 },
-    rowLeft: { flexDirection: "row", alignItems: "center", gap: 14, flex: 1, paddingRight: 12 },
+    rowLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      flex: 1,
+      paddingRight: 12,
+    },
     iconCircle: {
       width: 36,
       height: 36,
@@ -148,9 +205,23 @@ export default function ProfileScreen() {
       alignItems: "center",
       justifyContent: "center",
     },
-    rowLabel: { fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, flexShrink: 1 },
-    rowSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground, flexShrink: 1 },
-    rowValue: { fontSize: 14, fontFamily: "Inter_400Regular", color: colors.mutedForeground },
+    rowLabel: {
+      fontSize: 15,
+      fontFamily: "Inter_400Regular",
+      color: colors.foreground,
+      flexShrink: 1,
+    },
+    rowSub: {
+      fontSize: 12,
+      fontFamily: "Inter_400Regular",
+      color: colors.mutedForeground,
+      flexShrink: 1,
+    },
+    rowValue: {
+      fontSize: 14,
+      fontFamily: "Inter_400Regular",
+      color: colors.mutedForeground,
+    },
     nameEditPad: {
       paddingHorizontal: 22,
       paddingBottom: 18,
@@ -174,7 +245,11 @@ export default function ProfileScreen() {
       paddingVertical: 12,
       alignItems: "center",
     },
-    saveBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#FFFFFF" },
+    saveBtnText: {
+      fontSize: 15,
+      fontFamily: "Inter_600SemiBold",
+      color: "#FFFFFF",
+    },
     themeRow: {
       flexDirection: "row",
       gap: 10,
@@ -204,10 +279,37 @@ export default function ProfileScreen() {
       color: colors.primary,
       fontFamily: "Inter_600SemiBold",
     },
+    testBody: {
+      paddingHorizontal: 22,
+      paddingBottom: 18,
+      gap: 12,
+    },
+    testText: {
+      fontSize: 13,
+      fontFamily: "Inter_400Regular",
+      color: colors.mutedForeground,
+      lineHeight: 20,
+    },
+    testBtn: {
+      backgroundColor: colors.primary,
+      borderRadius: 100,
+      paddingVertical: 13,
+      alignItems: "center",
+      opacity: isSchedulingTest ? 0.7 : 1,
+    },
+    testBtnText: {
+      fontSize: 14,
+      fontFamily: "Inter_600SemiBold",
+      color: "#FFFFFF",
+    },
   });
 
   return (
-    <ScrollView style={s.container} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={s.container}
+      contentContainerStyle={s.content}
+      showsVerticalScrollIndicator={false}
+    >
       <Text style={s.title}>Профиль</Text>
 
       {/* Avatar + name */}
@@ -216,7 +318,10 @@ export default function ProfileScreen() {
         <Text style={s.userName}>{state.name}</Text>
         <Pressable
           style={({ pressed }) => [s.editBtn, pressed && { opacity: 0.75 }]}
-          onPress={() => { setEditingName(!editingName); setNameInput(state.name); }}
+          onPress={() => {
+            setEditingName(!editingName);
+            setNameInput(state.name);
+          }}
         >
           <Ionicons name="pencil-outline" size={14} color={colors.primary} />
           <Text style={s.editBtnText}>Изменить имя</Text>
@@ -237,7 +342,10 @@ export default function ProfileScreen() {
               returnKeyType="done"
               onSubmitEditing={saveName}
             />
-            <Pressable style={({ pressed }) => [s.saveBtn, pressed && { opacity: 0.85 }]} onPress={saveName}>
+            <Pressable
+              style={({ pressed }) => [s.saveBtn, pressed && { opacity: 0.85 }]}
+              onPress={saveName}
+            >
               <Text style={s.saveBtnText}>Сохранить</Text>
             </Pressable>
           </View>
@@ -253,11 +361,24 @@ export default function ProfileScreen() {
             return (
               <Pressable
                 key={opt.value}
-                style={({ pressed }) => [s.themeOption, isActive && s.themeOptionActive, pressed && { opacity: 0.8 }]}
-                onPress={() => { setTheme(opt.value); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                style={({ pressed }) => [
+                  s.themeOption,
+                  isActive && s.themeOptionActive,
+                  pressed && { opacity: 0.8 },
+                ]}
+                onPress={() => {
+                  setTheme(opt.value);
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
               >
-                <Ionicons name={opt.icon} size={22} color={isActive ? colors.primary : colors.mutedForeground} />
-                <Text style={[s.themeLabel, isActive && s.themeLabelActive]}>{opt.label}</Text>
+                <Ionicons
+                  name={opt.icon}
+                  size={22}
+                  color={isActive ? colors.primary : colors.mutedForeground}
+                />
+                <Text style={[s.themeLabel, isActive && s.themeLabelActive]}>
+                  {opt.label}
+                </Text>
               </Pressable>
             );
           })}
@@ -270,7 +391,11 @@ export default function ProfileScreen() {
         <View style={[s.row, s.rowFirst]}>
           <View style={s.rowLeft}>
             <View style={[s.iconCircle, { backgroundColor: colors.amber }]}>
-              <Ionicons name="sparkles-outline" size={17} color={colors.primary} />
+              <Ionicons
+                name="sparkles-outline"
+                size={17}
+                color={colors.primary}
+              />
             </View>
             <View>
               <Text style={s.rowLabel}>ИИ-фразы</Text>
@@ -279,9 +404,14 @@ export default function ProfileScreen() {
           </View>
           <Switch
             value={state.aiEnabled}
-            onValueChange={(v) => { updateField("aiEnabled", v); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+            onValueChange={(v) => {
+              updateField("aiEnabled", v);
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
             trackColor={{ false: colors.border, true: colors.peachSoft }}
-            thumbColor={state.aiEnabled ? colors.primary : colors.mutedForeground}
+            thumbColor={
+              state.aiEnabled ? colors.primary : colors.mutedForeground
+            }
           />
         </View>
       </View>
@@ -292,15 +422,24 @@ export default function ProfileScreen() {
         <View style={[s.row, s.rowFirst]}>
           <View style={s.rowLeft}>
             <View style={[s.iconCircle, { backgroundColor: colors.mint }]}>
-              <Ionicons name="notifications-outline" size={17} color="#5DAA7A" />
+              <Ionicons
+                name="notifications-outline"
+                size={17}
+                color="#5DAA7A"
+              />
             </View>
             <Text style={s.rowLabel}>Напоминания</Text>
           </View>
           <Switch
             value={state.notifications}
-            onValueChange={(v) => { updateField("notifications", v); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+            onValueChange={(v) => {
+              updateField("notifications", v);
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
             trackColor={{ false: colors.border, true: colors.peachSoft }}
-            thumbColor={state.notifications ? colors.primary : colors.mutedForeground}
+            thumbColor={
+              state.notifications ? colors.primary : colors.mutedForeground
+            }
           />
         </View>
         {state.notifications && (
@@ -308,7 +447,11 @@ export default function ProfileScreen() {
             <View style={s.row}>
               <View style={s.rowLeft}>
                 <View style={[s.iconCircle, { backgroundColor: colors.amber }]}>
-                  <Ionicons name="sunny-outline" size={17} color={colors.primary} />
+                  <Ionicons
+                    name="sunny-outline"
+                    size={17}
+                    color={colors.primary}
+                  />
                 </View>
                 <Text style={s.rowLabel}>Утреннее</Text>
               </View>
@@ -316,7 +459,9 @@ export default function ProfileScreen() {
             </View>
             <View style={s.row}>
               <View style={s.rowLeft}>
-                <View style={[s.iconCircle, { backgroundColor: colors.lavender }]}>
+                <View
+                  style={[s.iconCircle, { backgroundColor: colors.lavender }]}
+                >
                   <Ionicons name="moon-outline" size={17} color="#8B7BD4" />
                 </View>
                 <Text style={s.rowLabel}>Вечернее</Text>
@@ -325,6 +470,29 @@ export default function ProfileScreen() {
             </View>
           </>
         )}
+      </View>
+
+      {/* Notification test */}
+      <View style={s.section}>
+        <Text style={s.sectionLabel}>Тест уведомлений</Text>
+        <View style={s.testBody}>
+          <Text style={s.testText}>
+            Запускает короткий сценарий из AI-фраз и вечерних чек-инов, чтобы не
+            ждать 08:00 и проверить разные тексты прямо в Expo на iPhone.
+          </Text>
+          <Pressable
+            disabled={isSchedulingTest}
+            style={({ pressed }) => [
+              s.testBtn,
+              pressed && !isSchedulingTest && { opacity: 0.85 },
+            ]}
+            onPress={runNotificationTest}
+          >
+            <Text style={s.testBtnText}>
+              {isSchedulingTest ? "Планируем…" : "Запустить тестовый сценарий"}
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* About */}

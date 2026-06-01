@@ -1,9 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { ensureDailyAiNotification } from "@/utils/notifications";
 import { buildUniqueAiPhrase, type MoodKey } from "@/utils/phrases";
-
 
 const STORAGE_KEY = "warmly_state_v3";
 
@@ -22,7 +27,12 @@ export interface AppState {
   dailyAiPhrase: string;
   dailyAiPhraseDate: string;
   recentAiPhrases: string[];
-  moodHistory: Array<{ id: string; mood: MoodKey; note: string; createdAt: string }>;
+  moodHistory: Array<{
+    id: string;
+    mood: MoodKey;
+    note: string;
+    createdAt: string;
+  }>;
 }
 
 const DEFAULT_STATE: AppState = {
@@ -95,9 +105,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
   }, [state, isLoaded]);
 
-  // Keep a single daily local notification in sync with user settings.
+  // Keep the rolling local notification plan in sync with user settings.
   // We intentionally run this only after state is hydrated from storage so
-  // Android keeps a stable schedule across restarts without duplicates.
+  // native schedules are replaced without duplicates.
   useEffect(() => {
     if (!isLoaded) return;
 
@@ -105,7 +115,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       notifications: state.notifications,
       aiEnabled: state.aiEnabled,
       mood: state.mood,
-      hour: state.morning,
+      morning: state.morning,
+      evening: state.evening,
+      date: new Date().toISOString().slice(0, 10),
     });
 
     if (signature === lastNotificationSignature.current) return;
@@ -116,22 +128,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       aiEnabled: state.aiEnabled,
       mood: state.mood,
       preferredHour: state.morning,
+      preferredEvening: state.evening,
+      recentPhrases: state.recentAiPhrases,
     }).catch(() => {});
-  }, [isLoaded, state.notifications, state.aiEnabled, state.mood, state.morning]);
+  }, [
+    isLoaded,
+    state.notifications,
+    state.aiEnabled,
+    state.mood,
+    state.morning,
+    state.evening,
+    state.recentAiPhrases,
+  ]);
 
   useEffect(() => {
     if (!isLoaded) return;
     ensureDailyPhrase();
   }, [isLoaded, state.aiEnabled, state.mood]);
 
-  const updateField = <K extends keyof AppState>(key: K, value: AppState[K]) => {
+  const updateField = <K extends keyof AppState>(
+    key: K,
+    value: AppState[K],
+  ) => {
     setState((prev) => ({ ...prev, [key]: value }));
   };
 
   const addFavorite = (quote: string) => {
     setState((prev) => ({
       ...prev,
-      favorites: prev.favorites.includes(quote) ? prev.favorites : [...prev.favorites, quote],
+      favorites: prev.favorites.includes(quote)
+        ? prev.favorites
+        : [...prev.favorites, quote],
     }));
   };
 
@@ -158,7 +185,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AppContext.Provider value={{ state, setState, updateField, addMoodHistory, addFavorite, removeFavorite, isLoaded }}>
+    <AppContext.Provider
+      value={{
+        state,
+        setState,
+        updateField,
+        addMoodHistory,
+        addFavorite,
+        removeFavorite,
+        isLoaded,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );
