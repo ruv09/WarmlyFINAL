@@ -126,6 +126,7 @@ function Calendar({
       }}
       components={{
         Root: ({ className, rootRef, ...props }) => {
+codex/continue-with-the-project-1rb603
           // DayPicker resolves rootRef through its own React type instance in this workspace.
           // Keep the runtime ref intact while normalizing the type for this DOM node.
           const divRef = rootRef as React.Ref<HTMLDivElement> | undefined;
@@ -134,6 +135,16 @@ function Calendar({
             <div
               data-slot="calendar"
               ref={divRef}
+
+          const divRef = rootRef as React.Ref<HTMLDivElement> | undefined
+          return (
+            <div
+              data-slot="calendar"
+codex/continue-the-discussion
+              ref={rootRef as React.Ref<HTMLDivElement>}
+              ref={divRef}
+main
+main
               className={cn(className)}
               {...props}
             />
