@@ -1,10 +1,18 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { ensureDailyAiNotification } from "@/utils/notifications";
 import { buildUniqueAiPhrase, type MoodKey } from "@/utils/phrases";
 
+codex/continue-with-the-project-1rb603
 
+ main
 const STORAGE_KEY = "warmly_state_v3";
 
 export interface AppState {
@@ -22,7 +30,12 @@ export interface AppState {
   dailyAiPhrase: string;
   dailyAiPhraseDate: string;
   recentAiPhrases: string[];
-  moodHistory: Array<{ id: string; mood: MoodKey; note: string; createdAt: string }>;
+  moodHistory: Array<{
+    id: string;
+    mood: MoodKey;
+    note: string;
+    createdAt: string;
+  }>;
 }
 
 const DEFAULT_STATE: AppState = {
@@ -117,21 +130,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       mood: state.mood,
       preferredHour: state.morning,
     }).catch(() => {});
-  }, [isLoaded, state.notifications, state.aiEnabled, state.mood, state.morning]);
+  }, [
+    isLoaded,
+    state.notifications,
+    state.aiEnabled,
+    state.mood,
+    state.morning,
+  ]);
 
   useEffect(() => {
     if (!isLoaded) return;
     ensureDailyPhrase();
   }, [isLoaded, state.aiEnabled, state.mood]);
 
+codex/continue-with-the-project-1rb603
+  const updateField = <K extends keyof AppState>(
+    key: K,
+    value: AppState[K],
+  ) => {
+
   const updateField = <K extends keyof AppState>(key: K, value: AppState[K]) => {
+ main
     setState((prev) => ({ ...prev, [key]: value }));
   };
 
   const addFavorite = (quote: string) => {
     setState((prev) => ({
       ...prev,
-      favorites: prev.favorites.includes(quote) ? prev.favorites : [...prev.favorites, quote],
+      favorites: prev.favorites.includes(quote)
+        ? prev.favorites
+        : [...prev.favorites, quote],
     }));
   };
 
@@ -158,7 +186,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AppContext.Provider value={{ state, setState, updateField, addMoodHistory, addFavorite, removeFavorite, isLoaded }}>
+    <AppContext.Provider
+      value={{
+        state,
+        setState,
+        updateField,
+        addMoodHistory,
+        addFavorite,
+        removeFavorite,
+        isLoaded,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );
