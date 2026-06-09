@@ -147,6 +147,7 @@ export default function MoodScreen() {
   const s = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     content: {
+      flexGrow: 1,
       paddingTop: topPad + 20,
       paddingBottom: bottomPad,
       paddingHorizontal: 22,
@@ -437,8 +438,8 @@ export default function MoodScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
         style={s.container}
