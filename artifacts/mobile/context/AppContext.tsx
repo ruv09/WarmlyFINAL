@@ -8,6 +8,7 @@ import React, {
 } from "react";
 
 import { ensureDailyAiNotification } from "@/utils/notifications";
+import { type MoodHistoryEntry } from "@/utils/journey";
 import { buildUniqueAiPhrase, type MoodKey } from "@/utils/phrases";
 
 const STORAGE_KEY = "warmly_state_v3";
@@ -35,7 +36,11 @@ export interface AppState {
   dailyAiPhrase: string;
   dailyAiPhraseDate: string;
   recentAiPhrases: string[];
+codex/continue-the-discussion-dymt18
+  moodHistory: MoodHistoryEntry[];
+
   moodHistory: MoodEntry[];
+ main
 }
 
 const DEFAULT_STATE: AppState = {
@@ -60,9 +65,17 @@ interface AppContextType {
   state: AppState;
   setState: React.Dispatch<React.SetStateAction<AppState>>;
   updateField: <K extends keyof AppState>(key: K, value: AppState[K]) => void;
+ codex/continue-the-discussion-dymt18
+  addMoodHistory: (entry: {
+    mood: MoodKey;
+    note: string;
+    victory?: string;
+  }) => void;
+
   addMoodHistory: (entry: { mood: MoodKey; note: string }) => boolean;
   editMoodEntry: (id: string, mood: MoodKey, note: string) => void;
   deleteMoodEntry: (id: string) => void;
+ main
   addFavorite: (quote: string) => void;
   removeFavorite: (quote: string) => void;
   getTodayEntries: () => MoodEntry[];
@@ -115,6 +128,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
   }, [state, isLoaded]);
 
+ codex/continue-the-discussion-dymt18
+  // Keep the rolling local notification plan in sync with user settings.
+  // We intentionally run this only after state is hydrated from storage so
+  // native schedules are replaced without duplicates.
+ main
   useEffect(() => {
     if (!isLoaded) return;
 
@@ -126,10 +144,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const signature = JSON.stringify({
       notifications: state.notifications,
       aiEnabled: state.aiEnabled,
+ codex/continue-the-discussion-dymt18
+      mood: state.mood,
+      morning: state.morning,
+      evening: state.evening,
+      date: new Date().toISOString().slice(0, 10),
+      entries: state.moodHistory.length,
+      victories: state.moodHistory.filter((entry) => entry.victory?.trim())
+        .length,
+
       morning: state.morning,
       evening: state.evening,
       hasTodayEntry,
       date: today,
+ main
     });
 
     if (signature === lastNotificationSignature.current) return;
@@ -141,12 +169,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       preferredHour: state.morning,
       preferredEvening: state.evening,
       recentPhrases: state.recentAiPhrases,
+ codex/continue-the-discussion-dymt18
+      totalEntries: state.moodHistory.length,
+      totalVictories: state.moodHistory.filter((entry) => entry.victory?.trim())
+        .length,
+
       hasTodayMoodEntry: hasTodayEntry,
+main
     }).catch(() => {});
   }, [
     isLoaded,
     state.notifications,
     state.aiEnabled,
+ codex/continue-the-discussion-dymt18
+    state.mood,
+ main
     state.morning,
     state.evening,
     state.recentAiPhrases,
@@ -158,7 +195,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ensureDailyPhrase();
   }, [isLoaded, state.aiEnabled]);
 
-  const updateField = <K extends keyof AppState>(key: K, value: AppState[K]) => {
+  const updateField = <K extends keyof AppState>(
+    key: K,
+    value: AppState[K],
+  ) => {
     setState((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -170,6 +210,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         : [...prev.favorites, quote],
     }));
   };
+
+ codex/continue-the-discussion-dymt18
+  const addMoodHistory = (entry: {
+    mood: MoodKey;
+    note: string;
+    victory?: string;
+  }) => {
+    setState((prev) => ({
+      ...prev,
+      moodHistory: [
+        {
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          mood: entry.mood,
+          note: entry.note,
+          victory: entry.victory,
+          createdAt: new Date().toISOString(),
+        },
+        ...prev.moodHistory,
+      ],
 
   const addMoodHistory = (entry: { mood: MoodKey; note: string }): boolean => {
     const today = getTodayStr();
@@ -204,6 +263,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       moodHistory: prev.moodHistory.map((e) =>
         e.id === id ? { ...e, mood, note } : e,
       ),
+ main
     }));
   };
 
@@ -243,11 +303,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setState,
         updateField,
         addMoodHistory,
+ codex/continue-the-discussion-dymt18
+        addFavorite,
+        removeFavorite,
+
         editMoodEntry,
         deleteMoodEntry,
         addFavorite,
         removeFavorite,
         getTodayEntries,
+main
         isLoaded,
       }}
     >

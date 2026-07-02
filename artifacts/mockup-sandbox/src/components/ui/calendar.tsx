@@ -134,6 +134,9 @@ codex/continue-with-the-project-1rb603
           return (
             <div
               data-slot="calendar"
+codex/continue-the-discussion-dymt18
+              ref={rootRef as React.Ref<HTMLDivElement>}
+
               ref={divRef}
 
           const divRef = rootRef as React.Ref<HTMLDivElement> | undefined
@@ -149,6 +152,7 @@ codex/continue-the-discussion-4wozgx
 codex/continue-the-discussion
               ref={rootRef as React.Ref<HTMLDivElement>}
               ref={divRef}
+main
 main
 main
 main

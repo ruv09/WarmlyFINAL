@@ -19,6 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { useApp, type MoodEntry } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { getTreeForMood, VICTORY_MAX_LENGTH } from "@/utils/journey";
 import { MOOD_ITEMS, type MoodKey } from "@/utils/phrases";
 
 const MAX_ENTRIES_PER_DAY = 20;
@@ -80,8 +81,14 @@ export default function MoodScreen() {
   const rawCircleSize = (width - gridHorizontalPadding - gridGap) / 3;
   const circleSize = Math.max(80, Math.min(rawCircleSize, 120));
 
+ codex/continue-the-discussion-dymt18
+  const [noteText, setNoteText] = useState(state.moodNote ?? "");
+  const [victoryText, setVictoryText] = useState("");
+  const [submitted, setSubmitted] = useState(state.moodNoteSubmitted ?? false);
+
   const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
   const [noteText, setNoteText] = useState("");
+ main
   const [supportPhrase, setSupportPhrase] = useState<string | null>(null);
   const [editState, setEditState] = useState<EditState | null>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -89,29 +96,56 @@ export default function MoodScreen() {
   const topPad = Platform.OS === "web" ? 60 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 90;
 
+ codex/continue-the-discussion-dymt18
+  const handleMood = (key: MoodKey) => {
+    if (state.mood === key) return;
+    updateField("mood", key);
+    updateField("moodNote", "");
+    updateField("moodNoteSubmitted", false);
+    setNoteText("");
+    setSubmitted(false);
+    setVictoryText("");
+    setSupportPhrase(null);
+    fadeAnim.setValue(0);
+
   const todayEntries = getTodayEntries();
   const canAddMore = todayEntries.length < MAX_ENTRIES_PER_DAY;
 
   const handleMoodSelect = (key: MoodKey) => {
     setSelectedMood(key);
+ main
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handleSubmit = () => {
     if (!selectedMood) return;
     Keyboard.dismiss();
+codex/continue-the-discussion-dymt18
+    const note = noteText.trim();
+    updateField("moodNote", note);
+    updateField("moodNoteSubmitted", true);
+    const victory = victoryText.trim();
+    addMoodHistory({ mood: state.mood, note, victory: victory || undefined });
+    setSubmitted(true);
+    const phrase = pick(supportPhrases[state.mood]);
+
     const added = addMoodHistory({ mood: selectedMood, note: noteText.trim() });
     if (!added) {
       Alert.alert("Лимит достигнут", `Максимум ${MAX_ENTRIES_PER_DAY} записей в день.`);
       return;
     }
     const phrase = pick(supportPhrases);
+ main
     setSupportPhrase(phrase);
     setSelectedMood(null);
     setNoteText("");
     fadeAnim.setValue(0);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
   };
 
   const handleEditOpen = (entry: MoodEntry) => {
@@ -232,6 +266,39 @@ export default function MoodScreen() {
       padding: 14,
       minHeight: 90,
       textAlignVertical: "top",
+    },
+    victoryInput: {
+      fontSize: 15,
+      fontFamily: "Inter_400Regular",
+      color: colors.foreground,
+      backgroundColor: colors.muted,
+      borderRadius: 16,
+      padding: 16,
+      minHeight: 72,
+      textAlignVertical: "top",
+    },
+    counterText: {
+      alignSelf: "flex-end",
+      fontSize: 12,
+      fontFamily: "Inter_400Regular",
+      color: colors.mutedForeground,
+      marginTop: -10,
+    },
+    treePreview: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      backgroundColor: colors.muted,
+      borderRadius: 18,
+      padding: 14,
+    },
+    treeEmoji: { fontSize: 28 },
+    treeText: {
+      flex: 1,
+      fontSize: 13,
+      fontFamily: "Inter_400Regular",
+      color: colors.mutedForeground,
+      lineHeight: 19,
     },
     submitBtn: {
       backgroundColor: colors.primary,
@@ -438,8 +505,13 @@ export default function MoodScreen() {
 
   return (
     <KeyboardAvoidingView
+codex/continue-the-discussion-dymt18
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+
       style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
+ main
     >
       <ScrollView
         style={s.container}
@@ -539,6 +611,65 @@ export default function MoodScreen() {
               placeholderTextColor={colors.mutedForeground}
               multiline
             />
+codex/continue-the-discussion-dymt18
+            <Text style={s.noteTitle}>Маленькая победа</Text>
+            <Text style={s.noteSubtitle}>
+              Что сегодня получилось? Можно пропустить
+            </Text>
+            <TextInput
+              style={s.victoryInput}
+              placeholder="Например: вышло отдохнуть без чувства вины"
+              placeholderTextColor={colors.mutedForeground}
+              value={victoryText}
+              onChangeText={(value) =>
+                setVictoryText(value.slice(0, VICTORY_MAX_LENGTH))
+              }
+              multiline
+              maxLength={VICTORY_MAX_LENGTH}
+              returnKeyType="default"
+            />
+            <Text style={s.counterText}>
+              {victoryText.length}/{VICTORY_MAX_LENGTH}
+            </Text>
+            <View style={s.treePreview}>
+              <Text style={s.treeEmoji}>
+                {getTreeForMood(state.mood).emoji}
+              </Text>
+              <Text style={s.treeText}>
+                После сохранения в твоём лесу появится{" "}
+                {getTreeForMood(state.mood).title.toLowerCase()}.
+              </Text>
+            </View>
+            <Pressable
+              style={({ pressed }) => [
+                s.submitBtn,
+                pressed && { opacity: 0.85 },
+              ]}
+              onPress={handleSubmit}
+            >
+              <Text style={s.submitBtnText}>Отправить</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* Submitted note */}
+        {submitted && state.moodNote && (
+          <View style={s.noteCard}>
+            <Text style={s.noteTitle}>Твоя запись</Text>
+            <Text style={s.submittedNote}>«{state.moodNote}»</Text>
+            <Pressable
+              onPress={() => {
+                setSubmitted(false);
+                setVictoryText("");
+                setSupportPhrase(null);
+                updateField("moodNoteSubmitted", false);
+              }}
+            >
+              <Text style={s.editLink}>Изменить запись</Text>
+            </Pressable>
+          </View>
+        )}
+
             <View style={s.editActions}>
               <Pressable
                 style={({ pressed }) => [s.cancelBtn, pressed && { opacity: 0.8 }]}
@@ -562,6 +693,7 @@ export default function MoodScreen() {
             <Text style={s.sectionLabel}>
               {todayEntries.length === 0 ? "Выбери настроение" : "Добавить ещё запись"}
             </Text>
+ main
 
             {/* Mood grid */}
             <View style={s.grid}>

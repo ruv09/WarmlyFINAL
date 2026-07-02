@@ -19,8 +19,12 @@
     "android": {
       "package": "com.ruv09.warmly",
       "versionCode": 1,
+codex/continue-the-discussion-dymt18
+      "permissions": ["POST_NOTIFICATIONS"]
+
       "permissions": ["POST_NOTIFICATIONS"],
       "softwareKeyboardLayoutMode": "adjustResize"
+main
     },
     "web": {
       "favicon": "./assets/images/icon.png"
