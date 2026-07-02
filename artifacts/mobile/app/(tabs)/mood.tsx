@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { getTreeForMood, VICTORY_MAX_LENGTH } from "@/utils/journey";
 import { MOOD_ITEMS, type MoodKey } from "@/utils/phrases";
 
 const cardShadow = Platform.select({
@@ -80,6 +81,7 @@ export default function MoodScreen() {
   const circleSize = Math.max(84, Math.min(rawCircleSize, 132));
 
   const [noteText, setNoteText] = useState(state.moodNote ?? "");
+  const [victoryText, setVictoryText] = useState("");
   const [submitted, setSubmitted] = useState(state.moodNoteSubmitted ?? false);
   const [supportPhrase, setSupportPhrase] = useState<string | null>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -94,6 +96,7 @@ export default function MoodScreen() {
     updateField("moodNoteSubmitted", false);
     setNoteText("");
     setSubmitted(false);
+    setVictoryText("");
     setSupportPhrase(null);
     fadeAnim.setValue(0);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -105,12 +108,17 @@ export default function MoodScreen() {
     const note = noteText.trim();
     updateField("moodNote", note);
     updateField("moodNoteSubmitted", true);
-    addMoodHistory({ mood: state.mood, note });
+    const victory = victoryText.trim();
+    addMoodHistory({ mood: state.mood, note, victory: victory || undefined });
     setSubmitted(true);
     const phrase = pick(supportPhrases[state.mood]);
     setSupportPhrase(phrase);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
   };
 
   const s = StyleSheet.create({
@@ -195,6 +203,39 @@ export default function MoodScreen() {
       minHeight: 110,
       textAlignVertical: "top",
     },
+    victoryInput: {
+      fontSize: 15,
+      fontFamily: "Inter_400Regular",
+      color: colors.foreground,
+      backgroundColor: colors.muted,
+      borderRadius: 16,
+      padding: 16,
+      minHeight: 72,
+      textAlignVertical: "top",
+    },
+    counterText: {
+      alignSelf: "flex-end",
+      fontSize: 12,
+      fontFamily: "Inter_400Regular",
+      color: colors.mutedForeground,
+      marginTop: -10,
+    },
+    treePreview: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      backgroundColor: colors.muted,
+      borderRadius: 18,
+      padding: 14,
+    },
+    treeEmoji: { fontSize: 28 },
+    treeText: {
+      flex: 1,
+      fontSize: 13,
+      fontFamily: "Inter_400Regular",
+      color: colors.mutedForeground,
+      lineHeight: 19,
+    },
     submitBtn: {
       backgroundColor: colors.primary,
       borderRadius: 100,
@@ -253,7 +294,10 @@ export default function MoodScreen() {
   });
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <ScrollView
         style={s.container}
         contentContainerStyle={s.content}
@@ -305,8 +349,39 @@ export default function MoodScreen() {
               multiline
               returnKeyType="default"
             />
+            <Text style={s.noteTitle}>Маленькая победа</Text>
+            <Text style={s.noteSubtitle}>
+              Что сегодня получилось? Можно пропустить
+            </Text>
+            <TextInput
+              style={s.victoryInput}
+              placeholder="Например: вышло отдохнуть без чувства вины"
+              placeholderTextColor={colors.mutedForeground}
+              value={victoryText}
+              onChangeText={(value) =>
+                setVictoryText(value.slice(0, VICTORY_MAX_LENGTH))
+              }
+              multiline
+              maxLength={VICTORY_MAX_LENGTH}
+              returnKeyType="default"
+            />
+            <Text style={s.counterText}>
+              {victoryText.length}/{VICTORY_MAX_LENGTH}
+            </Text>
+            <View style={s.treePreview}>
+              <Text style={s.treeEmoji}>
+                {getTreeForMood(state.mood).emoji}
+              </Text>
+              <Text style={s.treeText}>
+                После сохранения в твоём лесу появится{" "}
+                {getTreeForMood(state.mood).title.toLowerCase()}.
+              </Text>
+            </View>
             <Pressable
-              style={({ pressed }) => [s.submitBtn, pressed && { opacity: 0.85 }]}
+              style={({ pressed }) => [
+                s.submitBtn,
+                pressed && { opacity: 0.85 },
+              ]}
               onPress={handleSubmit}
             >
               <Text style={s.submitBtnText}>Отправить</Text>
@@ -319,7 +394,14 @@ export default function MoodScreen() {
           <View style={s.noteCard}>
             <Text style={s.noteTitle}>Твоя запись</Text>
             <Text style={s.submittedNote}>«{state.moodNote}»</Text>
-            <Pressable onPress={() => { setSubmitted(false); setSupportPhrase(null); updateField("moodNoteSubmitted", false); }}>
+            <Pressable
+              onPress={() => {
+                setSubmitted(false);
+                setVictoryText("");
+                setSupportPhrase(null);
+                updateField("moodNoteSubmitted", false);
+              }}
+            >
               <Text style={s.editLink}>Изменить запись</Text>
             </Pressable>
           </View>
