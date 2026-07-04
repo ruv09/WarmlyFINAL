@@ -19,7 +19,11 @@ import {
   getJourneyInsights,
   getTreeForMood,
   isBestDay,
+ codex/continue-the-discussion-k4xcgp
   type MoodEntry,
+
+  type MoodHistoryEntry,
+ main
 } from "@/utils/journey";
 import { MOOD_ITEMS } from "@/utils/phrases";
 
@@ -42,7 +46,11 @@ function pluralTrees(n: number): string {
   return "деревьев";
 }
 
+codex/continue-the-discussion-k4xcgp
 function TreeCard({ entry }: { entry: MoodEntry }) {
+
+function TreeCard({ entry }: { entry: MoodHistoryEntry }) {
+main
   const colors = useColors();
   const tree = getTreeForMood(entry.mood);
   const mood = moodMap[entry.mood];

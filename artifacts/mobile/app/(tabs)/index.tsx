@@ -3,12 +3,12 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
-  Dimensions,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -16,8 +16,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { buildAiPhrase, getFallbackQuote, getGreeting, MOOD_ITEMS } from "@/utils/phrases";
-
-const { width } = Dimensions.get("window");
 
 function formatDate(): string {
   const now = new Date();
@@ -54,12 +52,17 @@ const softShadow = Platform.select({
 export default function HomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { state, addFavorite } = useApp();
+  const { width } = useWindowDimensions();
+  const { state, addFavorite, getTodayEntries } = useApp();
   const [saved, setSaved] = useState(false);
 
+  const todayEntries = getTodayEntries();
+  const hasTodayMood = todayEntries.length > 0;
+  const todayCount = todayEntries.length;
+
   const quote = useMemo(
-    () => (state.aiEnabled ? state.dailyAiPhrase || buildAiPhrase(state.mood) : getFallbackQuote()),
-    [state.aiEnabled, state.dailyAiPhrase, state.mood],
+    () => (state.aiEnabled ? state.dailyAiPhrase || buildAiPhrase() : getFallbackQuote()),
+    [state.aiEnabled, state.dailyAiPhrase],
   );
 
   const isFav = state.favorites.includes(quote);
@@ -74,6 +77,7 @@ export default function HomeScreen() {
 
   const topPad = Platform.OS === "web" ? 60 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 90;
+  const isSmall = width < 360;
 
   const activeMoodItem = MOOD_ITEMS.find((m) => m.key === state.mood);
 
@@ -82,8 +86,8 @@ export default function HomeScreen() {
     content: {
       paddingTop: topPad + 20,
       paddingBottom: bottomPad,
-      paddingHorizontal: 22,
-      gap: 20,
+      paddingHorizontal: isSmall ? 16 : 22,
+      gap: 18,
     },
     header: { gap: 4 },
     date: {
@@ -93,14 +97,14 @@ export default function HomeScreen() {
       letterSpacing: 0.2,
     },
     greeting: {
-      fontSize: 32,
+      fontSize: isSmall ? 26 : 30,
       fontFamily: "Inter_700Bold",
       color: colors.foreground,
       letterSpacing: -0.5,
-      lineHeight: 40,
+      lineHeight: isSmall ? 34 : 38,
     },
     subtitle: {
-      fontSize: 15,
+      fontSize: 14,
       color: colors.mutedForeground,
       fontFamily: "Inter_400Regular",
       marginTop: 4,
@@ -108,8 +112,8 @@ export default function HomeScreen() {
     quoteCard: {
       backgroundColor: colors.card,
       borderRadius: 24,
-      padding: 28,
-      gap: 16,
+      padding: isSmall ? 20 : 26,
+      gap: 14,
       ...cardShadow,
     },
     quoteTopRow: {
@@ -134,39 +138,41 @@ export default function HomeScreen() {
       letterSpacing: 0.8,
     },
     quoteText: {
-      fontSize: 20,
+      fontSize: isSmall ? 17 : 19,
       color: colors.foreground,
       fontFamily: "Inter_500Medium",
-      lineHeight: 32,
+      lineHeight: isSmall ? 28 : 30,
       fontStyle: "italic",
     },
     quoteMark: {
-      fontSize: 52,
+      fontSize: 48,
       color: colors.primary,
       fontFamily: "Inter_700Bold",
-      lineHeight: 44,
-      opacity: 0.25,
+      lineHeight: 40,
+      opacity: 0.2,
     },
     quoteFooter: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      marginTop: 4,
+      marginTop: 2,
     },
     favBtn: {
       flexDirection: "row",
       alignItems: "center",
       gap: 7,
-      paddingHorizontal: 16,
-      paddingVertical: 9,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
       borderRadius: 100,
       backgroundColor: colors.muted,
+      flexShrink: 1,
     },
     favBtnActive: { backgroundColor: "#FCEEED" },
     favBtnText: {
       fontSize: 13,
       color: colors.mutedForeground,
       fontFamily: "Inter_500Medium",
+      flexShrink: 1,
     },
     favBtnTextActive: { color: "#D94F3D" },
     sectionHeader: {
@@ -175,7 +181,7 @@ export default function HomeScreen() {
       alignItems: "center",
     },
     sectionTitle: {
-      fontSize: 18,
+      fontSize: 17,
       fontFamily: "Inter_700Bold",
       color: colors.foreground,
     },
@@ -193,24 +199,25 @@ export default function HomeScreen() {
     todayItem: {
       flexDirection: "row",
       alignItems: "center",
-      paddingHorizontal: 20,
-      paddingVertical: 16,
+      paddingHorizontal: 18,
+      paddingVertical: 15,
     },
     todayItemDivider: {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
     },
     todayItemIcon: {
-      width: 44,
-      height: 44,
-      borderRadius: 14,
+      width: 42,
+      height: 42,
+      borderRadius: 13,
       alignItems: "center",
       justifyContent: "center",
       marginRight: 14,
+      flexShrink: 0,
     },
     todayItemBody: { flex: 1, gap: 2 },
     todayItemTitle: {
-      fontSize: 15,
+      fontSize: 14,
       fontFamily: "Inter_600SemiBold",
       color: colors.foreground,
     },
@@ -238,7 +245,7 @@ export default function HomeScreen() {
     favPreviewCard: {
       backgroundColor: colors.card,
       borderRadius: 20,
-      padding: 20,
+      padding: 18,
       ...softShadow,
     },
     favPreviewText: {
@@ -297,7 +304,7 @@ export default function HomeScreen() {
               size={16}
               color={isFav || saved ? "#D94F3D" : colors.mutedForeground}
             />
-            <Text style={[s.favBtnText, (isFav || saved) && s.favBtnTextActive]}>
+            <Text style={[s.favBtnText, (isFav || saved) && s.favBtnTextActive]} numberOfLines={1}>
               {saved ? "Сохранено!" : isFav ? "В избранном" : "В избранное"}
             </Text>
           </Pressable>
@@ -322,13 +329,15 @@ export default function HomeScreen() {
             <View style={s.todayItemBody}>
               <Text style={s.todayItemTitle}>Оценка настроения</Text>
               <Text style={s.todayItemSub}>
-                {state.mood ? "Выполнено ✓" : "Как ты себя чувствуешь?"}
+                {hasTodayMood
+                  ? `${todayCount} ${todayCount === 1 ? "запись" : todayCount < 5 ? "записи" : "записей"} сегодня`
+                  : "Как ты себя чувствуешь?"}
               </Text>
             </View>
             <Ionicons
-              name={state.mood ? "checkmark-circle" : "chevron-forward"}
+              name={hasTodayMood ? "checkmark-circle" : "chevron-forward"}
               size={20}
-              color={state.mood ? "#5DAA7A" : colors.mutedForeground}
+              color={hasTodayMood ? "#5DAA7A" : colors.mutedForeground}
             />
           </Pressable>
 
@@ -351,24 +360,24 @@ export default function HomeScreen() {
             <Ionicons name="chevron-forward" size={20} color={colors.mutedForeground} />
           </Pressable>
 
-          {/* Daily note reminder */}
+          {/* Diary */}
           <Pressable
             style={({ pressed }) => [s.todayItem, s.todayItemDivider, pressed && { opacity: 0.75 }]}
-            onPress={() => router.push("/(tabs)/mood")}
+            onPress={() => router.push("/(tabs)/calendar")}
           >
             <View style={[s.todayItemIcon, { backgroundColor: colors.mint }]}>
-              <Ionicons name="journal-outline" size={20} color="#5DAA7A" />
+              <Ionicons name="calendar-outline" size={20} color="#5DAA7A" />
             </View>
             <View style={s.todayItemBody}>
-              <Text style={s.todayItemTitle}>Дневник настроения</Text>
+              <Text style={s.todayItemTitle}>Календарь настроения</Text>
               <Text style={s.todayItemSub}>
-                {state.moodNoteSubmitted ? "Запись добавлена ✓" : "Запиши, как прошёл день"}
+                {hasTodayMood ? "Записи за сегодня есть ✓" : "Посмотреть историю"}
               </Text>
             </View>
             <Ionicons
-              name={state.moodNoteSubmitted ? "checkmark-circle" : "chevron-forward"}
+              name={hasTodayMood ? "checkmark-circle" : "chevron-forward"}
               size={20}
-              color={state.moodNoteSubmitted ? "#5DAA7A" : colors.mutedForeground}
+              color={hasTodayMood ? "#5DAA7A" : colors.mutedForeground}
             />
           </Pressable>
         </View>

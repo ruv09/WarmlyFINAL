@@ -26,73 +26,58 @@ export type MoodKey = (typeof MOOD_ITEMS)[number]["key"];
 
 const RECENT_PHRASE_WINDOW = 7;
 
-const openings: Record<string, string[]> = {
-  good: [
-    "Сохрани это тепло — и поделись им.",
-    "Твоя радость заразительна.",
-    "Хороший день заслуживает хорошего вечера.",
-  ],
-  calm: [
-    "Спокойствие — это тоже сила.",
-    "Тишина внутри — редкий дар.",
-    "Ты в балансе, и это ценно.",
-  ],
-  neutral: [
-    "Нейтральный день — это тоже день.",
-    "Спокойный день — тоже хороший день.",
-    "Не каждый день должен быть особенным.",
-  ],
-  tired: [
-    "Ты много сделал(а). Теперь можно отдохнуть.",
-    "Усталость — знак того, что ты старался(ась).",
-    "Позволь себе замедлиться сегодня.",
-  ],
-  anxious: [
-    "Сегодня можно быть мягче к себе.",
-    "Тревога пройдёт — ты справишься.",
-    "Ты не обязан быть сильным каждую минуту.",
-  ],
-  sad: [
-    "Грусть — это тоже часть тебя. Это нормально.",
-    "Ты не один в своей грусти.",
-    "Даже в тёмный день есть маленький свет.",
-  ],
-  default: [
-    "Ты важен. Твои чувства имеют значение.",
-    "Ты не один, и с тобой всё в порядке.",
-    "Сегодня достаточно просто быть собой.",
-  ],
-};
+const openings = [
+  "Ты важен. Твои чувства имеют значение.",
+  "Ты не один, и с тобой всё в порядке.",
+  "Сегодня достаточно просто быть собой.",
+  "Ты справляешься лучше, чем тебе кажется.",
+  "Каждый шаг вперёд — это победа.",
+  "Береги себя — это тоже сила.",
+  "Позволь себе просто быть сегодня.",
+  "Маленькие победы тоже считаются.",
+  "Твоё присутствие уже имеет ценность.",
+  "Ты заслуживаешь доброты — особенно от себя.",
+  "Иногда отдых — это тоже прогресс.",
+  "Каждый новый день — это новая страница.",
+];
 
 const middles = [
   "Сделай глубокий вдох и один маленький шаг вперёд.",
   "Поблагодари себя за то, что продолжаешь идти.",
   "Сегодня достаточно сделать чуть-чуть.",
   "Ты заслуживаешь доброты — особенно от себя.",
+  "Замедлись и прислушайся к себе.",
+  "Дай себе то тепло, которое отдаёшь другим.",
 ];
 
-const endings = ["Warmly рядом 💛", "Ты справишься 🌿", "Береги себя ✨", "С любовью, Warmly 🍊"];
+const endings = [
+  "Warmly рядом 💛",
+  "Ты справишься 🌿",
+  "Береги себя ✨",
+  "С любовью, Warmly 🍊",
+  "Мы рядом 🌸",
+  "Всё будет хорошо 🌤",
+];
 
-const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)]!;
 
-export const buildAiPhrase = (mood: MoodKey | null): string => {
-  const moodOpenings = mood ? openings[mood] ?? openings.default : openings.default;
-  return `${pick(moodOpenings)} ${pick(middles)} ${pick(endings)}`;
+export const buildAiPhrase = (): string => {
+  return `${pick(openings)} ${pick(middles)} ${pick(endings)}`;
 };
 
-export const buildUniqueAiPhrase = (mood: MoodKey | null, recentPhrases: string[]): string => {
+export const buildUniqueAiPhrase = (recentPhrases: string[]): string => {
   const blocked = new Set(recentPhrases.slice(-RECENT_PHRASE_WINDOW));
   const attempts = 30;
   for (let i = 0; i < attempts; i += 1) {
-    const candidate = buildAiPhrase(mood);
+    const candidate = buildAiPhrase();
     if (!blocked.has(candidate)) return candidate;
   }
-  return buildAiPhrase(mood);
+  return buildAiPhrase();
 };
 
 export const getFallbackQuote = (date: Date = new Date()): string => {
   const index = date.getDate() % FALLBACK_QUOTES.length;
-  return FALLBACK_QUOTES[index];
+  return FALLBACK_QUOTES[index]!;
 };
 
 export const getGreeting = (name: string): string => {

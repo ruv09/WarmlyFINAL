@@ -1,6 +1,10 @@
 import { type MoodKey } from "@/utils/phrases";
 
+ codex/continue-the-discussion-k4xcgp
 export interface MoodEntry {
+
+export interface MoodHistoryEntry {
+ main
   id: string;
   mood: MoodKey;
   note: string;
@@ -56,7 +60,11 @@ export function getTreeForMood(mood: MoodKey) {
   return treeByMood[mood];
 }
 
+ codex/continue-the-discussion-k4xcgp
 export function isBestDay(entry: MoodEntry): boolean {
+
+export function isBestDay(entry: MoodHistoryEntry): boolean {
+ main
   return (
     Boolean(entry.victory?.trim()) &&
     (entry.mood === "good" || entry.mood === "calm")
@@ -74,7 +82,11 @@ export function formatEntryDate(value: string): string {
   });
 }
 
+ codex/continue-the-discussion-k4xcgp
 export function getJourneyInsights(entries: MoodEntry[]): string[] {
+
+export function getJourneyInsights(entries: MoodHistoryEntry[]): string[] {
+ main
   const insights: string[] = [];
   const victories = entries.filter((entry) => entry.victory?.trim()).length;
   const bestDays = entries.filter(isBestDay).length;

@@ -105,19 +105,41 @@ export default function ProfileScreen() {
     setIsSchedulingTest(true);
     try {
       const result = await scheduleNotificationTestScenario({
+ codex/continue-the-discussion-k4xcgp
         mood: state.mood,
+
+codex/continue-the-discussion-dymt18
+        mood: state.mood,
+main
+ main
         recentPhrases: state.recentAiPhrases,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         "Тест запущен",
+ codex/continue-the-discussion-k4xcgp
         `Запланировано уведомлений: ${result.count}. Первое придёт примерно через ${result.firstDelaySeconds} секунд. Для полной проверки сверни приложение или заблокируй экран.`,
+
+codex/continue-the-discussion-dymt18
+        `Запланировано уведомлений: ${result.count}. Первое придёт примерно через ${result.firstDelaySeconds} секунд. Для полной проверки сверни приложение или заблокируй экран.`,
+
+        `Запланировано уведомлений: ${result.count}. Первое придёт примерно через ${result.firstDelaySeconds} секунд. Сверни приложение или заблокируй экран.`,
+ main
+ main
       );
     } catch {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert(
         "Не удалось запустить тест",
+ codex/continue-the-discussion-k4xcgp
         "Проверь разрешение уведомлений в настройках устройства.",
+
+codex/continue-the-discussion-dymt18
+        "Проверь, что уведомления разрешены для Expo Go / Warmly в настройках iOS.",
+
+        "Проверь, что уведомления разрешены для Warmly в настройках.",
+main
+ main
       );
     } finally {
       setIsSchedulingTest(false);
@@ -133,7 +155,7 @@ export default function ProfileScreen() {
       gap: 20,
     },
     title: {
-      fontSize: 32,
+      fontSize: 30,
       fontFamily: "Inter_700Bold",
       color: colors.foreground,
       letterSpacing: -0.5,
@@ -397,9 +419,9 @@ export default function ProfileScreen() {
                 color={colors.primary}
               />
             </View>
-            <View>
-              <Text style={s.rowLabel}>ИИ-фразы</Text>
-              <Text style={s.rowSub}>Персональные по настроению</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={s.rowLabel}>Поддерживающие фразы</Text>
+              <Text style={s.rowSub}>Случайное время, 8:00–22:00</Text>
             </View>
           </View>
           <Switch
@@ -452,10 +474,15 @@ export default function ProfileScreen() {
                     size={17}
                     color={colors.primary}
                   />
+ codex/continue-the-discussion-k4xcgp
+
                 </View>
-                <Text style={s.rowLabel}>Утреннее</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.rowLabel}>Поддержка днём</Text>
+                  <Text style={s.rowSub}>Случайное время в диапазоне 8:00–22:00</Text>
+ main
+                </View>
               </View>
-              <Text style={s.rowValue}>{state.morning}</Text>
             </View>
             <View style={s.row}>
               <View style={s.rowLeft}>
@@ -464,9 +491,11 @@ export default function ProfileScreen() {
                 >
                   <Ionicons name="moon-outline" size={17} color="#8B7BD4" />
                 </View>
-                <Text style={s.rowLabel}>Вечернее</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.rowLabel}>Напоминание о настроении</Text>
+                  <Text style={s.rowSub}>После 20:00, если нет записей за день</Text>
+                </View>
               </View>
-              <Text style={s.rowValue}>{state.evening}</Text>
             </View>
           </>
         )}
@@ -477,8 +506,18 @@ export default function ProfileScreen() {
         <Text style={s.sectionLabel}>Тест уведомлений</Text>
         <View style={s.testBody}>
           <Text style={s.testText}>
+ codex/continue-the-discussion-k4xcgp
             Запускает тестовый сценарий: несколько уведомлений с интервалом
             10–70 сек.
+
+          codex/continue-the-discussion-dymt18
+            Запускает короткий сценарий из AI-фраз и вечерних чек-инов, чтобы не
+            ждать 08:00 и проверить разные тексты прямо в Expo на iPhone.
+
+            Запускает тестовый сценарий: несколько уведомлений с интервалом 10–70 сек.
+            Сверни приложение для получения.
+main
+ main
           </Text>
           <Pressable
             disabled={isSchedulingTest}
@@ -489,7 +528,15 @@ export default function ProfileScreen() {
             onPress={runNotificationTest}
           >
             <Text style={s.testBtnText}>
+ codex/continue-the-discussion-k4xcgp
               {isSchedulingTest ? "Планируем…" : "Запустить тест"}
+
+ codex/continue-the-discussion-dymt18
+              {isSchedulingTest ? "Планируем…" : "Запустить тестовый сценарий"}
+
+              {isSchedulingTest ? "Планируем…" : "Запустить тест"}
+main
+ main
             </Text>
           </Pressable>
         </View>
