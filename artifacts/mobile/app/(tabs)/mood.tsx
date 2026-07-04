@@ -2,7 +2,6 @@ import * as Haptics from "expo-haptics";
 import React, { useRef, useState } from "react";
 import {
   Animated,
-  useWindowDimensions,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -12,11 +11,13 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { getTreeForMood, VICTORY_MAX_LENGTH } from "@/utils/journey";
 import { MOOD_ITEMS, type MoodKey } from "@/utils/phrases";
 
 const cardShadow = Platform.select({
@@ -30,32 +31,12 @@ const cardShadow = Platform.select({
   },
 });
 
-const supportPhrases: Record<MoodKey, string[]> = {
-  good: [
-    "Это здорово! Сохрани эту энергию и поделись теплом с близкими 💛",
-    "Твоя радость заразительна — пусть она длится как можно дольше 🌟",
-  ],
-  calm: [
-    "Спокойствие — это твоя суперсила. Береги этот внутренний мир 🌿",
-    "Тихий день — это тоже подарок. Ты в гармонии с собой ✨",
-  ],
-  neutral: [
-    "Нейтральный день — отличное время для наблюдения и размышлений 🍃",
-    "Не каждый день должен быть особенным — это тоже нормально 💙",
-  ],
-  tired: [
-    "Ты много сделал(а) сегодня. Теперь позволь себе отдохнуть — ты это заслужил(а) 🌙",
-    "Усталость — знак того, что ты старался(ась). Восстановление так же важно 🫂",
-  ],
-  anxious: [
-    "Сделай три глубоких вдоха. Ты справляешься — шаг за шагом. Мы рядом 💛",
-    "Тревога не определяет тебя. Ты сильнее, чем кажется прямо сейчас 🌤",
-  ],
-  sad: [
-    "Грустить — это нормально. Твои чувства важны, и они пройдут. Ты не один(а) 🤍",
-    "Даже в самый серый день есть маленький свет. Ты справишься 🕯",
-  ],
-};
+const supportPhrases = [
+  "Каждая запись — это уже маленькая забота о себе 💛",
+  "Ты сделал(а) важный шаг: заметил(а), что происходит внутри 🌿",
+  "Даже тихий день становится частью твоего пути ✨",
+  "Спасибо, что нашёл(ла) минуту для себя. Это имеет значение 🍊",
+];
 
 const moodDarkColors: Record<MoodKey, string> = {
   good: "#3A2D18",
@@ -68,10 +49,12 @@ const moodDarkColors: Record<MoodKey, string> = {
 
 const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
+type EditState = "idle" | "editing" | "saved";
+
 export default function MoodScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { state, updateField, addMoodHistory } = useApp();
+  const { addMoodHistory } = useApp();
   const isDark = colors.background === "#131110";
   const { width } = useWindowDimensions();
   const gridHorizontalPadding = 22 * 2;
@@ -79,38 +62,52 @@ export default function MoodScreen() {
   const rawCircleSize = (width - gridHorizontalPadding - gridGap) / 3;
   const circleSize = Math.max(84, Math.min(rawCircleSize, 132));
 
-  const [noteText, setNoteText] = useState(state.moodNote ?? "");
-  const [submitted, setSubmitted] = useState(state.moodNoteSubmitted ?? false);
+  const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
+  const [noteText, setNoteText] = useState("");
+  const [victoryText, setVictoryText] = useState("");
   const [supportPhrase, setSupportPhrase] = useState<string | null>(null);
+  const [editState, setEditState] = useState<EditState>("idle");
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const topPad = Platform.OS === "web" ? 60 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 90;
 
-  const handleMood = (key: MoodKey) => {
-    if (state.mood === key) return;
-    updateField("mood", key);
-    updateField("moodNote", "");
-    updateField("moodNoteSubmitted", false);
-    setNoteText("");
-    setSubmitted(false);
+  const handleMoodSelect = (key: MoodKey) => {
+    setSelectedMood(key);
+    setEditState("editing");
     setSupportPhrase(null);
     fadeAnim.setValue(0);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handleSubmit = () => {
-    if (!noteText.trim() || !state.mood) return;
+    if (!selectedMood || !noteText.trim()) return;
+
     Keyboard.dismiss();
-    const note = noteText.trim();
-    updateField("moodNote", note);
-    updateField("moodNoteSubmitted", true);
-    addMoodHistory({ mood: state.mood, note });
-    setSubmitted(true);
-    const phrase = pick(supportPhrases[state.mood]);
-    setSupportPhrase(phrase);
+    const didAdd = addMoodHistory({
+      mood: selectedMood,
+      note: noteText.trim(),
+      victory: victoryText.trim() || undefined,
+    });
+
+    if (!didAdd) {
+      setSupportPhrase(
+        "Сегодня уже достаточно записей. Можно просто отдохнуть 🌙",
+      );
+      return;
+    }
+
+    setSupportPhrase(pick(supportPhrases));
+    setSelectedMood(null);
+    setNoteText("");
+    setVictoryText("");
+    setEditState("saved");
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 700,
+      useNativeDriver: true,
+    }).start();
   };
 
   const s = StyleSheet.create({
@@ -152,9 +149,7 @@ export default function MoodScreen() {
       borderWidth: 2.5,
       borderColor: "transparent",
     },
-    circleSelected: {
-      borderColor: colors.primary,
-    },
+    circleSelected: { borderColor: colors.primary },
     moodEmoji: { fontSize: 34 },
     moodLabel: {
       fontSize: 12,
@@ -195,28 +190,50 @@ export default function MoodScreen() {
       minHeight: 110,
       textAlignVertical: "top",
     },
+    victoryInput: {
+      fontSize: 15,
+      fontFamily: "Inter_400Regular",
+      color: colors.foreground,
+      backgroundColor: colors.muted,
+      borderRadius: 16,
+      padding: 16,
+      minHeight: 72,
+      textAlignVertical: "top",
+    },
+    counterText: {
+      alignSelf: "flex-end",
+      fontSize: 12,
+      fontFamily: "Inter_400Regular",
+      color: colors.mutedForeground,
+      marginTop: -10,
+    },
+    treePreview: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      backgroundColor: colors.muted,
+      borderRadius: 18,
+      padding: 14,
+    },
+    treeEmoji: { fontSize: 28 },
+    treeText: {
+      flex: 1,
+      fontSize: 13,
+      fontFamily: "Inter_400Regular",
+      color: colors.mutedForeground,
+      lineHeight: 19,
+    },
     submitBtn: {
       backgroundColor: colors.primary,
       borderRadius: 100,
       paddingVertical: 14,
       alignItems: "center",
+      opacity: noteText.trim() ? 1 : 0.7,
     },
     submitBtnText: {
       fontSize: 15,
       fontFamily: "Inter_600SemiBold",
       color: "#FFFFFF",
-    },
-    submittedNote: {
-      fontSize: 15,
-      fontFamily: "Inter_400Regular",
-      color: colors.foreground,
-      fontStyle: "italic",
-      lineHeight: 24,
-    },
-    editLink: {
-      fontSize: 13,
-      fontFamily: "Inter_500Medium",
-      color: colors.primary,
     },
     supportCard: {
       borderRadius: 24,
@@ -253,7 +270,10 @@ export default function MoodScreen() {
   });
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <ScrollView
         style={s.container}
         contentContainerStyle={s.content}
@@ -263,10 +283,9 @@ export default function MoodScreen() {
         <Text style={s.title}>Как ты себя{"\n"}чувствуешь?</Text>
         <Text style={s.subtitle}>Твоё настроение помогает нам быть рядом</Text>
 
-        {/* Mood circles */}
         <View style={s.grid}>
           {MOOD_ITEMS.map((item) => {
-            const isSelected = state.mood === item.key;
+            const isSelected = selectedMood === item.key;
             const bgColor = isDark ? moodDarkColors[item.key] : item.color;
             return (
               <View key={item.key} style={s.circleWrapper}>
@@ -277,7 +296,7 @@ export default function MoodScreen() {
                     isSelected && s.circleSelected,
                     pressed && { opacity: 0.8, transform: [{ scale: 0.95 }] },
                   ]}
-                  onPress={() => handleMood(item.key)}
+                  onPress={() => handleMoodSelect(item.key)}
                 >
                   <Text style={s.moodEmoji}>{item.emoji}</Text>
                 </Pressable>
@@ -289,8 +308,7 @@ export default function MoodScreen() {
           })}
         </View>
 
-        {/* Note input */}
-        {state.mood && !submitted && (
+        {selectedMood && editState === "editing" && (
           <View style={s.noteCard}>
             <Text style={s.noteTitle}>Расскажи подробнее</Text>
             <Text style={s.noteSubtitle}>
@@ -305,8 +323,40 @@ export default function MoodScreen() {
               multiline
               returnKeyType="default"
             />
+            <Text style={s.noteTitle}>Маленькая победа</Text>
+            <Text style={s.noteSubtitle}>
+              Что сегодня получилось? Можно пропустить
+            </Text>
+            <TextInput
+              style={s.victoryInput}
+              placeholder="Например: вышло отдохнуть без чувства вины"
+              placeholderTextColor={colors.mutedForeground}
+              value={victoryText}
+              onChangeText={(value) =>
+                setVictoryText(value.slice(0, VICTORY_MAX_LENGTH))
+              }
+              multiline
+              maxLength={VICTORY_MAX_LENGTH}
+              returnKeyType="default"
+            />
+            <Text style={s.counterText}>
+              {victoryText.length}/{VICTORY_MAX_LENGTH}
+            </Text>
+            <View style={s.treePreview}>
+              <Text style={s.treeEmoji}>
+                {getTreeForMood(selectedMood).emoji}
+              </Text>
+              <Text style={s.treeText}>
+                После сохранения в твоём лесу появится{" "}
+                {getTreeForMood(selectedMood).title.toLowerCase()}.
+              </Text>
+            </View>
             <Pressable
-              style={({ pressed }) => [s.submitBtn, pressed && { opacity: 0.85 }]}
+              disabled={!noteText.trim()}
+              style={({ pressed }) => [
+                s.submitBtn,
+                pressed && noteText.trim() && { opacity: 0.85 },
+              ]}
               onPress={handleSubmit}
             >
               <Text style={s.submitBtnText}>Отправить</Text>
@@ -314,18 +364,6 @@ export default function MoodScreen() {
           </View>
         )}
 
-        {/* Submitted note */}
-        {submitted && state.moodNote && (
-          <View style={s.noteCard}>
-            <Text style={s.noteTitle}>Твоя запись</Text>
-            <Text style={s.submittedNote}>«{state.moodNote}»</Text>
-            <Pressable onPress={() => { setSubmitted(false); setSupportPhrase(null); updateField("moodNoteSubmitted", false); }}>
-              <Text style={s.editLink}>Изменить запись</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {/* Support phrase */}
         {supportPhrase && (
           <Animated.View style={[s.supportCard, { opacity: fadeAnim }]}>
             <Text style={s.supportLabel}>Warmly говорит</Text>
@@ -333,7 +371,7 @@ export default function MoodScreen() {
           </Animated.View>
         )}
 
-        {!state.mood && (
+        {!selectedMood && editState !== "saved" && (
           <View style={s.emptyState}>
             <Text style={{ fontSize: 32 }}>🌱</Text>
             <Text style={s.emptyText}>

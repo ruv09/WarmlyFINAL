@@ -17,9 +17,9 @@
       "supportsTablet": false
     },
     "android": {
-      "permissions": [
-        "POST_NOTIFICATIONS"
-      ]
+      "package": "com.ruv09.warmly",
+      "versionCode": 1,
+      "permissions": ["POST_NOTIFICATIONS"]
     },
     "web": {
       "favicon": "./assets/images/icon.png"
