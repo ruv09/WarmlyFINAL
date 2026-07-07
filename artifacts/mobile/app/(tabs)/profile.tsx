@@ -105,29 +105,18 @@ export default function ProfileScreen() {
     setIsSchedulingTest(true);
     try {
       const result = await scheduleNotificationTestScenario({
-codex/continue-the-discussion-dymt18
-        mood: state.mood,
-main
         recentPhrases: state.recentAiPhrases,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         "Тест запущен",
-codex/continue-the-discussion-dymt18
-        `Запланировано уведомлений: ${result.count}. Первое придёт примерно через ${result.firstDelaySeconds} секунд. Для полной проверки сверни приложение или заблокируй экран.`,
-
         `Запланировано уведомлений: ${result.count}. Первое придёт примерно через ${result.firstDelaySeconds} секунд. Сверни приложение или заблокируй экран.`,
- main
       );
     } catch {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert(
         "Не удалось запустить тест",
-codex/continue-the-discussion-dymt18
-        "Проверь, что уведомления разрешены для Expo Go / Warmly в настройках iOS.",
-
         "Проверь, что уведомления разрешены для Warmly в настройках.",
-main
       );
     } finally {
       setIsSchedulingTest(false);
@@ -491,13 +480,8 @@ main
         <Text style={s.sectionLabel}>Тест уведомлений</Text>
         <View style={s.testBody}>
           <Text style={s.testText}>
-          codex/continue-the-discussion-dymt18
-            Запускает короткий сценарий из AI-фраз и вечерних чек-инов, чтобы не
-            ждать 08:00 и проверить разные тексты прямо в Expo на iPhone.
-
             Запускает тестовый сценарий: несколько уведомлений с интервалом 10–70 сек.
             Сверни приложение для получения.
-main
           </Text>
           <Pressable
             disabled={isSchedulingTest}
@@ -508,11 +492,7 @@ main
             onPress={runNotificationTest}
           >
             <Text style={s.testBtnText}>
- codex/continue-the-discussion-dymt18
-              {isSchedulingTest ? "Планируем…" : "Запустить тестовый сценарий"}
-
               {isSchedulingTest ? "Планируем…" : "Запустить тест"}
-main
             </Text>
           </Pressable>
         </View>

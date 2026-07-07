@@ -14,12 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
- codex/continue-the-discussion-dymt18
-import { isBestDay } from "@/utils/journey";
-import { MOOD_ITEMS } from "@/utils/phrases";
-
 import { MOOD_ITEMS, type MoodKey } from "@/utils/phrases";
-main
 
 const moodMap = Object.fromEntries(MOOD_ITEMS.map((item) => [item.key, item]));
 
@@ -133,11 +128,7 @@ export default function CalendarScreen() {
       gap: 16,
     },
     title: {
-codex/continue-the-discussion-dymt18
-      fontSize: 32,
-
       fontSize: 30,
- main
       fontFamily: "Inter_700Bold",
       color: colors.foreground,
       letterSpacing: -0.5,
@@ -148,31 +139,6 @@ codex/continue-the-discussion-dymt18
       color: colors.mutedForeground,
       marginTop: -8,
     },
-codex/continue-the-discussion-dymt18
-    dayBlock: {
-      backgroundColor: colors.card,
-      borderRadius: 20,
-      padding: 16,
-      gap: 10,
-    },
-    dayTitle: {
-      fontSize: 16,
-      fontFamily: "Inter_700Bold",
-      color: colors.foreground,
-    },
-    row: {
-      backgroundColor: colors.muted,
-      borderRadius: 14,
-      padding: 12,
-      gap: 4,
-    },
-    bestRow: {
-      backgroundColor: colors.amber,
-      borderWidth: 1,
-      borderColor: colors.primary,
-    },
-    moodLine: {
-
     statsRow: {
       flexDirection: "row",
       gap: 12,
@@ -268,24 +234,10 @@ codex/continue-the-discussion-dymt18
       gap: 8,
     },
     entryMood: {
-main
       fontSize: 14,
       fontFamily: "Inter_600SemiBold",
       color: colors.foreground,
     },
-codex/continue-the-discussion-dymt18
-    note: {
-      fontSize: 14,
-      fontFamily: "Inter_400Regular",
-      color: colors.mutedForeground,
-      lineHeight: 20,
-    },
-    victory: {
-      fontSize: 13,
-      fontFamily: "Inter_500Medium",
-      color: colors.foreground,
-      lineHeight: 20,
-
     entryTime: {
       fontSize: 12,
       fontFamily: "Inter_400Regular",
@@ -304,7 +256,6 @@ codex/continue-the-discussion-dymt18
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.muted,
- main
     },
     empty: {
       fontSize: 14,
@@ -322,32 +273,6 @@ codex/continue-the-discussion-dymt18
     >
       <Text style={s.title}>Календарь</Text>
       <Text style={s.subtitle}>История твоих чувств и заметок</Text>
-
-codex/continue-the-discussion-dymt18
-      {grouped.length === 0 ? (
-        <Text style={s.empty}>
-          Пока нет записей. Отметь настроение и добавь заметку на вкладке
-          «Настроение».
-        </Text>
-      ) : (
-        grouped.map(([date, entries]) => (
-          <View key={date} style={s.dayBlock}>
-            <Text style={s.dayTitle}>{date}</Text>
-            {entries.map((entry) => {
-              const mood = moodMap[entry.mood];
-              return (
-                <View
-                  key={entry.id}
-                  style={[s.row, isBestDay(entry) && s.bestRow]}
-                >
-                  <Text style={s.moodLine}>
-                    {mood?.emoji} {mood?.label}
-                  </Text>
-                  <Text style={s.note}>{entry.note || "Без заметки"}</Text>
-                  {entry.victory ? (
-                    <Text style={s.victory}>⭐ {entry.victory}</Text>
-                  ) : null}
-                </View>
 
       {/* Overall stats */}
       {totalEntries > 0 && (
@@ -370,7 +295,6 @@ codex/continue-the-discussion-dymt18
                   <Text style={s.statNumber}>{mood?.emoji ?? "—"}</Text>
                   <Text style={s.statLabel}>{mood?.label ?? "Нет данных"}</Text>
                 </>
- main
               );
             })()}
           </View>
