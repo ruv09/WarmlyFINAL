@@ -100,7 +100,7 @@ function Calendar({
           defaultClassNames.week_number,
         ),
         day: cn(
-          "group/day relative aspect-square h-full w-full select-none p-0 text-center [&:first-child[data-selected=true]_button]:rounded-l-md [&:last-child[data-selected=true]_button]:rounded-r-md",
+          "group/day relative aspect-square h-full w-full select-none p-0 text-center [&:first-child[data-selected=true]_button]:rounded-l-md [&:last-child[data-selected=true]_button]:rounded-r-md [\&:first-child[data-selected=true]_button]:rounded-l-md [\&:last-child[data-selected=true]_button]:rounded-r-md group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 flex aspect-square h-auto w-full min-w-[--cell-size] flex-col gap-1 font-normal leading-none data-[range-end=true]:rounded-md data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-md group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] [\&>span]:text-xs [\&>span]:opacity-70",
           defaultClassNames.day,
         ),
         range_start: cn(
@@ -126,25 +126,12 @@ function Calendar({
       }}
       components={{
         Root: ({ className, rootRef, ...props }) => {
-codex/continue-with-the-project-1rb603
-          // DayPicker resolves rootRef through its own React type instance in this workspace.
-          // Keep the runtime ref intact while normalizing the type for this DOM node.
           const divRef = rootRef as React.Ref<HTMLDivElement> | undefined;
 
           return (
             <div
               data-slot="calendar"
               ref={divRef}
-
-          const divRef = rootRef as React.Ref<HTMLDivElement> | undefined
-          return (
-            <div
-              data-slot="calendar"
-codex/continue-the-discussion
-              ref={rootRef as React.Ref<HTMLDivElement>}
-              ref={divRef}
-main
-main
               className={cn(className)}
               {...props}
             />

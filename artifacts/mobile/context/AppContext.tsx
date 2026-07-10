@@ -10,10 +10,16 @@ import React, {
 import { ensureDailyAiNotification } from "@/utils/notifications";
 import { buildUniqueAiPhrase, type MoodKey } from "@/utils/phrases";
 
-codex/continue-with-the-project-1rb603
-
- main
 const STORAGE_KEY = "warmly_state_v3";
+const MAX_ENTRIES_PER_DAY = 20;
+
+export interface MoodEntry {
+  id: string;
+  mood: MoodKey;
+  note: string;
+  victory?: string;
+  createdAt: string;
+}
 
 export interface AppState {
   name: string;
@@ -30,12 +36,7 @@ export interface AppState {
   dailyAiPhrase: string;
   dailyAiPhraseDate: string;
   recentAiPhrases: string[];
-  moodHistory: Array<{
-    id: string;
-    mood: MoodKey;
-    note: string;
-    createdAt: string;
-  }>;
+  moodHistory: MoodEntry[];
 }
 
 const DEFAULT_STATE: AppState = {
@@ -60,13 +61,20 @@ interface AppContextType {
   state: AppState;
   setState: React.Dispatch<React.SetStateAction<AppState>>;
   updateField: <K extends keyof AppState>(key: K, value: AppState[K]) => void;
-  addMoodHistory: (entry: { mood: MoodKey; note: string }) => void;
+  addMoodHistory: (entry: { mood: MoodKey; note: string }) => boolean;
+  editMoodEntry: (id: string, mood: MoodKey, note: string) => void;
+  deleteMoodEntry: (id: string) => void;
   addFavorite: (quote: string) => void;
   removeFavorite: (quote: string) => void;
+  getTodayEntries: () => MoodEntry[];
   isLoaded: boolean;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
+
+function getTodayStr(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(DEFAULT_STATE);
@@ -74,11 +82,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const lastNotificationSignature = useRef("");
 
   const ensureDailyPhrase = () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getTodayStr();
     setState((prev) => {
       if (!prev.aiEnabled) return prev;
       if (prev.dailyAiPhraseDate === today && prev.dailyAiPhrase) return prev;
-      const phrase = buildUniqueAiPhrase(prev.mood, prev.recentAiPhrases);
+      const phrase = buildUniqueAiPhrase(prev.recentAiPhrases);
       return {
         ...prev,
         dailyAiPhrase: phrase,
@@ -108,17 +116,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
   }, [state, isLoaded]);
 
-  // Keep a single daily local notification in sync with user settings.
-  // We intentionally run this only after state is hydrated from storage so
-  // Android keeps a stable schedule across restarts without duplicates.
   useEffect(() => {
     if (!isLoaded) return;
+
+    const today = getTodayStr();
+    const hasTodayEntry = state.moodHistory.some(
+      (e) => e.createdAt.slice(0, 10) === today,
+    );
 
     const signature = JSON.stringify({
       notifications: state.notifications,
       aiEnabled: state.aiEnabled,
-      mood: state.mood,
-      hour: state.morning,
+      morning: state.morning,
+      evening: state.evening,
+      hasTodayEntry,
+      date: today,
     });
 
     if (signature === lastNotificationSignature.current) return;
@@ -127,30 +139,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ensureDailyAiNotification({
       enabled: state.notifications,
       aiEnabled: state.aiEnabled,
-      mood: state.mood,
       preferredHour: state.morning,
+      preferredEvening: state.evening,
+      recentPhrases: state.recentAiPhrases,
+      hasTodayMoodEntry: hasTodayEntry,
     }).catch(() => {});
   }, [
     isLoaded,
     state.notifications,
     state.aiEnabled,
-    state.mood,
     state.morning,
+    state.evening,
+    state.recentAiPhrases,
+    state.moodHistory,
   ]);
 
   useEffect(() => {
     if (!isLoaded) return;
     ensureDailyPhrase();
-  }, [isLoaded, state.aiEnabled, state.mood]);
+  }, [isLoaded, state.aiEnabled]);
 
-codex/continue-with-the-project-1rb603
   const updateField = <K extends keyof AppState>(
     key: K,
     value: AppState[K],
   ) => {
-
-  const updateField = <K extends keyof AppState>(key: K, value: AppState[K]) => {
- main
     setState((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -163,9 +175,20 @@ codex/continue-with-the-project-1rb603
     }));
   };
 
-  const addMoodHistory = (entry: { mood: MoodKey; note: string }) => {
+  const addMoodHistory = (entry: { mood: MoodKey; note: string }): boolean => {
+    const today = getTodayStr();
+    // Compute limit check against the current snapshot (before setState) so
+    // the boolean return is deterministic and not affected by React's batching
+    // or StrictMode double-invoking the updater.
+    const todayCount = state.moodHistory.filter(
+      (e) => e.createdAt.slice(0, 10) === today,
+    ).length;
+    if (todayCount >= MAX_ENTRIES_PER_DAY) return false;
+
     setState((prev) => ({
       ...prev,
+      mood: entry.mood,
+      moodNoteSubmitted: true,
       moodHistory: [
         {
           id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -176,6 +199,31 @@ codex/continue-with-the-project-1rb603
         ...prev.moodHistory,
       ],
     }));
+    return true;
+  };
+
+  const editMoodEntry = (id: string, mood: MoodKey, note: string) => {
+    setState((prev) => ({
+      ...prev,
+      moodHistory: prev.moodHistory.map((e) =>
+        e.id === id ? { ...e, mood, note } : e,
+      ),
+    }));
+  };
+
+  const deleteMoodEntry = (id: string) => {
+    setState((prev) => {
+      const updated = prev.moodHistory.filter((e) => e.id !== id);
+      const today = getTodayStr();
+      const todayEntries = updated.filter((e) => e.createdAt.slice(0, 10) === today);
+      const hasTodayEntry = todayEntries.length > 0;
+      return {
+        ...prev,
+        moodHistory: updated,
+        moodNoteSubmitted: hasTodayEntry,
+        mood: hasTodayEntry ? todayEntries[0]!.mood : prev.mood,
+      };
+    });
   };
 
   const removeFavorite = (quote: string) => {
@@ -185,6 +233,13 @@ codex/continue-with-the-project-1rb603
     }));
   };
 
+  const getTodayEntries = (): MoodEntry[] => {
+    const today = getTodayStr();
+    return state.moodHistory
+      .filter((e) => e.createdAt.slice(0, 10) === today)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -192,8 +247,11 @@ codex/continue-with-the-project-1rb603
         setState,
         updateField,
         addMoodHistory,
+        editMoodEntry,
+        deleteMoodEntry,
         addFavorite,
         removeFavorite,
+        getTodayEntries,
         isLoaded,
       }}
     >

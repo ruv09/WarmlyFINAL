@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mobile",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/icon.png",
@@ -17,9 +17,10 @@
       "supportsTablet": false
     },
     "android": {
-      "permissions": [
-        "POST_NOTIFICATIONS"
-      ]
+      "package": "com.ruv09.warmly",
+      "versionCode": 1,
+      "permissions": ["POST_NOTIFICATIONS"],
+      "softwareKeyboardLayoutMode": "adjustResize"
     },
     "web": {
       "favicon": "./assets/images/icon.png"
@@ -39,7 +40,14 @@
           "color": "#F8A172"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-navigation-bar",
+        {
+          "position": "absolute",
+          "visible": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
