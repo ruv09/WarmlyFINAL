@@ -1,0 +1,1 @@
+- [GitHub auto-push](github-autopush.md) — после каждого изменения автоматически пушить в fix/conflict-markers без явного запроса

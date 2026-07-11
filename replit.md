@@ -34,7 +34,7 @@ _Describe the high-level user-facing capabilities of this app once they exist._
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- **Автосохранение в GitHub**: после каждого завершённого изменения автоматически делать `git add -A && git commit && git push` в ветку `fix/conflict-markers` репозитория `https://github.com/ruv09/WarmlyFINAL.git`. Не ждать явной просьбы.
 
 ## Gotchas
 
