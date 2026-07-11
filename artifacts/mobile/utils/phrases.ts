@@ -1,3 +1,20 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+// ─── Mood items ────────────────────────────────────────────────────────────────
+
+export const MOOD_ITEMS = [
+  { key: "good",    emoji: "🙂", label: "Хорошо",     color: "#FCE8C5" },
+  { key: "calm",    emoji: "😌", label: "Спокойно",   color: "#DDF3EC" },
+  { key: "neutral", emoji: "😐", label: "Нейтрально", color: "#F2EDE7" },
+  { key: "tired",   emoji: "🥱", label: "Устал(а)",   color: "#E8F1E8" },
+  { key: "anxious", emoji: "😟", label: "Тревожно",   color: "#F8E4E4" },
+  { key: "sad",     emoji: "😔", label: "Грустно",    color: "#EAE4F8" },
+] as const;
+
+export type MoodKey = (typeof MOOD_ITEMS)[number]["key"];
+
+// ─── Fallback daily quotes (shown on home screen) ─────────────────────────────
+
 export const FALLBACK_QUOTES = [
   "Сегодня можно быть мягче к себе.",
   "Ты справляешься лучше, чем тебе кажется.",
@@ -13,17 +30,9 @@ export const FALLBACK_QUOTES = [
   "Ты заслуживаешь доброты — особенно от себя.",
 ];
 
-export const MOOD_ITEMS = [
-  { key: "good", emoji: "🙂", label: "Хорошо", color: "#FCE8C5" },
-  { key: "calm", emoji: "😌", label: "Спокойно", color: "#DDF3EC" },
-  { key: "neutral", emoji: "😐", label: "Нейтрально", color: "#F2EDE7" },
-  { key: "tired", emoji: "🥱", label: "Устал(а)", color: "#E8F1E8" },
-  { key: "anxious", emoji: "😟", label: "Тревожно", color: "#F8E4E4" },
-  { key: "sad", emoji: "😔", label: "Грустно", color: "#EAE4F8" },
-] as const;
+// ─── AI notification phrases (90+ уникальных фраз) ───────────────────────────
 
-export type MoodKey = (typeof MOOD_ITEMS)[number]["key"];
-
+ fix/conflict-markers
 const RECENT_PHRASE_WINDOW = 7;
 
 const openings = [
@@ -41,7 +50,156 @@ const openings = [
   "Каждый новый день — это новая страница.",
 ];
 
-const middles = [
+/** Категории поддерживающих сообщений */
+const NOTIFICATION_PHRASES: Record<string, string[]> = {
+  support: [
+    "Всё обязательно наладится.",
+    "Ты справляешься лучше, чем думаешь.",
+    "Сейчас сложный период, но он пройдёт.",
+    "Ты уже прошёл через многое — и справишься с этим тоже.",
+    "Даже если сегодня тяжело, ты всё равно держишься.",
+    "Твои усилия имеют значение, даже если пока не видно результата.",
+    "Один день за раз — и ты справишься.",
+    "Ты делаешь всё, что можешь. Этого достаточно.",
+    "Быть уязвимым — это не слабость. Это смелость.",
+    "Трудности не определяют тебя — они закаляют.",
+    "Ты уже прошёл сложные времена. Этот раз тоже пройдёт.",
+    "Иногда просто держаться — это большая победа.",
+    "Ты заслуживаешь поддержки так же, как даёшь её другим.",
+    "Сегодня можно чуть медленнее. Это нормально.",
+    "Ты важен для этого мира — даже в тихие дни.",
+  ],
+  calm: [
+    "Этот момент тоже пройдёт.",
+    "Можно замедлиться — это нормально.",
+    "Дыши. Всё в порядке.",
+    "Сегодня разреши себе просто быть.",
+    "Тишина тоже имеет ценность.",
+    "Не нужно торопиться. У тебя есть время.",
+    "Спокойствие — это не слабость, а мудрость.",
+    "Сделай глубокий вдох. Ты здесь, ты в безопасности.",
+    "Позволь мыслям просто пройти — не борись с ними.",
+    "Этот вечер принадлежит тебе. Никаких обязательств.",
+    "Можно не иметь ответов на все вопросы прямо сейчас.",
+    "Твоё тело знает, что ему нужно. Прислушайся к нему.",
+    "Сегодня достаточно просто существовать.",
+    "Покой — это тоже достижение.",
+    "Ты в порядке, даже когда чувствуешь иначе.",
+  ],
+  motivation: [
+    "Один маленький шаг — это уже движение вперёд.",
+    "Начни с малого. Большое придёт само.",
+    "Ты способен на больше, чем кажется.",
+    "Каждый день — это новая возможность.",
+    "Твои мечты заслуживают действий.",
+    "Сегодня — хороший день, чтобы начать.",
+    "Маленький прогресс — это всё равно прогресс.",
+    "Ты ближе к цели, чем вчера.",
+    "Доверяй процессу. Результат придёт.",
+    "Твои старания не пропадают даром.",
+    "Каждый шаг вперёд имеет значение.",
+    "Ты уже начал — это самое сложное.",
+    "Продолжай идти, даже если медленно.",
+    "Твои усилия складываются в большое.",
+    "Сегодня ты снова попробуешь — и это важно.",
+  ],
+  recovery: [
+    "Отдыхать — это не слабость, это необходимость.",
+    "Восстановление — важная часть пути.",
+    "Позволь себе замедлиться без чувства вины.",
+    "Ты не машина. Тебе нужны перерывы.",
+    "Забота о себе — это не эгоизм.",
+    "После шторма всегда приходит тишина.",
+    "Твоё тело и разум заслуживают отдыха.",
+    "Иногда лучшее, что можно сделать — это ничего не делать.",
+    "Дай себе время восстановиться. Оно у тебя есть.",
+    "Усталость — это сигнал, а не приговор.",
+    "Сегодня можно просто восстанавливаться.",
+    "Ты много дал(а) другим. Теперь побудь для себя.",
+    "Отдых сегодня — это энергия завтра.",
+    "Можно остановиться и перевести дыхание.",
+    "Забота о себе — это тоже работа.",
+  ],
+  warmth: [
+    "Кто-то сегодня рад, что ты есть.",
+    "Ты приносишь тепло в жизнь других, даже не зная об этом.",
+    "Твоё присутствие делает мир лучше.",
+    "Ты любим(а) — даже когда сомневаешься в этом.",
+    "Есть люди, которым важно, что ты рядом.",
+    "Ты не один(а) в этом мире.",
+    "Твоя доброта возвращается к тебе.",
+    "Мир стал лучше, когда ты в нём появился(ась).",
+    "Ты имеешь значение — для себя и для других.",
+    "Сегодня кто-то думает о тебе с теплом.",
+    "Ты заслуживаешь столько же любви, сколько даёшь.",
+    "Твоя улыбка важна — даже если ты её не видишь.",
+    "Ты — это больше, чем то, что чувствуешь сегодня.",
+    "Рядом с тобой люди чувствуют себя лучше.",
+    "Ты ценен(а) просто потому, что ты есть.",
+  ],
+  care: [
+    "Позаботься о себе сегодня немного больше обычного.",
+    "Выпей воды. Подыши свежим воздухом. Ты заслуживаешь этого.",
+    "Сделай что-то приятное для себя сегодня.",
+    "Ты заботишься о других — позаботься и о себе.",
+    "Сегодня хороший день, чтобы сделать что-то доброе для себя.",
+    "Немного тишины и покоя — это тоже уход за собой.",
+    "Твоё здоровье важнее любых задач.",
+    "Дай себе то, что тебе нужно — без объяснений.",
+    "Небольшая забота о себе сегодня — большой вклад в завтра.",
+    "Послушай своё тело. Оно знает, что ему нужно.",
+    "Сегодня можно делать только то, что даёт силы.",
+    "Одна чашка чая и минута тишины — уже много.",
+    "Ты важнее любого дедлайна.",
+    "Забота о себе — это не каприз, это необходимость.",
+    "Сегодня ты на первом месте.",
+  ],
+};
+ main
+
+const ALL_NOTIFICATION_PHRASES = Object.values(NOTIFICATION_PHRASES).flat();
+
+const LAST_NOTIF_INDEX_KEY = "warmly_notif_phrase_index";
+
+/**
+ * Returns a notification phrase, cycling through all to avoid repetition.
+ * Persists the current index in AsyncStorage.
+ */
+export async function getNextNotificationPhrase(): Promise<string> {
+  try {
+    const raw = await AsyncStorage.getItem(LAST_NOTIF_INDEX_KEY);
+    const lastIndex = raw ? parseInt(raw, 10) : -1;
+    const nextIndex = (lastIndex + 1) % ALL_NOTIFICATION_PHRASES.length;
+    await AsyncStorage.setItem(LAST_NOTIF_INDEX_KEY, String(nextIndex));
+    return ALL_NOTIFICATION_PHRASES[nextIndex];
+  } catch {
+    // Fallback: random pick
+    return ALL_NOTIFICATION_PHRASES[
+      Math.floor(Math.random() * ALL_NOTIFICATION_PHRASES.length)
+    ];
+  }
+}
+
+/** Synchronous random pick for non-async contexts */
+export function pickNotificationPhrase(): string {
+  return ALL_NOTIFICATION_PHRASES[
+    Math.floor(Math.random() * ALL_NOTIFICATION_PHRASES.length)
+  ];
+}
+
+// ─── Mood-based AI phrases ────────────────────────────────────────────────────
+
+const moodOpenings: Record<string, string[]> = {
+  good:    ["Сохрани это тепло — и поделись им.", "Твоя радость заразительна!", "Хороший день заслуживает хорошего вечера."],
+  calm:    ["Спокойствие — это тоже сила.", "Тишина внутри — редкий дар.", "Ты в балансе, и это ценно."],
+  neutral: ["Нейтральный день — тоже день.", "Спокойный день — тоже хороший день.", "Не каждый день должен быть особенным."],
+  tired:   ["Ты много сделал(а). Теперь можно отдохнуть.", "Усталость — знак того, что ты старался(ась).", "Позволь себе замедлиться сегодня."],
+  anxious: ["Сделай глубокий вдох — ты справляешься.", "Тревога пройдёт. Ты сильнее её.", "Сегодня можно быть мягче к себе."],
+  sad:     ["Грусть — это тоже часть тебя. Это нормально.", "Ты не один(а) в своей грусти.", "Даже в тёмный день есть маленький свет."],
+  default: ["Ты важен. Твои чувства имеют значение.", "Ты не один, и с тобой всё в порядке.", "Сегодня достаточно просто быть собой."],
+};
+
+const moodMiddles = [
   "Сделай глубокий вдох и один маленький шаг вперёд.",
   "Поблагодари себя за то, что продолжаешь идти.",
   "Сегодня достаточно сделать чуть-чуть.",
@@ -50,6 +208,7 @@ const middles = [
   "Дай себе то тепло, которое отдаёшь другим.",
 ];
 
+ fix/conflict-markers
 const endings = [
   "Warmly рядом 💛",
   "Ты справишься 🌿",
@@ -61,10 +220,14 @@ const endings = [
 
 const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)]!;
 
+const moodEndings = ["Warmly рядом 💛", "Ты справишься 🌿", "Береги себя ✨", "С любовью, Warmly 🍊"];
+ main
+
 export const buildAiPhrase = (): string => {
   return `${pick(openings)} ${pick(middles)} ${pick(endings)}`;
 };
 
+ fix/conflict-markers
 export const buildUniqueAiPhrase = (recentPhrases: string[]): string => {
   const blocked = new Set(recentPhrases.slice(-RECENT_PHRASE_WINDOW));
   const attempts = 30;
@@ -78,14 +241,23 @@ export const buildUniqueAiPhrase = (recentPhrases: string[]): string => {
 export const getFallbackQuote = (date: Date = new Date()): string => {
   const index = date.getDate() % FALLBACK_QUOTES.length;
   return FALLBACK_QUOTES[index]!;
+
+export const buildAiPhrase = (mood: MoodKey | null): string => {
+  const openings = mood ? (moodOpenings[mood] ?? moodOpenings.default) : moodOpenings.default;
+  return `${pick(openings)} ${pick(moodMiddles)} ${pick(moodEndings)}`;
+};
+
+export const getFallbackQuote = (date: Date = new Date()): string => {
+  return FALLBACK_QUOTES[date.getDate() % FALLBACK_QUOTES.length];
+ main
 };
 
 export const getGreeting = (name: string): string => {
   const hour = new Date().getHours();
-  let greeting = "Привет";
-  if (hour >= 5 && hour < 12) greeting = "Доброе утро";
-  else if (hour >= 12 && hour < 17) greeting = "Добрый день";
-  else if (hour >= 17 && hour < 22) greeting = "Добрый вечер";
-  else greeting = "Доброй ночи";
-  return name ? `${greeting}, ${name}` : greeting;
+  let g = "Привет";
+  if (hour >= 5 && hour < 12)  g = "Доброе утро";
+  else if (hour >= 12 && hour < 17) g = "Добрый день";
+  else if (hour >= 17 && hour < 22) g = "Добрый вечер";
+  else g = "Доброй ночи";
+  return name ? `${g}, ${name}` : g;
 };
