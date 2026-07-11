@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -17,6 +18,19 @@ import { useColors } from "@/hooks/useColors";
 import { useResponsive } from "@/utils/responsive";
 import { buildAiPhrase, getFallbackQuote, getGreeting, MOOD_ITEMS } from "@/utils/phrases";
 
+ fix/conflict-markers
+function formatDate(): string {
+  const now = new Date();
+  const days = ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"];
+  const months = [
+    "января", "февраля", "марта", "апреля", "мая", "июня",
+    "июля", "августа", "сентября", "октября", "ноября", "декабря",
+  ];
+  return `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+}
+
+
+ main
 const cardShadow = Platform.select({
   web: { boxShadow: "0px 4px 24px rgba(0,0,0,0.07)" } as object,
   default: {
@@ -49,13 +63,22 @@ function formatDate(): string {
 export default function HomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+ fix/conflict-markers
+  const { width } = useWindowDimensions();
+  const { state, addFavorite, getTodayEntries } = useApp();
+
   const { rf, hPad, isSmall } = useResponsive();
   const { state, addFavorite } = useApp();
+ main
   const [saved, setSaved] = useState(false);
 
+  const todayEntries = getTodayEntries();
+  const hasTodayMood = todayEntries.length > 0;
+  const todayCount = todayEntries.length;
+
   const quote = useMemo(
-    () => (state.aiEnabled ? buildAiPhrase(state.mood) : getFallbackQuote()),
-    [state.aiEnabled, state.mood],
+    () => (state.aiEnabled ? state.dailyAiPhrase || buildAiPhrase() : getFallbackQuote()),
+    [state.aiEnabled, state.dailyAiPhrase],
   );
 
   const isFav = state.favorites.includes(quote);
@@ -72,13 +95,26 @@ export default function HomeScreen() {
     setTimeout(() => setSaved(false), 2000);
   };
 
+ fix/conflict-markers
+  const topPad = Platform.OS === "web" ? 60 : insets.top;
+  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 90;
+  const isSmall = width < 360;
+
+  const activeMoodItem = MOOD_ITEMS.find((m) => m.key === state.mood);
+
+ main
   const s = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     content: {
       paddingTop: topPad + 20,
       paddingBottom: bottomPad,
+ fix/conflict-markers
+      paddingHorizontal: isSmall ? 16 : 22,
+      gap: 18,
+
       paddingHorizontal: hPad,
       gap: isSmall ? 14 : 18,
+ main
     },
     date: {
       fontSize: rf(13),
@@ -86,6 +122,16 @@ export default function HomeScreen() {
       fontFamily: "Inter_400Regular",
     },
     greeting: {
+ fix/conflict-markers
+      fontSize: isSmall ? 26 : 30,
+      fontFamily: "Inter_700Bold",
+      color: colors.foreground,
+      letterSpacing: -0.5,
+      lineHeight: isSmall ? 34 : 38,
+    },
+    subtitle: {
+      fontSize: 14,
+
       fontSize: rf(isSmall ? 26 : 30),
       fontFamily: "Inter_700Bold",
       color: colors.foreground,
@@ -94,6 +140,7 @@ export default function HomeScreen() {
     },
     subtitle: {
       fontSize: rf(14),
+ main
       color: colors.mutedForeground,
       fontFamily: "Inter_400Regular",
       marginTop: 2,
@@ -102,7 +149,11 @@ export default function HomeScreen() {
       backgroundColor: colors.card,
       borderRadius: 24,
       padding: isSmall ? 20 : 26,
+ fix/conflict-markers
+      gap: 14,
+
       gap: 12,
+ main
       ...cardShadow,
     },
     quotePill: {
@@ -122,6 +173,27 @@ export default function HomeScreen() {
       textTransform: "uppercase",
       letterSpacing: 0.8,
     },
+ fix/conflict-markers
+    quoteText: {
+      fontSize: isSmall ? 17 : 19,
+      color: colors.foreground,
+      fontFamily: "Inter_500Medium",
+      lineHeight: isSmall ? 28 : 30,
+      fontStyle: "italic",
+    },
+    quoteMark: {
+      fontSize: 48,
+      color: colors.primary,
+      fontFamily: "Inter_700Bold",
+      lineHeight: 40,
+      opacity: 0.2,
+    },
+    quoteFooter: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginTop: 2,
+
     quoteMark: {
       fontSize: rf(44),
       color: colors.primary,
@@ -135,6 +207,7 @@ export default function HomeScreen() {
       fontFamily: "Inter_500Medium",
       lineHeight: rf(isSmall ? 26 : 30),
       fontStyle: "italic",
+ main
     },
     quoteFooter: { flexDirection: "row" },
     favBtn: {
@@ -142,12 +215,26 @@ export default function HomeScreen() {
       alignItems: "center",
       gap: 7,
       paddingHorizontal: 14,
+ fix/conflict-markers
+      paddingVertical: 8,
+
       paddingVertical: 9,
+ main
       borderRadius: 100,
       backgroundColor: colors.muted,
+      flexShrink: 1,
     },
     favBtnActive: { backgroundColor: "#FCEEED" },
+ fix/conflict-markers
+    favBtnText: {
+      fontSize: 13,
+      color: colors.mutedForeground,
+      fontFamily: "Inter_500Medium",
+      flexShrink: 1,
+    },
+
     favBtnText: { fontSize: rf(13), color: colors.mutedForeground, fontFamily: "Inter_500Medium" },
+ main
     favBtnTextActive: { color: "#D94F3D" },
     moodBadge: {
       flexDirection: "row",
@@ -160,10 +247,23 @@ export default function HomeScreen() {
       alignSelf: "flex-start",
       ...softShadow,
     },
+ fix/conflict-markers
+    sectionTitle: {
+      fontSize: 17,
+      fontFamily: "Inter_700Bold",
+      color: colors.foreground,
+    },
+    sectionLink: {
+      fontSize: 13,
+      color: colors.primary,
+      fontFamily: "Inter_500Medium",
+    },
+
     moodBadgeText: { fontSize: rf(13), fontFamily: "Inter_500Medium", color: colors.primary },
     sectionTitle: { fontSize: rf(17), fontFamily: "Inter_700Bold", color: colors.foreground },
     sectionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     sectionLink: { fontSize: rf(13), color: colors.primary, fontFamily: "Inter_500Medium" },
+ main
     todayList: {
       backgroundColor: colors.card,
       borderRadius: 24,
@@ -173,22 +273,67 @@ export default function HomeScreen() {
     todayItem: {
       flexDirection: "row",
       alignItems: "center",
+ fix/conflict-markers
+      paddingHorizontal: 18,
+      paddingVertical: 15,
+
       paddingHorizontal: isSmall ? 16 : 20,
       paddingVertical: isSmall ? 13 : 15,
+ main
     },
     todayDivider: {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
     },
+ fix/conflict-markers
+    todayItemIcon: {
+      width: 42,
+      height: 42,
+      borderRadius: 13,
+
     todayIcon: {
       width: isSmall ? 38 : 44,
       height: isSmall ? 38 : 44,
       borderRadius: 12,
+ main
       alignItems: "center",
       justifyContent: "center",
       marginRight: 14,
       flexShrink: 0,
     },
+ fix/conflict-markers
+    todayItemBody: { flex: 1, gap: 2 },
+    todayItemTitle: {
+      fontSize: 14,
+      fontFamily: "Inter_600SemiBold",
+      color: colors.foreground,
+    },
+    todayItemSub: {
+      fontSize: 12,
+      fontFamily: "Inter_400Regular",
+      color: colors.mutedForeground,
+    },
+    moodBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: colors.amber,
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+      borderRadius: 100,
+      alignSelf: "flex-start",
+      ...softShadow,
+    },
+    moodBadgeText: {
+      fontSize: 13,
+      fontFamily: "Inter_500Medium",
+      color: colors.primary,
+    },
+    favPreviewCard: {
+      backgroundColor: colors.card,
+      borderRadius: 20,
+      padding: 18,
+
     todayBody: { flex: 1, gap: 2 },
     todayTitle: { fontSize: rf(14), fontFamily: "Inter_600SemiBold", color: colors.foreground },
     todaySub: { fontSize: rf(12), fontFamily: "Inter_400Regular", color: colors.mutedForeground },
@@ -196,6 +341,7 @@ export default function HomeScreen() {
       backgroundColor: colors.card,
       borderRadius: 20,
       padding: isSmall ? 16 : 20,
+ main
       ...softShadow,
     },
     favCardText: {
@@ -254,7 +400,7 @@ export default function HomeScreen() {
               size={15}
               color={isFav || saved ? "#D94F3D" : colors.mutedForeground}
             />
-            <Text style={[s.favBtnText, (isFav || saved) && s.favBtnTextActive]}>
+            <Text style={[s.favBtnText, (isFav || saved) && s.favBtnTextActive]} numberOfLines={1}>
               {saved ? "Сохранено!" : isFav ? "В избранном" : "В избранное"}
             </Text>
           </Pressable>
@@ -272,16 +418,25 @@ export default function HomeScreen() {
             <View style={[s.todayIcon, { backgroundColor: colors.rose }]}>
               <Ionicons name="pulse-outline" size={20} color="#D94F3D" />
             </View>
+ fix/conflict-markers
+            <View style={s.todayItemBody}>
+              <Text style={s.todayItemTitle}>Оценка настроения</Text>
+              <Text style={s.todayItemSub}>
+                {hasTodayMood
+                  ? `${todayCount} ${todayCount === 1 ? "запись" : todayCount < 5 ? "записи" : "записей"} сегодня`
+                  : "Как ты себя чувствуешь?"}
+
             <View style={s.todayBody}>
               <Text style={s.todayTitle} numberOfLines={1}>Оценка настроения</Text>
               <Text style={s.todaySub} numberOfLines={1}>
                 {state.mood ? "Выполнено ✓" : "Как ты себя чувствуешь?"}
+ main
               </Text>
             </View>
             <Ionicons
-              name={state.mood ? "checkmark-circle" : "chevron-forward"}
+              name={hasTodayMood ? "checkmark-circle" : "chevron-forward"}
               size={20}
-              color={state.mood ? "#5DAA7A" : colors.mutedForeground}
+              color={hasTodayMood ? "#5DAA7A" : colors.mutedForeground}
             />
           </Pressable>
 
@@ -303,6 +458,20 @@ export default function HomeScreen() {
             <Ionicons name="chevron-forward" size={20} color={colors.mutedForeground} />
           </Pressable>
 
+ fix/conflict-markers
+          {/* Diary */}
+          <Pressable
+            style={({ pressed }) => [s.todayItem, s.todayItemDivider, pressed && { opacity: 0.75 }]}
+            onPress={() => router.push("/(tabs)/calendar")}
+          >
+            <View style={[s.todayItemIcon, { backgroundColor: colors.mint }]}>
+              <Ionicons name="calendar-outline" size={20} color="#5DAA7A" />
+            </View>
+            <View style={s.todayItemBody}>
+              <Text style={s.todayItemTitle}>Календарь настроения</Text>
+              <Text style={s.todayItemSub}>
+                {hasTodayMood ? "Записи за сегодня есть ✓" : "Посмотреть историю"}
+
           <Pressable
             style={({ pressed }) => [s.todayItem, s.todayDivider, pressed && { opacity: 0.7 }]}
             onPress={() => router.push("/(tabs)/mood")}
@@ -314,12 +483,13 @@ export default function HomeScreen() {
               <Text style={s.todayTitle} numberOfLines={1}>Дневник настроения</Text>
               <Text style={s.todaySub} numberOfLines={1}>
                 {state.moodNoteSubmitted ? "Запись добавлена ✓" : "Запиши, как прошёл день"}
+ main
               </Text>
             </View>
             <Ionicons
-              name={state.moodNoteSubmitted ? "checkmark-circle" : "chevron-forward"}
+              name={hasTodayMood ? "checkmark-circle" : "chevron-forward"}
               size={20}
-              color={state.moodNoteSubmitted ? "#5DAA7A" : colors.mutedForeground}
+              color={hasTodayMood ? "#5DAA7A" : colors.mutedForeground}
             />
           </Pressable>
         </View>

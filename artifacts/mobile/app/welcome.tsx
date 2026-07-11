@@ -11,6 +11,7 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -34,6 +35,8 @@ export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
   const { rf, hPad, isSmall } = useResponsive();
   const { updateField } = useApp();
+  const { width } = useWindowDimensions();
+  const isCompact = width < 360;
   const [name, setName] = useState("");
   const [focused, setFocused] = useState(false);
   const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -68,18 +71,34 @@ export default function WelcomeScreen() {
       flex: 1,
       paddingTop: topPad + 10,
       paddingBottom: bottomPad,
+ fix/conflict-markers
+      paddingHorizontal: isCompact ? 20 : 28,
+
       paddingHorizontal: hPad,
+ main
       justifyContent: "space-between",
     },
     top: { flex: 1, justifyContent: "center", alignItems: "center", gap: 0 },
     decorRow: { flexDirection: "row", gap: isSmall ? 8 : 10, marginBottom: isSmall ? 24 : 32 },
     decorCircle: {
+ fix/conflict-markers
+      width: isCompact ? 48 : 56,
+      height: isCompact ? 48 : 56,
+      borderRadius: isCompact ? 24 : 28,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    decorEmoji: { fontSize: isCompact ? 24 : 28 },
+    logoText: {
+      fontSize: isCompact ? 42 : 52,
+
       width: isSmall ? 48 : 56, height: isSmall ? 48 : 56, borderRadius: isSmall ? 24 : 28,
       alignItems: "center", justifyContent: "center",
     },
     decorEmoji: { fontSize: isSmall ? 24 : 28 },
     logoText: {
       fontSize: rf(isSmall ? 44 : 52),
+ main
       fontFamily: "Inter_700Bold",
       color: colors.foreground,
       letterSpacing: -2,

@@ -32,6 +32,24 @@ export const FALLBACK_QUOTES = [
 
 // ─── AI notification phrases (90+ уникальных фраз) ───────────────────────────
 
+ fix/conflict-markers
+const RECENT_PHRASE_WINDOW = 7;
+
+const openings = [
+  "Ты важен. Твои чувства имеют значение.",
+  "Ты не один, и с тобой всё в порядке.",
+  "Сегодня достаточно просто быть собой.",
+  "Ты справляешься лучше, чем тебе кажется.",
+  "Каждый шаг вперёд — это победа.",
+  "Береги себя — это тоже сила.",
+  "Позволь себе просто быть сегодня.",
+  "Маленькие победы тоже считаются.",
+  "Твоё присутствие уже имеет ценность.",
+  "Ты заслуживаешь доброты — особенно от себя.",
+  "Иногда отдых — это тоже прогресс.",
+  "Каждый новый день — это новая страница.",
+];
+
 /** Категории поддерживающих сообщений */
 const NOTIFICATION_PHRASES: Record<string, string[]> = {
   support: [
@@ -137,6 +155,7 @@ const NOTIFICATION_PHRASES: Record<string, string[]> = {
     "Сегодня ты на первом месте.",
   ],
 };
+ main
 
 const ALL_NOTIFICATION_PHRASES = Object.values(NOTIFICATION_PHRASES).flat();
 
@@ -185,11 +204,43 @@ const moodMiddles = [
   "Поблагодари себя за то, что продолжаешь идти.",
   "Сегодня достаточно сделать чуть-чуть.",
   "Ты заслуживаешь доброты — особенно от себя.",
+  "Замедлись и прислушайся к себе.",
+  "Дай себе то тепло, которое отдаёшь другим.",
 ];
 
-const moodEndings = ["Warmly рядом 💛", "Ты справишься 🌿", "Береги себя ✨", "С любовью, Warmly 🍊"];
+ fix/conflict-markers
+const endings = [
+  "Warmly рядом 💛",
+  "Ты справишься 🌿",
+  "Береги себя ✨",
+  "С любовью, Warmly 🍊",
+  "Мы рядом 🌸",
+  "Всё будет хорошо 🌤",
+];
 
-const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)]!;
+
+const moodEndings = ["Warmly рядом 💛", "Ты справишься 🌿", "Береги себя ✨", "С любовью, Warmly 🍊"];
+ main
+
+export const buildAiPhrase = (): string => {
+  return `${pick(openings)} ${pick(middles)} ${pick(endings)}`;
+};
+
+ fix/conflict-markers
+export const buildUniqueAiPhrase = (recentPhrases: string[]): string => {
+  const blocked = new Set(recentPhrases.slice(-RECENT_PHRASE_WINDOW));
+  const attempts = 30;
+  for (let i = 0; i < attempts; i += 1) {
+    const candidate = buildAiPhrase();
+    if (!blocked.has(candidate)) return candidate;
+  }
+  return buildAiPhrase();
+};
+
+export const getFallbackQuote = (date: Date = new Date()): string => {
+  const index = date.getDate() % FALLBACK_QUOTES.length;
+  return FALLBACK_QUOTES[index]!;
 
 export const buildAiPhrase = (mood: MoodKey | null): string => {
   const openings = mood ? (moodOpenings[mood] ?? moodOpenings.default) : moodOpenings.default;
@@ -198,6 +249,7 @@ export const buildAiPhrase = (mood: MoodKey | null): string => {
 
 export const getFallbackQuote = (date: Date = new Date()): string => {
   return FALLBACK_QUOTES[date.getDate() % FALLBACK_QUOTES.length];
+ main
 };
 
 export const getGreeting = (name: string): string => {

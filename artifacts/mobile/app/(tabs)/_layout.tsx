@@ -20,9 +20,17 @@ function NativeTabLayout() {
         <Icon sf={{ default: "face.smiling", selected: "face.smiling.fill" }} />
         <Label>Настроение</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="forest">
+        <Icon sf={{ default: "tree", selected: "tree.fill" }} />
+        <Label>Мой лес</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="favorites">
         <Icon sf={{ default: "heart", selected: "heart.fill" }} />
         <Label>Избранное</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="calendar">
+        <Icon sf={{ default: "calendar", selected: "calendar" }} />
+        <Label>Календарь</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: "person", selected: "person.fill" }} />
@@ -50,7 +58,11 @@ function ClassicTabLayout() {
           bottom: 0,
           left: 0,
           right: 0,
-          backgroundColor: isIOS ? "transparent" : isDark ? colors.card : colors.background,
+          backgroundColor: isIOS
+            ? "transparent"
+            : isDark
+              ? colors.card
+              : colors.background,
           borderTopWidth: 1,
           borderTopColor: colors.border,
           elevation: 0,
@@ -65,7 +77,10 @@ function ClassicTabLayout() {
             />
           ) : isWeb ? (
             <View
-              style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? colors.card : colors.background }]}
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: isDark ? colors.card : colors.background },
+              ]}
             />
           ) : null,
         tabBarLabelStyle: {
@@ -100,6 +115,18 @@ function ClassicTabLayout() {
         }}
       />
       <Tabs.Screen
+        name="forest"
+        options={{
+          title: "Мой лес",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="tree" tintColor={color} size={22} />
+            ) : (
+              <Ionicons name="leaf-outline" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
         name="favorites"
         options={{
           title: "Избранное",
@@ -108,6 +135,19 @@ function ClassicTabLayout() {
               <SymbolView name="heart" tintColor={color} size={22} />
             ) : (
               <Feather name="heart" size={22} color={color} />
+            ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="calendar"
+        options={{
+          title: "Календарь",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="calendar" tintColor={color} size={22} />
+            ) : (
+              <Feather name="calendar" size={22} color={color} />
             ),
         }}
       />
