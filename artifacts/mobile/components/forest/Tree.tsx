@@ -10,7 +10,8 @@ interface Props {
 
 /**
  * Renders a single tree in the forest.
- * Sprint 1: emoji placeholder. Later sprints will replace with SVG.
+ * Sprint 2: emoji placeholder positioned by parent.
+ * Later sprints: replace with SVG illustration.
  */
 export function Tree({ tree }: Props) {
   const treeData = getTreeByMood(tree.mood);
@@ -28,7 +29,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   emoji: {
-    fontSize: 42,
-    lineHeight: 50,
+    fontSize: 40,
+    lineHeight: 48,
   },
 });

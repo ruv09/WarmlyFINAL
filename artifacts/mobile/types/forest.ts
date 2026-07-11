@@ -8,7 +8,7 @@ export interface ForestTree {
   createdAt: string;
   x: number;
   y: number;
-  type: ForestTreeType;
+  treeType: ForestTreeType;
 }
 
 export interface ForestStats {
