@@ -1,12 +1,9 @@
 /**
- * ForestContext — Sprint 2
+ * ForestContext — Sprint 4
  *
- * Manages the in-memory list of forest trees.
- * Trees are NOT mixed with mood data: this context observes moodHistory
- * length changes via useEffect and plants a new tree for every new entry
- * that appears in the current session.
- *
- * Persistence (AsyncStorage) will be wired in a later sprint.
+ * Каждая запись настроения создаёт отдельное дерево (note передаётся в дерево).
+ * Несколько деревьев в сутки поддерживаются без ограничений.
+ * Хранение (AsyncStorage) — в следующем спринте.
  */
 
 import React, {
@@ -21,21 +18,43 @@ import React, {
 import { useApp } from "@/context/AppContext";
 import type { ForestTree } from "@/types/forest";
 import type { MoodKey } from "@/utils/phrases";
-import { plantTree as makePlantTree } from "@/utils/forest";
+import {
+  plantTree as makePlantTree,
+  growTree,
+  deleteTree,
+  updateTree,
+  getTreeStatistics,
+} from "@/utils/forest";
+import type { ForestStats } from "@/types/forest";
 
 // ─── Context shape ────────────────────────────────────────────────────────────
 
 interface ForestContextType {
   trees: ForestTree[];
-  /** Manually plant a tree (used for testing / future sprints). */
-  plantTree: (mood: MoodKey) => ForestTree;
+
+  /** Вручную посадить дерево (для тестов / будущих спринтов). */
+  plantTree: (mood: MoodKey, note?: string) => ForestTree;
+
+  /** Перевести дерево на следующую стадию роста. TODO: реализовать. */
+  growTree: (tree: ForestTree) => void;
+
+  /** Удалить дерево из леса. TODO: реализовать. */
+  deleteTree: (id: string) => void;
+
+  /** Обновить поля дерева. TODO: реализовать. */
+  updateTree: (id: string, patch: Partial<Pick<ForestTree, "note" | "isFavorite">>) => void;
+
+  /** Агрегированная статистика по лесу. */
+  getTreeStatistics: () => ForestStats;
 }
 
 const ForestContext = createContext<ForestContextType>({
   trees: [],
-  plantTree: () => {
-    throw new Error("ForestProvider is not mounted");
-  },
+  plantTree:         () => { throw new Error("ForestProvider is not mounted"); },
+  growTree:          () => {},
+  deleteTree:        () => {},
+  updateTree:        () => {},
+  getTreeStatistics: () => ({ totalTrees: 0, mostCommonMood: null, oldestTree: null, newestTree: null }),
 });
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -45,9 +64,9 @@ export function ForestProvider({ children }: { children: React.ReactNode }) {
   const [trees, setTrees] = useState<ForestTree[]>([]);
 
   /**
-   * prevLengthRef tracks how many moodHistory entries we have already
-   * processed. Initialised to the current length once the app state is loaded
-   * so that existing entries don't retroactively fill the forest on mount.
+   * prevLengthRef отслеживает количество уже обработанных записей настроения.
+   * Инициализируется текущей длиной после загрузки, чтобы старые записи
+   * не создавали деревья повторно при монтировании.
    */
   const prevLengthRef = useRef<number | null>(null);
 
@@ -56,18 +75,19 @@ export function ForestProvider({ children }: { children: React.ReactNode }) {
 
     const currentLen = state.moodHistory.length;
 
-    // First time after state loads: set baseline, do not plant old entries.
+    // Первый вызов после загрузки: устанавливаем базовую линию.
     if (prevLengthRef.current === null) {
       prevLengthRef.current = currentLen;
       return;
     }
 
-    // New entries added in this session → plant one tree each.
+    // Новые записи этой сессии → одно дерево на каждую запись.
     if (currentLen > prevLengthRef.current) {
       const newEntries = state.moodHistory.slice(prevLengthRef.current);
       setTrees((prev) => [
         ...prev,
-        ...newEntries.map((entry) => makePlantTree(entry.mood)),
+        // Передаём заметку, чтобы дерево хранило свою историю.
+        ...newEntries.map((entry) => makePlantTree(entry.mood, entry.note || undefined)),
       ]);
     }
 
@@ -75,14 +95,51 @@ export function ForestProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, state.moodHistory.length]);
 
-  const plantTreeManual = useCallback((mood: MoodKey): ForestTree => {
-    const tree = makePlantTree(mood);
+  // ─── Context methods ───────────────────────────────────────────────────────
+
+  const plantTreeManual = useCallback((mood: MoodKey, note?: string): ForestTree => {
+    const tree = makePlantTree(mood, note);
     setTrees((prev) => [...prev, tree]);
     return tree;
   }, []);
 
+  const growTreeHandler = useCallback((tree: ForestTree) => {
+    // TODO: обновить стадию роста дерева в массиве
+    const grown = growTree(tree);
+    setTrees((prev) => prev.map((t) => (t.id === grown.id ? grown : t)));
+  }, []);
+
+  const deleteTreeHandler = useCallback((id: string) => {
+    // TODO: мягкое удаление или подтверждение
+    setTrees((prev) => deleteTree(prev, id));
+  }, []);
+
+  const updateTreeHandler = useCallback(
+    (id: string, patch: Partial<Pick<ForestTree, "note" | "isFavorite">>) => {
+      // TODO: применить patch и обновить lastUpdated
+      setTrees((prev) =>
+        prev.map((t) => (t.id === id ? updateTree(t, patch) : t)),
+      );
+    },
+    [],
+  );
+
+  const getStatsHandler = useCallback(
+    (): ForestStats => getTreeStatistics(trees),
+    [trees],
+  );
+
   return (
-    <ForestContext.Provider value={{ trees, plantTree: plantTreeManual }}>
+    <ForestContext.Provider
+      value={{
+        trees,
+        plantTree:         plantTreeManual,
+        growTree:          growTreeHandler,
+        deleteTree:        deleteTreeHandler,
+        updateTree:        updateTreeHandler,
+        getTreeStatistics: getStatsHandler,
+      }}
+    >
       {children}
     </ForestContext.Provider>
   );
