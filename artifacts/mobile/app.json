@@ -33,15 +33,10 @@
         }
       ],
       "expo-font",
- fix/conflict-markers
-
-      "expo-web-browser",
- main
       [
         "expo-notifications",
         {
           "icon": "./assets/images/icon.png",
- fix/conflict-markers
           "color": "#F8A172"
         }
       ],
@@ -51,11 +46,6 @@
         {
           "position": "absolute",
           "visible": false
-
-          "color": "#C4855A",
-          "defaultChannel": "warmly-daily",
-          "sounds": []
- main
         }
       ]
     ],
