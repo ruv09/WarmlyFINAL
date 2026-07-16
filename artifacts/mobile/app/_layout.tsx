@@ -16,6 +16,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider, useApp } from "@/context/AppContext";
+import { ForestProvider } from "@/context/ForestContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { scheduleDailyNotifications } from "@/services/notifications";
 
@@ -82,11 +83,13 @@ export default function RootLayout() {
         <ErrorBoundary>
           <QueryClientProvider client={queryClient}>
             <AppProvider>
-              <GestureHandlerRootView style={{ flex: 1 }}>
-                <KeyboardProvider>
-                  <RootLayoutNav />
-                </KeyboardProvider>
-              </GestureHandlerRootView>
+              <ForestProvider>
+                <GestureHandlerRootView style={{ flex: 1 }}>
+                  <KeyboardProvider>
+                    <RootLayoutNav />
+                  </KeyboardProvider>
+                </GestureHandlerRootView>
+              </ForestProvider>
             </AppProvider>
           </QueryClientProvider>
         </ErrorBoundary>

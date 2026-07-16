@@ -13,15 +13,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
- fix/conflict-markers
 import { FALLBACK_QUOTES } from "@/utils/phrases";
 
 function pickRandom<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!;
 }
-
-import { pickNotificationPhrase } from "@/utils/phrases";
- main
 
 const CHANNEL_ID = "warmly-daily";
 const SCHEDULED_KEY = "warmly_notif_scheduled_ids";
@@ -110,11 +106,7 @@ export async function scheduleDailyNotifications(enabled: boolean): Promise<void
         const id = await Notifications.scheduleNotificationAsync({
           content: {
             title: "Warmly 💛",
- fix/conflict-markers
             body: pickRandom(FALLBACK_QUOTES),
-
-            body: pickNotificationPhrase(),
- main
             sound: undefined,
             ...(Platform.OS === "android" && { channelId: CHANNEL_ID }),
           },
@@ -135,11 +127,7 @@ export async function scheduleDailyNotifications(enabled: boolean): Promise<void
         const id = await Notifications.scheduleNotificationAsync({
           content: {
             title: "Warmly 💛",
- fix/conflict-markers
             body: pickRandom(FALLBACK_QUOTES),
-
-            body: pickNotificationPhrase(),
- main
             sound: undefined,
             ...(Platform.OS === "android" && { channelId: CHANNEL_ID }),
           },

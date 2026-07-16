@@ -1,24 +1,22 @@
 import React from "react";
-import { Platform, ScrollView, StyleSheet, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ForestHeader } from "@/components/forest/ForestHeader";
 import { ForestScene } from "@/components/forest/ForestScene";
+import { useForest } from "@/context/ForestContext";
 import { useColors } from "@/hooks/useColors";
-import { getForest } from "@/utils/forest";
 
 /**
  * ForestScreen — Мой лес
  *
- * Sprint 1: architecture scaffold only.
- * The screen is composed entirely of components; no logic lives here.
- * Data is currently a stub; persistence will be wired in a later sprint.
+ * Sprint 2: receives live tree list from ForestContext.
+ * No logic lives here — screen is composed entirely of components.
  */
 export default function ForestScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-
-  const trees = getForest();
+  const { trees } = useForest();
 
   const topPad = Platform.OS === "web" ? 60 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 90;
@@ -33,6 +31,12 @@ export default function ForestScreen() {
         showsVerticalScrollIndicator={false}
       >
         <ForestHeader totalTrees={trees.length} />
+
+        {/* Debug counter — will be removed in a later sprint */}
+        <Text style={[styles.debug, { color: colors.mutedForeground }]}>
+          Деревьев: {trees.length}
+        </Text>
+
         <ForestScene trees={trees} />
       </ScrollView>
     </View>
@@ -45,5 +49,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 22,
     gap: 20,
+  },
+  debug: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    marginTop: -12,
   },
 });
