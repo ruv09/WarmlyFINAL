@@ -1,9 +1,9 @@
 import { TreePosition } from "../../types";
 
-const MIN_DISTANCE = 46;
-const MAX_DISTANCE_FROM_ANCHOR = 130;
-const MAX_ATTEMPTS_PER_ANCHOR = 24;
-const MAX_ANCHOR_ROUNDS = 12;
+const MIN_DISTANCE = 52;
+const MAX_DISTANCE_FROM_ANCHOR = 150;
+const MAX_ATTEMPTS_PER_ANCHOR = 28;
+const MAX_ANCHOR_ROUNDS = 14;
 
 function distance(a: TreePosition, b: TreePosition): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
@@ -52,9 +52,10 @@ export function placeNextTree(existingPositions: TreePosition[]): TreePosition {
     for (let attempt = 0; attempt < MAX_ATTEMPTS_PER_ANCHOR; attempt++) {
       const angle = Math.random() * Math.PI * 2;
       const dist = MIN_DISTANCE + Math.random() * (MAX_DISTANCE_FROM_ANCHOR - MIN_DISTANCE);
+      // Чуть шире по горизонтали — лес читается как территория, а не столбик.
       const candidate: TreePosition = {
-        x: anchor.x + Math.cos(angle) * dist,
-        y: anchor.y + Math.sin(angle) * dist,
+        x: anchor.x + Math.cos(angle) * dist * 1.15,
+        y: anchor.y + Math.sin(angle) * dist * 0.9,
       };
       if (isFarEnoughFromAll(candidate, existingPositions)) {
         return candidate;
