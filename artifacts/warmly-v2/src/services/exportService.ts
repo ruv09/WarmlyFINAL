@@ -1,4 +1,4 @@
-import * as FileSystem from "expo-file-system";
+import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { Entry } from "../types";
 import { buildExportPayload, serializeExportPayload } from "../utils/export";
@@ -18,15 +18,16 @@ export async function exportEntries(entries: Entry[]): Promise<void> {
   const payload = buildExportPayload(entries);
   const json = serializeExportPayload(payload);
 
-  const fileUri = `${FileSystem.cacheDirectory}warmly-export-${Date.now()}.json`;
-  await FileSystem.writeAsStringAsync(fileUri, json, { encoding: FileSystem.EncodingType.UTF8 });
+  const file = new File(Paths.cache, `warmly-export-${Date.now()}.json`);
+  file.create();
+  file.write(json);
 
   const isAvailable = await Sharing.isAvailableAsync();
   if (!isAvailable) {
     throw new Error("Sharing is not available on this device");
   }
 
-  await Sharing.shareAsync(fileUri, {
+  await Sharing.shareAsync(file.uri, {
     mimeType: "application/json",
     dialogTitle: "Экспорт данных Warmly",
   });

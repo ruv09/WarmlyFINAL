@@ -14,6 +14,8 @@ import { NotificationSettings } from "../types";
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: false,
     shouldSetBadge: false,
   }),
@@ -64,9 +66,9 @@ async function scheduleDaily(id: string, time: string, title: string, body: stri
       ...(Platform.OS === "android" ? { channelId: CHANNEL_ID } : {}),
     },
     trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
       hour,
       minute,
-      repeats: true,
       ...(Platform.OS === "android" ? { channelId: CHANNEL_ID } : {}),
     },
   });

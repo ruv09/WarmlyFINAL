@@ -15,17 +15,18 @@ pnpm typecheck
 pnpm start
 ```
 
-Пакет специально вне root pnpm workspace: Expo 51 / `@types/react@18`
-не смешиваются с React 19 у остальных артефактов.
+Пакет специально вне root pnpm workspace: Expo 54 / React 19.1
+ставится через `--ignore-workspace`, чтобы не смешивать lockfile
+с `artifacts/mobile` и root catalog.
 
-**Наследие:** `artifacts/mobile` — предыдущая Expo 54-версия. Оставлена для
+**Наследие:** `artifacts/mobile` — предыдущая Expo-версия. Оставлена для
 сравнения; новый функционал добавляйте в `warmly-v2`.
 
 ## Структура репозитория
 
 ```text
-artifacts/warmly-v2/       основное приложение (Expo 51, standalone)
-artifacts/mobile/          наследие Warmly v1 (Expo 54)
+artifacts/warmly-v2/       основное приложение (Expo 54, standalone)
+artifacts/mobile/          наследие Warmly v1
 artifacts/mockup-sandbox/  Vite UI sandbox
 artifacts/api-server/      Express API (healthcheck / scaffolding)
 lib/                       OpenAPI, клиенты, схема БД

@@ -36,8 +36,8 @@ minimumReleaseAgeExclude:
 
 packages:
   # Explicit list (not artifacts/*): artifacts/warmly-v2 is a standalone
-  # Expo 51 app with @types/react@18 and must not share the React 19 type
-  # graph used by mobile / mockup-sandbox.
+  # Expo 54 app installed with --ignore-workspace so its lockfile/deps
+  # do not collide with mobile / mockup-sandbox.
   - artifacts/api-server
   - artifacts/mobile
   - artifacts/mockup-sandbox

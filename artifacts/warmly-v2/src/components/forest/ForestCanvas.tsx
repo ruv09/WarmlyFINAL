@@ -4,12 +4,12 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Easing,
   cancelAnimation,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
+import { runOnJS } from "react-native-worklets";
 import { Tree } from "../../types";
 import { buildTreeSpatialIndex, getVisibleTrees } from "../../utils/viewportCulling";
 import { ForestAtmosphere } from "./ForestAtmosphere";
