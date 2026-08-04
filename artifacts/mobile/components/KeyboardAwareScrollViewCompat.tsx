@@ -1,3 +1,4 @@
+import React from "react";
 import {
   KeyboardAwareScrollView,
   KeyboardAwareScrollViewProps,
@@ -18,12 +19,14 @@ export function KeyboardAwareScrollViewCompat({
       </ScrollView>
     );
   }
+  // Fragment narrows React 19's ReactNode (includes bigint) to what
+  // react-native-keyboard-controller's typings accept as children.
   return (
     <KeyboardAwareScrollView
       keyboardShouldPersistTaps={keyboardShouldPersistTaps}
       {...props}
     >
-      {children}
+      <React.Fragment>{children}</React.Fragment>
     </KeyboardAwareScrollView>
   );
 }
