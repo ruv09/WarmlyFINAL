@@ -35,7 +35,12 @@ minimumReleaseAgeExclude:
   - stripe-replit-sync
 
 packages:
-  - artifacts/*
+  # Explicit list (not artifacts/*): artifacts/warmly-v2 is a standalone
+  # Expo 51 app with @types/react@18 and must not share the React 19 type
+  # graph used by mobile / mockup-sandbox.
+  - artifacts/api-server
+  - artifacts/mobile
+  - artifacts/mockup-sandbox
   - lib/*
   - lib/integrations/*
   - scripts

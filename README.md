@@ -15,7 +15,8 @@ Warmly is a gentle mood-support app. Its core idea is to help a person check in 
 ## Repository layout
 
 ```text
-artifacts/mobile/          Expo / React Native app
+artifacts/mobile/          Expo / React Native app (Warmly v1, Expo 54)
+artifacts/warmly-v2/       Merged Warmly 2.0 app (Expo 51; standalone install)
 artifacts/mockup-sandbox/  Vite UI sandbox and reusable UI components
 artifacts/api-server/      Express API server artifact
 lib/api-spec/              OpenAPI contract
@@ -23,6 +24,19 @@ lib/api-client-react/      generated React API client
 lib/api-zod/               generated Zod API helpers
 lib/db/                    database schema package
 scripts/                   workspace utility scripts
+```
+
+### Warmly v2 (merged)
+
+`artifacts/warmly-v2` is the architecture of Warmly2.0 plus product strengths
+from v1 (onboarding, daily phrases, favorites, haptics, notification channel).
+It is **not** part of the root pnpm workspace — install it separately:
+
+```bash
+cd artifacts/warmly-v2
+pnpm install --ignore-workspace
+pnpm typecheck
+pnpm start
 ```
 
 ## Important mobile files
