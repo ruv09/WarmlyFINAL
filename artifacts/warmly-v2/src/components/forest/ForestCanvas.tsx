@@ -1,17 +1,29 @@
-import React, { useMemo, useState } from "react";
-import { Pressable, useWindowDimensions, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { AccessibilityInfo, useWindowDimensions, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { runOnJS, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
+import Animated, {
+  Easing,
+  cancelAnimation,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 import { Tree } from "../../types";
-import { TreeIllustration } from "../tree";
-import { getVisibleTrees } from "../../utils/viewportCulling";
+import { buildTreeSpatialIndex, getVisibleTrees } from "../../utils/viewportCulling";
+import { ForestAtmosphere } from "./ForestAtmosphere";
+import { ForestTreeNode, TREE_SIZE, swayPhaseForTree } from "./ForestTreeNode";
+import { ForestWorld } from "./ForestWorld";
 
-const MIN_SCALE = 0.5;
-const MAX_SCALE = 3;
-const TREE_SIZE = 64;
-/** Запас вокруг видимой области при отсечении невидимых деревьев —
- *  дерево не должно резко выскакивать в кадре при панорамировании. */
-const CULLING_MARGIN = 120;
+const MIN_SCALE = 0.45;
+const MAX_SCALE = 2.8;
+/** Запас вокруг видимой области — дерево не выскакивает резко при пане. */
+const CULLING_MARGIN = 140;
+const WORLD_SIZE = 2800;
+/** Новое дерево считается «только что посаженным» для анимации появления. */
+const NEW_TREE_MS = 12_000;
+const VIEWPORT_THROTTLE_MS = 72;
 
 interface ForestCanvasProps {
   trees: Tree[];
@@ -19,16 +31,8 @@ interface ForestCanvasProps {
 }
 
 /**
- * Взаимодействие пользователя (жесты) и визуальное отображение
- * (иллюстрации деревьев) — разные ответственности внутри одного
- * компонента, разделённые по требованию ТЗ через явные подфункции
- * и вынесенную виртуализацию (utils/viewportCulling.ts) и генерацию
- * (services/forest/*), а не смешаны в одну процедуру.
- *
- * Жесты — на react-native-gesture-handler + react-native-reanimated
- * (UI-поток), а не на встроенном Animated: непрерывный мультитач
- * (пан + пинч-зум) на JS-потоке даёт заметные рывки, что прямо
- * запрещено ТЗ. См. обоснование выбора в /FOREST.md.
+ * Интерактивная карта леса: атмосфера, мир, жесты пан/зум, виртуализация.
+ * Жесты на UI-потоке (RNGH + Reanimated) — без рывков JS-потока.
  */
 export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -39,37 +43,68 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   const savedTranslateX = useSharedValue(0);
   const savedTranslateY = useSharedValue(0);
   const savedScale = useSharedValue(1);
+  const sway = useSharedValue(0);
 
   const [viewport, setViewport] = useState({ x: 0, y: 0, scale: 1 });
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const lastReportRef = useRef(0);
 
-  function reportViewport(x: number, y: number, s: number) {
+  useEffect(() => {
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (mounted) setReduceMotion(enabled);
+    });
+    const sub = AccessibilityInfo.addEventListener?.("reduceMotionChanged", setReduceMotion);
+    return () => {
+      mounted = false;
+      sub?.remove?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      cancelAnimation(sway);
+      sway.value = 0;
+      return;
+    }
+    sway.value = 0;
+    sway.value = withRepeat(
+      withTiming(Math.PI * 2, { duration: 5600, easing: Easing.linear }),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(sway);
+  }, [reduceMotion, sway]);
+
+  function reportViewport(x: number, y: number, s: number, force = false) {
+    const now = Date.now();
+    if (!force && now - lastReportRef.current < VIEWPORT_THROTTLE_MS) return;
+    lastReportRef.current = now;
     setViewport({ x, y, scale: s });
   }
 
-  // Сообщаем viewport во время жеста (не только в onEnd), иначе при
-  // панорамировании дальше CULLING_MARGIN пользователь тянет пустое поле.
   const panGesture = Gesture.Pan()
-    .minDistance(10)
+    .minDistance(8)
     .onUpdate((event) => {
       translateX.value = savedTranslateX.value + event.translationX;
       translateY.value = savedTranslateY.value + event.translationY;
-      runOnJS(reportViewport)(translateX.value, translateY.value, scale.value);
+      runOnJS(reportViewport)(translateX.value, translateY.value, scale.value, false);
     })
     .onEnd(() => {
       savedTranslateX.value = translateX.value;
       savedTranslateY.value = translateY.value;
-      runOnJS(reportViewport)(translateX.value, translateY.value, scale.value);
+      runOnJS(reportViewport)(translateX.value, translateY.value, scale.value, true);
     });
 
   const pinchGesture = Gesture.Pinch()
     .onUpdate((event) => {
       const next = savedScale.value * event.scale;
       scale.value = Math.min(MAX_SCALE, Math.max(MIN_SCALE, next));
-      runOnJS(reportViewport)(translateX.value, translateY.value, scale.value);
+      runOnJS(reportViewport)(translateX.value, translateY.value, scale.value, false);
     })
     .onEnd(() => {
       savedScale.value = scale.value;
-      runOnJS(reportViewport)(translateX.value, translateY.value, scale.value);
+      runOnJS(reportViewport)(translateX.value, translateY.value, scale.value, true);
     });
 
   const composedGesture = Gesture.Simultaneous(panGesture, pinchGesture);
@@ -82,31 +117,66 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
     ],
   }));
 
+  const spatialIndex = useMemo(() => buildTreeSpatialIndex(trees), [trees]);
+
   const visibleTrees = useMemo(
-    () => getVisibleTrees(trees, viewport, screenWidth, screenHeight, CULLING_MARGIN),
-    [trees, viewport, screenWidth, screenHeight],
+    () =>
+      getVisibleTrees(trees, viewport, screenWidth, screenHeight, CULLING_MARGIN, spatialIndex),
+    [trees, viewport, screenWidth, screenHeight, spatialIndex],
   );
 
+  const newestCreatedAt = useMemo(() => {
+    let max = 0;
+    for (const tree of trees) {
+      const t = Date.parse(tree.createdAt);
+      if (t > max) max = t;
+    }
+    return max;
+  }, [trees]);
+
+  const now = Date.now();
+
   return (
-    <GestureDetector gesture={composedGesture}>
-      <View style={{ flex: 1, overflow: "hidden" }}>
+    <View style={{ flex: 1, overflow: "hidden" }}>
+      <ForestAtmosphere width={screenWidth} height={screenHeight} />
+
+      <GestureDetector gesture={composedGesture}>
         <Animated.View style={[{ flex: 1 }, animatedStyle]}>
-          {visibleTrees.map((tree) => (
-            <Pressable
-              key={tree.id}
-              onPress={() => onSelectTree(tree)}
-              hitSlop={8}
-              style={{
-                position: "absolute",
-                left: screenWidth / 2 + tree.position.x - TREE_SIZE / 2,
-                top: screenHeight / 2 + tree.position.y - TREE_SIZE / 2,
-              }}
-            >
-              <TreeIllustration tree={tree} size={TREE_SIZE} />
-            </Pressable>
-          ))}
+          <View
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              left: screenWidth / 2 - WORLD_SIZE / 2,
+              top: screenHeight / 2 - WORLD_SIZE / 2,
+              width: WORLD_SIZE,
+              height: WORLD_SIZE,
+            }}
+          >
+            <ForestWorld width={WORLD_SIZE} height={WORLD_SIZE} />
+          </View>
+
+          {visibleTrees.map((tree) => {
+            const created = Date.parse(tree.createdAt);
+            const isNew =
+              !reduceMotion &&
+              created === newestCreatedAt &&
+              now - created < NEW_TREE_MS;
+
+            return (
+              <ForestTreeNode
+                key={tree.id}
+                tree={tree}
+                left={screenWidth / 2 + tree.position.x - TREE_SIZE / 2}
+                top={screenHeight / 2 + tree.position.y - TREE_SIZE / 2}
+                sway={sway}
+                phase={swayPhaseForTree(tree.id)}
+                isNew={isNew}
+                onPress={onSelectTree}
+              />
+            );
+          })}
         </Animated.View>
-      </View>
-    </GestureDetector>
+      </GestureDetector>
+    </View>
   );
 }

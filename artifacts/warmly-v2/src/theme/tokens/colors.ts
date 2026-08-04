@@ -23,24 +23,26 @@ export interface ColorPalette {
   overlay: string;
 }
 
+/** Светлая тема — «Природный уют»: тёплое утро, овсяный фон. */
 export const lightColors: ColorPalette = {
-  background: "#F6F1E6",
-  surface: "#FFFDF8",
+  background: "#F3EBDC",
+  surface: "#FFF9F0",
   textPrimary: "#3A332B",
   textSecondary: "#8B8275",
   accent: "#7FA06F",
   accentWarm: "#D98B6F",
-  border: "#EBE3D3",
-  overlay: "#FFFDF8CC",
+  border: "#E5DBC8",
+  overlay: "#FFF9F0D9",
 };
 
+/** Тёмная тема — «Тёплый вечер»: сумерки, не инверсия светлой. */
 export const darkColors: ColorPalette = {
-  background: "#211E30",
-  surface: "#2B2740",
+  background: "#1C1828",
+  surface: "#2A243C",
   textPrimary: "#F0EAE2",
   textSecondary: "#B3A9C4",
   accent: "#8FB996",
   accentWarm: "#E8B975",
-  border: "#3A3550",
-  overlay: "#211E30CC",
+  border: "#3A3350",
+  overlay: "#1C1828D9",
 };
