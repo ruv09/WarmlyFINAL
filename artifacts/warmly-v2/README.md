@@ -5,7 +5,7 @@
 
 Пакет **намеренно вне root pnpm workspace**: Expo 54 / React 19.1
 ставится через `pnpm install --ignore-workspace`, чтобы не смешивать
-lockfile с `artifacts/mobile` и root catalog.
+lockfile с корневым workspace.
 
 ## Что здесь
 

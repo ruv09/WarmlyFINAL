@@ -1,1 +1,3 @@
-- [GitHub auto-push](github-autopush.md) — после каждого изменения автоматически пушить в fix/conflict-markers без явного запроса
+- Основное приложение: `artifacts/warmly-v2` (Expo SDK 54, standalone)
+- Установка: `cd artifacts/warmly-v2 && pnpm install --ignore-workspace`
+- Legacy mobile / mockup-sandbox / api-server / attached_assets удалены

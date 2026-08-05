@@ -3,10 +3,9 @@
 Warmly — спокойное приложение поддержки настроения: чек-ины, личный лес,
 поддерживающие фразы и мягкие напоминания.
 
-## Какое приложение запускать
+## Запуск
 
-**Основное (рекомендуется):** `artifacts/warmly-v2` — архитектура Warmly 2.0
-плюс продуктовые сильные стороны v1 (онбординг, мысль дня, избранное, хаптика).
+Основное (и единственное) приложение: `artifacts/warmly-v2` (Expo SDK 54).
 
 ```bash
 cd artifacts/warmly-v2
@@ -15,44 +14,24 @@ pnpm typecheck
 pnpm start
 ```
 
-Пакет специально вне root pnpm workspace: Expo 54 / React 19.1
-ставится через `--ignore-workspace`, чтобы не смешивать lockfile
-с `artifacts/mobile` и root catalog.
+Пакет специально вне root pnpm workspace: ставится через
+`--ignore-workspace`, чтобы Expo-зависимости не смешивались с корневым
+lockfile.
 
-**Наследие:** `artifacts/mobile` — предыдущая Expo-версия. Оставлена для
-сравнения; новый функционал добавляйте в `warmly-v2`.
-
-## Структура репозитория
-
-```text
-artifacts/warmly-v2/       основное приложение (Expo 54, standalone)
-artifacts/mobile/          наследие Warmly v1
-artifacts/mockup-sandbox/  Vite UI sandbox
-artifacts/api-server/      Express API (healthcheck / scaffolding)
-lib/                       OpenAPI, клиенты, схема БД
-scripts/                   утилиты воркспейса
-```
-
-## Корневой workspace
+Из корня репозитория:
 
 ```bash
 pnpm install
-pnpm run typecheck              # api-server, mobile, mockup-sandbox, libs
-pnpm run typecheck:warmly-v2    # основное приложение
+pnpm run typecheck   # typecheck warmly-v2
+pnpm start           # expo start в warmly-v2
 ```
 
-Mockup sandbox требует `PORT` и `BASE_PATH`:
+## Структура
 
-```bash
-cd artifacts/mockup-sandbox
-PORT=5173 BASE_PATH=/ pnpm run dev
+```text
+artifacts/warmly-v2/   приложение Warmly 2.0 (Expo 54)
+scripts/post-merge.sh  post-merge hook для Replit
 ```
 
-## Проверки
-
-Главный автоматический контроль — TypeScript. Юнит-тестов в корне нет.
-
-```bash
-pnpm run typecheck
-pnpm run typecheck:warmly-v2
-```
+Архитектурные заметки — в `artifacts/warmly-v2/*.md`
+(FOREST, DATA_LAYER, THEME, …).
