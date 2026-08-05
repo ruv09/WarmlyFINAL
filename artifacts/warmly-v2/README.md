@@ -3,8 +3,9 @@
 Рабочее приложение на базе архитектуры [Warmly2.0](https://github.com/ruv09/Warmly2.0)
 с сильными сторонами продукта из Warmly v1 (этот монорепозиторий).
 
-Пакет **намеренно вне root pnpm workspace**: Expo 51 + `@types/react@18`
-не должны смешиваться с React 19-типами `artifacts/mobile`.
+Пакет **намеренно вне root pnpm workspace**: Expo 54 / React 19.1
+ставится через `pnpm install --ignore-workspace`, чтобы не смешивать
+lockfile с `artifacts/mobile` и root catalog.
 
 ## Что здесь
 
