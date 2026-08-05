@@ -1,7 +1,7 @@
 import { TreePosition } from "../../types";
 
-const MIN_DISTANCE = 52;
-const MAX_DISTANCE_FROM_ANCHOR = 150;
+const MIN_DISTANCE = 58;
+const MAX_DISTANCE_FROM_ANCHOR = 160;
 const MAX_ATTEMPTS_PER_ANCHOR = 28;
 const MAX_ANCHOR_ROUNDS = 14;
 

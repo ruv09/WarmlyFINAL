@@ -13,7 +13,8 @@ import { runOnJS } from "react-native-worklets";
 import { Tree } from "../../types";
 import { buildTreeSpatialIndex, getVisibleTrees } from "../../utils/viewportCulling";
 import { ForestAtmosphere } from "./ForestAtmosphere";
-import { ForestTreeNode, TREE_SIZE, swayPhaseForTree } from "./ForestTreeNode";
+import { ForestTreeNode, TREE_HEIGHT, swayPhaseForTree } from "./ForestTreeNode";
+import { getSpeciesVisual } from "../../constants/treeSpecies";
 import { ForestWorld } from "./ForestWorld";
 
 const MIN_SCALE = 0.45;
@@ -161,13 +162,17 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
               !reduceMotion &&
               created === newestCreatedAt &&
               now - created < NEW_TREE_MS;
+            const heightScale = getSpeciesVisual(tree.species).heightScale;
+            const height = Math.round(TREE_HEIGHT * heightScale);
+            const width = Math.round((height * 100) / 130);
 
+            // Точка позиции — основание дерева (травка), смотрим на него в фас.
             return (
               <ForestTreeNode
                 key={tree.id}
                 tree={tree}
-                left={screenWidth / 2 + tree.position.x - TREE_SIZE / 2}
-                top={screenHeight / 2 + tree.position.y - TREE_SIZE / 2}
+                left={screenWidth / 2 + tree.position.x - width / 2}
+                top={screenHeight / 2 + tree.position.y - height}
                 sway={sway}
                 phase={swayPhaseForTree(tree.id)}
                 isNew={isNew}
