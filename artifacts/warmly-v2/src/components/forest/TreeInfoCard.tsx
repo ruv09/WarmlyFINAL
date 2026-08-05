@@ -65,7 +65,7 @@ export function TreeInfoCard({ visible, tree, entry, onClose }: TreeInfoCardProp
               />
 
               <View style={{ alignItems: "center", marginBottom: theme.spacing("sm") }}>
-                <TreeIllustration tree={tree} size={84} />
+                <TreeIllustration tree={tree} size={112} />
                 <Text
                   style={{
                     marginTop: theme.spacing("xs"),
