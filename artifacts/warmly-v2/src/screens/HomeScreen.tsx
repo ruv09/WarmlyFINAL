@@ -173,7 +173,7 @@ export function HomeScreen() {
           </Text>
           <View style={{ flexDirection: "row", gap: theme.spacing("sm") }}>
             {previewTrees.map((tree) => (
-              <TreeIllustration key={tree.id} tree={tree} size={72} />
+              <TreeIllustration key={tree.id} tree={tree} size={80} />
             ))}
           </View>
         </Pressable>

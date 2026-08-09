@@ -1,31 +1,25 @@
 /**
- * Виды деревьев Warmly 2.0 — 12 силуэтов из арт-гайда.
- * Без стадий роста и без сезонных вариантов: каждая запись сразу
- * даёт полноценное дерево. См. constants/treeSpecies.ts.
+ * Виды деревьев Warmly 2.0 — PNG-иллюстрации в фас.
+ * Без стадий роста и сезонных вариантов.
  */
 export type TreeSpecies =
   | "oak"
   | "birch"
+  | "pine"
+  | "spruce"
   | "maple"
   | "linden"
-  | "pine"
-  | "apple"
   | "sakura"
+  | "apple"
+  | "bush"
   | "willow"
-  | "rowan"
-  | "poplar"
-  | "chestnut"
-  | "seabuckthorn";
+  | "rowan";
 
-/** Координаты в условных единицах мира леса (не пиксели экрана). */
 export interface TreePosition {
   x: number;
   y: number;
 }
 
-/**
- * Дерево неизменно после создания — без роста и сезонов.
- */
 export interface Tree {
   id: string;
   species: TreeSpecies;

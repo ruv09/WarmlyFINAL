@@ -163,16 +163,15 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
               created === newestCreatedAt &&
               now - created < NEW_TREE_MS;
             const heightScale = getSpeciesVisual(tree.species).heightScale;
-            const height = Math.round(TREE_HEIGHT * heightScale);
-            const width = Math.round((height * 100) / 130);
+            const side = Math.round(TREE_HEIGHT * heightScale);
 
-            // Точка позиции — основание дерева (травка), смотрим на него в фас.
+            // Точка позиции — основание дерева; смотрим в фас.
             return (
               <ForestTreeNode
                 key={tree.id}
                 tree={tree}
-                left={screenWidth / 2 + tree.position.x - width / 2}
-                top={screenHeight / 2 + tree.position.y - height}
+                left={screenWidth / 2 + tree.position.x - side / 2}
+                top={screenHeight / 2 + tree.position.y - side}
                 sway={sway}
                 phase={swayPhaseForTree(tree.id)}
                 isNew={isNew}
