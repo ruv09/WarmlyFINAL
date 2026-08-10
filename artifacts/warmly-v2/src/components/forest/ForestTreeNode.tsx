@@ -8,20 +8,19 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { Tree } from "../../types";
-import { getSpeciesVisual } from "../../constants/treeSpecies";
 import { TreeIllustration } from "../tree";
 import { SPRING_CONFIGS } from "../../theme/tokens/animation";
 
-/** Средний размер дерева на карте (гайд: medium 120). */
-export const TREE_HEIGHT = 120;
-export const TREE_WIDTH = 120;
-/** @deprecated используйте TREE_HEIGHT */
+/** Крупный размер как на концептах (не мелкие иконки карты). */
+export const TREE_HEIGHT = 168;
+export const TREE_WIDTH = 168;
 export const TREE_SIZE = TREE_HEIGHT;
 
 interface ForestTreeNodeProps {
   tree: Tree;
   left: number;
   top: number;
+  size: number;
   sway: SharedValue<number>;
   phase: number;
   isNew: boolean;
@@ -32,14 +31,13 @@ export const ForestTreeNode = memo(function ForestTreeNode({
   tree,
   left,
   top,
+  size,
   sway,
   phase,
   isNew,
   onPress,
 }: ForestTreeNodeProps) {
   const appear = useSharedValue(isNew ? 0 : 1);
-  const heightScale = getSpeciesVisual(tree.species).heightScale;
-  const side = Math.round(TREE_HEIGHT * heightScale);
 
   useEffect(() => {
     if (!isNew) {
@@ -58,14 +56,14 @@ export const ForestTreeNode = memo(function ForestTreeNode({
   }, [appear, isNew, tree.id]);
 
   const animatedStyle = useAnimatedStyle(() => {
-    const angle = Math.sin(sway.value + phase) * 1.2;
-    const scale = 0.72 + appear.value * 0.28;
+    const angle = Math.sin(sway.value + phase) * 1.15;
+    const scale = 0.75 + appear.value * 0.25;
     return {
       opacity: appear.value,
       transform: [
-        { translateY: side / 2 },
+        { translateY: size / 2 },
         { rotate: `${angle}deg` },
-        { translateY: -side / 2 },
+        { translateY: -size / 2 },
         { scale },
       ],
     };
@@ -74,17 +72,11 @@ export const ForestTreeNode = memo(function ForestTreeNode({
   return (
     <Pressable
       onPress={() => onPress(tree)}
-      hitSlop={10}
-      style={{
-        position: "absolute",
-        left,
-        top,
-        width: side,
-        height: side,
-      }}
+      hitSlop={12}
+      style={{ position: "absolute", left, top, width: size, height: size }}
     >
       <Animated.View style={animatedStyle}>
-        <TreeIllustration tree={tree} size={TREE_HEIGHT} />
+        <TreeIllustration tree={tree} size={size} />
       </Animated.View>
     </Pressable>
   );
@@ -92,8 +84,6 @@ export const ForestTreeNode = memo(function ForestTreeNode({
 
 export function swayPhaseForTree(treeId: string): number {
   let hash = 0;
-  for (let i = 0; i < treeId.length; i++) {
-    hash = (hash * 33 + treeId.charCodeAt(i)) >>> 0;
-  }
+  for (let i = 0; i < treeId.length; i++) hash = (hash * 33 + treeId.charCodeAt(i)) >>> 0;
   return (hash % 628) / 100;
 }

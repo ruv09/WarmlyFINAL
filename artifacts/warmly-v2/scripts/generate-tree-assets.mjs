@@ -1,6 +1,7 @@
 /**
- * Генерирует PNG-иллюстрации деревьев (512×512, прозрачный фон)
- * в мягком пастельном стиле гайда Warmly — вид в фас.
+ * PNG деревьев Warmly — вид в фас, как на концептах 1/2/4/5.
+ * Светлые: мягкий минимализм + природный уют.
+ * Тёмные (*-dark.png): сказочный лес / тёплый вечер с огоньками.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -9,260 +10,335 @@ import sharp from "sharp";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(__dirname, "../assets/trees");
-const SIZE = 512;
+const SIZE = 768;
 
 fs.mkdirSync(OUT, { recursive: true });
 
-function svg(body) {
+function doc(body) {
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 100 100">
-  <defs>
-    <radialGradient id="g" cx="40%" cy="35%" r="60%">
-      <stop offset="0%" stop-color="var(--hi)" stop-opacity="0.95"/>
-      <stop offset="55%" stop-color="var(--mid)" stop-opacity="0.92"/>
-      <stop offset="100%" stop-color="var(--sh)" stop-opacity="0.9"/>
-    </radialGradient>
-    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#FFE9B8" stop-opacity="0.45"/>
-      <stop offset="60%" stop-color="#FFE9B8" stop-opacity="0.12"/>
-      <stop offset="100%" stop-color="#FFE9B8" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  ${body}
+<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 100 120">
+${body}
 </svg>`;
 }
 
-function base(grass = "#A8C89A", grassDeep = "#7FA06F") {
+function ground(isDark) {
+  const g = isDark ? "#3A4A38" : "#B8C89A";
+  const gd = isDark ? "#2A3828" : "#8FA872";
   return `
-  <ellipse cx="50" cy="92" rx="22" ry="3.5" fill="#000000" opacity="0.08"/>
-  <ellipse cx="50" cy="88" rx="26" ry="10" fill="url(#glow)"/>
-  <ellipse cx="50" cy="91" rx="24" ry="5" fill="${grass}" opacity="0.92"/>
-  <ellipse cx="42" cy="90" rx="7" ry="2.5" fill="${grassDeep}" opacity="0.45"/>
-  <ellipse cx="60" cy="91" rx="6" ry="2.2" fill="${grassDeep}" opacity="0.4"/>
-  <circle cx="36" cy="89.5" r="0.9" fill="#F0D48A"/>
-  <circle cx="66" cy="89.5" r="0.8" fill="#F8F4EC"/>`;
+  <ellipse cx="50" cy="112" rx="28" ry="4" fill="#000" opacity="${isDark ? 0.25 : 0.1}"/>
+  ${isDark ? `<ellipse cx="50" cy="108" rx="32" ry="12" fill="#E8B975" opacity="0.22"/>` : `<ellipse cx="50" cy="108" rx="30" ry="10" fill="#FFE9B8" opacity="0.28"/>`}
+  <ellipse cx="50" cy="110" rx="26" ry="5.5" fill="${g}"/>
+  <ellipse cx="40" cy="109" rx="8" ry="3" fill="${gd}" opacity="0.5"/>
+  <ellipse cx="62" cy="110" rx="7" ry="2.5" fill="${gd}" opacity="0.4"/>
+  ${isDark ? "" : `<circle cx="34" cy="108.5" r="1" fill="#E8C878"/><circle cx="68" cy="108.5" r="0.9" fill="#F4EDE4"/>`}`;
 }
 
-function trunk(x, y, w, h, color, rx = 2) {
-  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${color}"/>`;
+function lights(seed = 1) {
+  const pts = [];
+  let s = seed * 9973;
+  for (let i = 0; i < 8; i++) {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    const x = 22 + (s % 56);
+    const y = 18 + ((s >> 7) % 58);
+    pts.push(`
+      <circle cx="${x}" cy="${y}" r="2.8" fill="#E8B975" opacity="0.22"/>
+      <circle cx="${x}" cy="${y}" r="1.15" fill="#FFF6E0" opacity="0.95"/>`);
+  }
+  pts.push(`
+    <circle cx="38" cy="104" r="2.4" fill="#E8B975" opacity="0.25"/>
+    <circle cx="38" cy="104" r="1" fill="#FFF6E0"/>
+    <circle cx="62" cy="105" r="2.2" fill="#E8B975" opacity="0.22"/>
+    <circle cx="62" cy="105" r="0.95" fill="#FFF6E0"/>`);
+  return pts.join("\n");
 }
 
-const trees = {
-  oak: () => {
-    const mid = "#7FA06F";
-    const hi = "#A8C89A";
-    const sh = "#5D7D5A";
-    const tr = "#8B5A3C";
-    return svg(`
-      <style>:root{--hi:${hi};--mid:${mid};--sh:${sh}}</style>
-      ${base()}
-      ${trunk(46, 58, 8, 32, tr, 3)}
-      <path d="M46 86 Q40 90 36 91" stroke="${tr}" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.7"/>
-      <path d="M54 86 Q60 90 64 91" stroke="${tr}" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.7"/>
-      <circle cx="32" cy="48" r="16" fill="${sh}" opacity="0.4"/>
-      <circle cx="68" cy="46" r="15" fill="${sh}" opacity="0.35"/>
-      <circle cx="34" cy="44" r="15" fill="url(#g)"/>
-      <circle cx="66" cy="42" r="14" fill="url(#g)"/>
-      <circle cx="50" cy="30" r="17" fill="url(#g)"/>
-      <circle cx="44" cy="46" r="12" fill="${mid}" opacity="0.85"/>
-      <circle cx="58" cy="44" r="11" fill="${mid}" opacity="0.8"/>
-      <ellipse cx="40" cy="32" rx="8" ry="6" fill="${hi}" opacity="0.45"/>
+function trunk(x, y, w, h, color, roots = true) {
+  let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${w * 0.35}" fill="${color}"/>`;
+  if (roots) {
+    s += `<path d="M${x} ${y + h - 2} Q${x - 6} ${y + h + 2} ${x - 10} ${y + h + 3}" stroke="${color}" stroke-width="${w * 0.45}" stroke-linecap="round" fill="none" opacity="0.75"/>`;
+    s += `<path d="M${x + w} ${y + h - 2} Q${x + w + 6} ${y + h + 2} ${x + w + 10} ${y + h + 3}" stroke="${color}" stroke-width="${w * 0.45}" stroke-linecap="round" fill="none" opacity="0.75"/>`;
+  }
+  return s;
+}
+
+/** Мягкие комки кроны — главный приём концептов 1 и 2. */
+function clumps(parts, mid, hi, sh) {
+  return parts
+    .map(
+      ([cx, cy, r, kind]) => {
+        const fill = kind === "hi" ? hi : kind === "sh" ? sh : mid;
+        const op = kind === "sh" ? 0.55 : kind === "hi" ? 0.5 : 0.95;
+        return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" opacity="${op}"/>`;
+      },
+    )
+    .join("\n");
+}
+
+const species = {
+  oak: (d) => {
+    const mid = d ? "#4E6848" : "#7FA06F";
+    const hi = d ? "#7A9A70" : "#A8C89A";
+    const sh = d ? "#334232" : "#5D7D5A";
+    const tr = d ? "#5A4030" : "#8B5A3C";
+    return doc(`
+      ${ground(d)}
+      ${trunk(46, 62, 8, 44, tr)}
+      ${clumps(
+        [
+          [30, 52, 18, "sh"],
+          [70, 50, 17, "sh"],
+          [34, 46, 18, "mid"],
+          [66, 44, 17, "mid"],
+          [50, 28, 20, "mid"],
+          [42, 48, 14, "mid"],
+          [58, 46, 13, "mid"],
+          [40, 32, 9, "hi"],
+        ],
+        mid,
+        hi,
+        sh,
+      )}
+      ${d ? lights(1) : ""}
     `);
   },
 
-  birch: () => {
-    const mid = "#A8C89A";
-    const hi = "#D4E8C4";
-    const sh = "#7FA06F";
-    const tr = "#F8F8F8";
-    return svg(`
-      <style>:root{--hi:${hi};--mid:${mid};--sh:${sh}}</style>
-      ${base()}
-      ${trunk(47.5, 42, 5, 48, tr, 2.2)}
-      <rect x="48.5" y="52" width="1.1" height="5" rx="0.4" fill="#4A4038" opacity="0.35"/>
-      <rect x="50.2" y="66" width="1.1" height="4.5" rx="0.4" fill="#4A4038" opacity="0.3"/>
-      <rect x="48.8" y="78" width="1" height="4" rx="0.4" fill="#4A4038" opacity="0.28"/>
-      <circle cx="50" cy="26" r="13" fill="url(#g)"/>
-      <circle cx="40" cy="36" r="11" fill="url(#g)"/>
-      <circle cx="60" cy="38" r="11" fill="url(#g)"/>
-      <circle cx="50" cy="44" r="11" fill="${mid}" opacity="0.88"/>
-      <ellipse cx="44" cy="28" rx="6" ry="8" fill="${hi}" opacity="0.4"/>
+  birch: (d) => {
+    const mid = d ? "#6A7A58" : "#B5D0A0";
+    const hi = d ? "#9AAA74" : "#E0F0C8";
+    const sh = d ? "#4A5840" : "#8FB87A";
+    const tr = d ? "#E0D8CC" : "#F8F8F8";
+    return doc(`
+      ${ground(d)}
+      ${trunk(47.5, 48, 5, 58, tr)}
+      <rect x="48.5" y="58" width="1.2" height="6" rx="0.4" fill="#4A4038" opacity="0.35"/>
+      <rect x="50.2" y="74" width="1.2" height="5" rx="0.4" fill="#4A4038" opacity="0.3"/>
+      <rect x="48.8" y="90" width="1.1" height="5" rx="0.4" fill="#4A4038" opacity="0.28"/>
+      ${clumps(
+        [
+          [50, 26, 14, "mid"],
+          [39, 38, 12, "mid"],
+          [61, 40, 12, "mid"],
+          [50, 48, 12, "mid"],
+          [44, 30, 7, "hi"],
+        ],
+        mid,
+        hi,
+        sh,
+      )}
+      ${d ? lights(2) : ""}
     `);
   },
 
-  pine: () => {
-    const mid = "#5D7D5A";
-    const hi = "#7FA06F";
-    const sh = "#3E5A3C";
-    const tr = "#8B5A3C";
-    return svg(`
-      <style>:root{--hi:${hi};--mid:${mid};--sh:${sh}}</style>
-      ${base()}
-      ${trunk(47.5, 58, 5, 32, tr, 2)}
-      <path d="M50 14 L62 36 L38 36 Z" fill="${sh}" opacity="0.5"/>
-      <path d="M50 16 L60 36 L40 36 Z" fill="url(#g)"/>
-      <path d="M50 28 L66 52 L34 52 Z" fill="url(#g)" opacity="0.95"/>
-      <path d="M50 42 L70 70 L30 70 Z" fill="${mid}" opacity="0.92"/>
-      <path d="M50 20 L55 30 L45 30 Z" fill="${hi}" opacity="0.4"/>
+  pine: (d) => {
+    const mid = d ? "#3A5544" : "#5D7D5A";
+    const hi = d ? "#5A7A64" : "#8FB996";
+    const sh = d ? "#283C30" : "#3E5A3C";
+    const tr = d ? "#6A4830" : "#A06740";
+    return doc(`
+      ${ground(d)}
+      ${trunk(47.5, 64, 5, 42, tr, false)}
+      <path d="M50 12 L64 38 L36 38 Z" fill="${sh}" opacity="0.55"/>
+      <path d="M50 14 L62 38 L38 38 Z" fill="${mid}"/>
+      <path d="M50 30 L68 58 L32 58 Z" fill="${hi}" opacity="0.85"/>
+      <path d="M50 30 L66 58 L34 58 Z" fill="${mid}"/>
+      <path d="M50 48 L72 80 L28 80 Z" fill="${sh}" opacity="0.9"/>
+      <path d="M50 48 L70 80 L30 80 Z" fill="${mid}" opacity="0.95"/>
+      <path d="M50 18 L56 32 L44 32 Z" fill="${hi}" opacity="0.45"/>
+      ${d ? lights(3) : ""}
     `);
   },
 
-  spruce: () => {
-    const mid = "#4A6A48";
-    const hi = "#6A8A64";
-    const sh = "#2E4A30";
-    const tr = "#6A4A34";
-    return svg(`
-      <style>:root{--hi:${hi};--mid:${mid};--sh:${sh}}</style>
-      ${base()}
-      ${trunk(47.5, 66, 5, 24, tr, 2)}
-      <path d="M50 12 L60 32 L40 32 Z" fill="${sh}" opacity="0.55"/>
-      <path d="M50 14 L58 32 L42 32 Z" fill="url(#g)"/>
-      <path d="M50 26 L64 48 L36 48 Z" fill="url(#g)"/>
-      <path d="M50 40 L68 62 L32 62 Z" fill="${mid}" opacity="0.95"/>
-      <path d="M50 52 L72 78 L28 78 Z" fill="${sh}" opacity="0.9"/>
-      <path d="M50 16 L54 26 L46 26 Z" fill="${hi}" opacity="0.35"/>
+  spruce: (d) => {
+    const mid = d ? "#2A4234" : "#4A6A48";
+    const hi = d ? "#4A6354" : "#6A8A64";
+    const sh = d ? "#1A2C24" : "#2E4A30";
+    const tr = d ? "#3E3228" : "#6A4A34";
+    return doc(`
+      ${ground(d)}
+      ${trunk(47.5, 72, 5, 34, tr, false)}
+      <path d="M50 10 L60 30 L40 30 Z" fill="${sh}" opacity="0.6"/>
+      <path d="M50 12 L58 30 L42 30 Z" fill="${mid}"/>
+      <path d="M50 24 L64 48 L36 48 Z" fill="${mid}"/>
+      <path d="M50 40 L68 66 L32 66 Z" fill="${hi}" opacity="0.85"/>
+      <path d="M50 40 L66 66 L34 66 Z" fill="${mid}"/>
+      <path d="M50 56 L74 88 L26 88 Z" fill="${sh}" opacity="0.92"/>
+      <path d="M50 56 L72 88 L28 88 Z" fill="${mid}" opacity="0.95"/>
+      ${d ? lights(4) : ""}
     `);
   },
 
-  maple: () => {
-    const mid = "#E8A23D";
-    const hi = "#F4C878";
-    const sh = "#C07828";
-    const tr = "#8B5A3C";
-    return svg(`
-      <style>:root{--hi:${hi};--mid:${mid};--sh:${sh}}</style>
-      ${base()}
-      ${trunk(46.5, 56, 7, 34, tr, 2.8)}
-      <path d="M50 18 C62 22 74 34 72 46 C78 50 74 60 64 62 C60 72 40 72 36 62 C24 60 22 48 28 42 C24 30 38 16 50 18 Z" fill="url(#g)"/>
-      <circle cx="38" cy="40" r="10" fill="${hi}" opacity="0.35"/>
-      <circle cx="60" cy="44" r="9" fill="${sh}" opacity="0.3"/>
+  maple: (d) => {
+    const mid = d ? "#A06038" : "#E8A23D";
+    const hi = d ? "#C88858" : "#F4C878";
+    const sh = d ? "#6A4024" : "#C07828";
+    const tr = d ? "#4A3828" : "#8B5A3C";
+    return doc(`
+      ${ground(d)}
+      ${trunk(46.5, 60, 7, 46, tr)}
+      <path d="M50 16 C64 20 78 34 74 48 C82 52 76 64 64 66 C60 78 40 78 36 66 C22 64 18 50 26 44 C20 30 36 14 50 16 Z" fill="${sh}" opacity="0.45"/>
+      <path d="M50 18 C62 22 74 34 72 46 C78 50 74 60 64 62 C60 72 40 72 36 62 C24 60 22 48 28 42 C24 30 38 16 50 18 Z" fill="${mid}"/>
+      <circle cx="38" cy="40" r="11" fill="${hi}" opacity="0.4"/>
+      <circle cx="60" cy="44" r="10" fill="${sh}" opacity="0.3"/>
+      ${d ? lights(5) : ""}
     `);
   },
 
-  linden: () => {
-    const mid = "#8FB996";
-    const hi = "#C5E0B8";
-    const sh = "#5D7D5A";
-    const tr = "#8B5A3C";
-    return svg(`
-      <style>:root{--hi:${hi};--mid:${mid};--sh:${sh}}</style>
-      ${base()}
-      ${trunk(46.5, 56, 7, 34, tr, 2.8)}
-      <ellipse cx="50" cy="40" rx="28" ry="26" fill="${mid}" opacity="0.18"/>
-      <circle cx="50" cy="40" r="26" fill="url(#g)"/>
-      <circle cx="50" cy="38" r="20" fill="${mid}" opacity="0.5"/>
-      <ellipse cx="40" cy="32" rx="10" ry="8" fill="${hi}" opacity="0.42"/>
+  linden: (d) => {
+    const mid = d ? "#5A7A48" : "#8FB996";
+    const hi = d ? "#88A868" : "#C5E0B8";
+    const sh = d ? "#3E5432" : "#5D7D5A";
+    const tr = d ? "#5A4634" : "#8B5A3C";
+    return doc(`
+      ${ground(d)}
+      ${trunk(46.5, 60, 7, 46, tr)}
+      <circle cx="50" cy="42" r="30" fill="${sh}" opacity="0.25"/>
+      <circle cx="50" cy="40" r="28" fill="${mid}"/>
+      <circle cx="50" cy="38" r="22" fill="${mid}" opacity="0.55"/>
+      <ellipse cx="40" cy="32" rx="11" ry="8" fill="${hi}" opacity="0.45"/>
+      ${d ? lights(6) : ""}
     `);
   },
 
-  cherry: () => {
-    const mid = "#F4B3C2";
-    const hi = "#FFE0E8";
-    const sh = "#E090A8";
-    const tr = "#8B5A3C";
-    return svg(`
-      <style>:root{--hi:${hi};--mid:${mid};--sh:${sh}}</style>
-      ${base()}
-      ${trunk(46.5, 54, 7, 36, tr, 2.8)}
-      <circle cx="32" cy="44" r="14" fill="${sh}" opacity="0.3"/>
-      <circle cx="68" cy="42" r="13" fill="${sh}" opacity="0.28"/>
-      <circle cx="34" cy="40" r="14" fill="url(#g)"/>
-      <circle cx="66" cy="38" r="13" fill="url(#g)"/>
-      <circle cx="50" cy="26" r="15" fill="url(#g)"/>
-      <circle cx="44" cy="42" r="11" fill="${hi}" opacity="0.4"/>
-      <circle cx="28" cy="66" r="1.3" fill="${hi}" opacity="0.7"/>
-      <circle cx="72" cy="62" r="1.1" fill="${hi}" opacity="0.65"/>
-      <circle cx="36" cy="76" r="1" fill="${mid}" opacity="0.55"/>
+  cherry: (d) => {
+    const mid = d ? "#8A5A6A" : "#F4B3C2";
+    const hi = d ? "#B88898" : "#FFE0E8";
+    const sh = d ? "#5A3E4C" : "#E090A8";
+    const tr = d ? "#3E3228" : "#8B5A3C";
+    return doc(`
+      ${ground(d)}
+      ${trunk(46.5, 58, 7, 48, tr)}
+      ${clumps(
+        [
+          [30, 48, 16, "sh"],
+          [70, 46, 15, "sh"],
+          [34, 42, 16, "mid"],
+          [66, 40, 15, "mid"],
+          [50, 26, 17, "mid"],
+          [44, 44, 12, "hi"],
+        ],
+        mid,
+        hi,
+        sh,
+      )}
+      <circle cx="28" cy="72" r="1.4" fill="${hi}" opacity="0.7"/>
+      <circle cx="74" cy="68" r="1.2" fill="${hi}" opacity="0.65"/>
+      <circle cx="34" cy="84" r="1.1" fill="${mid}" opacity="0.55"/>
+      ${d ? lights(7) : ""}
     `);
   },
 
-  apple: () => {
-    const mid = "#7FA06F";
-    const hi = "#A8C89A";
-    const sh = "#5D7D5A";
-    const tr = "#8B5A3C";
-    const fruit = "#D4544A";
-    return svg(`
-      <style>:root{--hi:${hi};--mid:${mid};--sh:${sh}}</style>
-      ${base()}
-      ${trunk(46.5, 56, 7, 34, tr, 2.8)}
-      <circle cx="34" cy="44" r="14" fill="url(#g)"/>
-      <circle cx="66" cy="42" r="13" fill="url(#g)"/>
-      <circle cx="50" cy="30" r="15" fill="url(#g)"/>
-      <circle cx="50" cy="44" r="11" fill="${mid}" opacity="0.8"/>
-      <circle cx="38" cy="42" r="2" fill="${fruit}"/>
-      <circle cx="56" cy="34" r="2" fill="${fruit}"/>
-      <circle cx="64" cy="48" r="1.8" fill="${fruit}"/>
-      <circle cx="46" cy="50" r="1.8" fill="${fruit}"/>
-      <circle cx="52" cy="42" r="1.6" fill="${fruit}" opacity="0.9"/>
+  apple: (d) => {
+    const mid = d ? "#4E6848" : "#7FA06F";
+    const hi = d ? "#7A9A6C" : "#A8C89A";
+    const sh = d ? "#364832" : "#5D7D5A";
+    const tr = d ? "#4A3828" : "#8B5A3C";
+    const fruit = d ? "#E88870" : "#D4544A";
+    return doc(`
+      ${ground(d)}
+      ${trunk(46.5, 60, 7, 46, tr)}
+      ${clumps(
+        [
+          [34, 48, 16, "mid"],
+          [66, 46, 15, "mid"],
+          [50, 30, 17, "mid"],
+          [50, 46, 12, "mid"],
+          [40, 34, 8, "hi"],
+        ],
+        mid,
+        hi,
+        sh,
+      )}
+      <circle cx="38" cy="44" r="2.2" fill="${fruit}"/>
+      <circle cx="56" cy="36" r="2.2" fill="${fruit}"/>
+      <circle cx="64" cy="50" r="2" fill="${fruit}"/>
+      <circle cx="46" cy="52" r="2" fill="${fruit}"/>
+      ${d ? lights(8) : ""}
     `);
   },
 
-  bush: () => {
-    const mid = "#7FA06F";
-    const hi = "#A8C89A";
-    const sh = "#5D7D5A";
-    return svg(`
-      <style>:root{--hi:${hi};--mid:${mid};--sh:${sh}}</style>
-      ${base("#A8C89A", "#7FA06F")}
-      <circle cx="34" cy="68" r="14" fill="${sh}" opacity="0.35"/>
-      <circle cx="66" cy="68" r="14" fill="${sh}" opacity="0.35"/>
-      <circle cx="36" cy="64" r="14" fill="url(#g)"/>
-      <circle cx="64" cy="64" r="14" fill="url(#g)"/>
-      <circle cx="50" cy="58" r="16" fill="url(#g)"/>
-      <circle cx="50" cy="68" r="12" fill="${mid}" opacity="0.85"/>
-      <ellipse cx="42" cy="58" rx="8" ry="5" fill="${hi}" opacity="0.4"/>
+  bush: (d) => {
+    const mid = d ? "#4E6848" : "#7FA06F";
+    const hi = d ? "#7A9A6C" : "#A8C89A";
+    const sh = d ? "#364832" : "#5D7D5A";
+    return doc(`
+      ${ground(d)}
+      ${clumps(
+        [
+          [32, 78, 16, "sh"],
+          [68, 78, 16, "sh"],
+          [36, 72, 16, "mid"],
+          [64, 72, 16, "mid"],
+          [50, 64, 18, "mid"],
+          [50, 76, 13, "mid"],
+          [42, 66, 8, "hi"],
+        ],
+        mid,
+        hi,
+        sh,
+      )}
+      ${d ? lights(9) : ""}
     `);
   },
 
-  willow: () => {
-    const mid = "#8FB996";
-    const hi = "#C5E0B8";
-    const sh = "#5D7D5A";
-    const tr = "#8B5A3C";
-    return svg(`
-      <style>:root{--hi:${hi};--mid:${mid};--sh:${sh}}</style>
-      ${base()}
-      ${trunk(46.5, 44, 7, 46, tr, 2.8)}
-      <circle cx="50" cy="28" r="15" fill="url(#g)"/>
-      <ellipse cx="30" cy="52" rx="9" ry="24" fill="${mid}" opacity="0.78"/>
-      <ellipse cx="70" cy="54" rx="9" ry="26" fill="${mid}" opacity="0.78"/>
-      <ellipse cx="38" cy="60" rx="7" ry="22" fill="${sh}" opacity="0.45"/>
-      <ellipse cx="62" cy="62" rx="7" ry="24" fill="${sh}" opacity="0.4"/>
-      <ellipse cx="50" cy="66" rx="6" ry="22" fill="${mid}" opacity="0.6"/>
-      <ellipse cx="44" cy="24" rx="7" ry="5" fill="${hi}" opacity="0.4"/>
+  willow: (d) => {
+    const mid = d ? "#5A6A50" : "#8FB996";
+    const hi = d ? "#849A74" : "#C5E0B8";
+    const sh = d ? "#3E4A38" : "#5D7D5A";
+    const tr = d ? "#5A4634" : "#8B5A3C";
+    return doc(`
+      ${ground(d)}
+      ${trunk(46.5, 48, 7, 58, tr)}
+      <circle cx="50" cy="28" r="16" fill="${mid}"/>
+      <ellipse cx="28" cy="58" rx="10" ry="30" fill="${mid}" opacity="0.8"/>
+      <ellipse cx="72" cy="60" rx="10" ry="32" fill="${mid}" opacity="0.8"/>
+      <ellipse cx="38" cy="68" rx="8" ry="28" fill="${sh}" opacity="0.5"/>
+      <ellipse cx="62" cy="70" rx="8" ry="30" fill="${sh}" opacity="0.45"/>
+      <ellipse cx="50" cy="74" rx="7" ry="28" fill="${mid}" opacity="0.65"/>
+      <ellipse cx="44" cy="24" rx="8" ry="6" fill="${hi}" opacity="0.4"/>
+      ${d ? lights(10) : ""}
     `);
   },
 
-  rowan: () => {
-    const mid = "#7FA06F";
-    const hi = "#A8C89A";
-    const sh = "#5D7D5A";
-    const tr = "#8B5A3C";
-    const berry = "#D4544A";
-    return svg(`
-      <style>:root{--hi:${hi};--mid:${mid};--sh:${sh}}</style>
-      ${base()}
-      ${trunk(46.5, 54, 7, 36, tr, 2.8)}
-      <circle cx="36" cy="44" r="13" fill="url(#g)"/>
-      <circle cx="64" cy="42" r="12" fill="url(#g)"/>
-      <circle cx="50" cy="30" r="14" fill="url(#g)"/>
-      <circle cx="50" cy="44" r="10" fill="${mid}" opacity="0.8"/>
-      <circle cx="40" cy="46" r="1.8" fill="${berry}"/>
-      <circle cx="44" cy="50" r="1.5" fill="${berry}"/>
-      <circle cx="58" cy="40" r="1.7" fill="${berry}"/>
-      <circle cx="62" cy="46" r="1.5" fill="${berry}"/>
-      <circle cx="50" cy="48" r="1.6" fill="${berry}"/>
+  rowan: (d) => {
+    const mid = d ? "#4E6448" : "#7FA06F";
+    const hi = d ? "#7A8E68" : "#A8C89A";
+    const sh = d ? "#364432" : "#5D7D5A";
+    const tr = d ? "#5A4634" : "#8B5A3C";
+    const berry = d ? "#E87858" : "#D4544A";
+    return doc(`
+      ${ground(d)}
+      ${trunk(46.5, 58, 7, 48, tr)}
+      ${clumps(
+        [
+          [34, 46, 14, "mid"],
+          [66, 44, 13, "mid"],
+          [50, 30, 15, "mid"],
+          [50, 46, 11, "mid"],
+          [40, 34, 7, "hi"],
+        ],
+        mid,
+        hi,
+        sh,
+      )}
+      <circle cx="40" cy="48" r="2.1" fill="${berry}"/>
+      <circle cx="44" cy="52" r="1.8" fill="${berry}"/>
+      <circle cx="58" cy="40" r="2" fill="${berry}"/>
+      <circle cx="62" cy="46" r="1.8" fill="${berry}"/>
+      <circle cx="50" cy="50" r="1.9" fill="${berry}"/>
+      ${d ? lights(11) : ""}
     `);
   },
 };
 
-for (const [name, build] of Object.entries(trees)) {
-  const out = path.join(OUT, `${name}.png`);
-  await sharp(Buffer.from(build())).png({ compressionLevel: 9 }).toFile(out);
-  const kb = (fs.statSync(out).size / 1024).toFixed(1);
-  console.log(`wrote ${name}.png (${kb} KB)`);
+for (const [name, build] of Object.entries(species)) {
+  for (const dark of [false, true]) {
+    const file = dark ? `${name}-dark.png` : `${name}.png`;
+    const out = path.join(OUT, file);
+    await sharp(Buffer.from(build(dark)))
+      .resize(SIZE, SIZE)
+      .png({ compressionLevel: 9 })
+      .toFile(out);
+    console.log(file, `${(fs.statSync(out).size / 1024).toFixed(1)}KB`);
+  }
 }
-
-console.log("done", OUT);
+console.log("ok", OUT);

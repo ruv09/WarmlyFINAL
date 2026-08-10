@@ -8,8 +8,7 @@ import { Tree } from "../types";
 import { pluralRu } from "../utils";
 
 /**
- * Лес на весь экран — главный визуальный и эмоциональный экран Warmly.
- * Хром минимален: заголовок и счётчик поверх карты, без карточек-героев.
+ * Экран «Лес» — как на концептах: заголовок, крупный счётчик, пейзаж в фас.
  */
 export function ForestScreen() {
   const theme = useTheme();
@@ -21,28 +20,18 @@ export function ForestScreen() {
     ? entries.find((entry) => entry.treeId === selectedTree.id)
     : undefined;
 
-  const countLabel = pluralRu(total, "дерево", "дерева", "деревьев");
+  const plantedLabel = pluralRu(total, "дерево посажено", "дерева посажено", "деревьев посажено");
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ForestCanvas trees={isLoading ? [] : trees} onSelectTree={setSelectedTree} />
 
       <SafeAreaView edges={["top", "left", "right"]} style={styles.chrome} pointerEvents="box-none">
-        <View
-          style={[
-            styles.header,
-            {
-              backgroundColor: theme.colors.overlay,
-              borderRadius: theme.radius.lg,
-              borderColor: theme.colors.border,
-            },
-          ]}
-          pointerEvents="none"
-        >
+        <View style={styles.headerBlock} pointerEvents="none">
           <Text
             style={{
-              fontSize: theme.typography.sizes.title,
-              fontWeight: theme.typography.weights.semibold,
+              fontSize: theme.typography.sizes.largeTitle,
+              fontWeight: theme.typography.weights.bold,
               color: theme.colors.textPrimary,
             }}
           >
@@ -55,7 +44,26 @@ export function ForestScreen() {
               color: theme.colors.textSecondary,
             }}
           >
-            {total > 0 ? `${total} ${countLabel}` : "твоё пространство заботы"}
+            твоё пространство заботы
+          </Text>
+          <Text
+            style={{
+              marginTop: theme.spacing("md"),
+              fontSize: 44,
+              lineHeight: 48,
+              fontWeight: theme.typography.weights.bold,
+              color: theme.colors.textPrimary,
+            }}
+          >
+            {total}
+          </Text>
+          <Text
+            style={{
+              fontSize: theme.typography.sizes.caption,
+              color: theme.colors.textSecondary,
+            }}
+          >
+            {plantedLabel}
           </Text>
         </View>
       </SafeAreaView>
@@ -96,14 +104,11 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 16,
-    paddingTop: 4,
+    paddingHorizontal: 20,
+    paddingTop: 8,
   },
-  header: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: StyleSheet.hairlineWidth,
+  headerBlock: {
+    alignSelf: "stretch",
   },
   empty: {
     ...StyleSheet.absoluteFillObject,

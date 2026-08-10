@@ -1,31 +1,32 @@
 import React, { memo } from "react";
 import { Image, StyleSheet, View } from "react-native";
 import { Tree } from "../../types";
-import { getSpeciesVisual } from "../../constants/treeSpecies";
+import { getTreeImage, getSpeciesVisual } from "../../constants/treeSpecies";
+import { useTheme } from "../../theme";
 
 interface TreeIllustrationProps {
   tree: Tree;
-  /** Сторона квадрата иллюстрации (гайд: 80 / 120 / 160). */
   size?: number;
-  /** Сохранено для совместимости вызовов; свечение уже в PNG. */
   showLights?: boolean;
 }
 
 /**
- * Дерево в фас — PNG из assets/trees/, без SVG-«коронок сверху».
- * Стиль: мягкий минимализм, пастель, прозрачный фон.
+ * Дерево в фас — PNG из assets/trees.
+ * Светлая тема: концепты 1–2; тёмная: 4–5 (отдельные ассеты с огоньками).
  */
 export const TreeIllustration = memo(function TreeIllustration({
   tree,
-  size = 120,
+  size = 160,
 }: TreeIllustrationProps) {
+  const theme = useTheme();
+  const isDark = theme.mode === "dark";
   const visual = getSpeciesVisual(tree.species);
   const side = Math.round(size * visual.heightScale);
 
   return (
     <View style={[styles.treeContainer, { width: side, height: side }]}>
       <Image
-        source={visual.image}
+        source={getTreeImage(tree.species, isDark)}
         style={{ width: side, height: side }}
         resizeMode="contain"
         accessibilityLabel={visual.labelRu}

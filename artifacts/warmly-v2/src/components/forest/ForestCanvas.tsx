@@ -15,14 +15,10 @@ import { buildTreeSpatialIndex, getVisibleTrees } from "../../utils/viewportCull
 import { ForestAtmosphere } from "./ForestAtmosphere";
 import { ForestTreeNode, TREE_HEIGHT, swayPhaseForTree } from "./ForestTreeNode";
 import { getSpeciesVisual } from "../../constants/treeSpecies";
-import { ForestWorld } from "./ForestWorld";
 
-const MIN_SCALE = 0.45;
-const MAX_SCALE = 2.8;
-/** Запас вокруг видимой области — дерево не выскакивает резко при пане. */
-const CULLING_MARGIN = 140;
-const WORLD_SIZE = 2800;
-/** Новое дерево считается «только что посаженным» для анимации появления. */
+const MIN_SCALE = 0.7;
+const MAX_SCALE = 1.8;
+const CULLING_MARGIN = 180;
 const NEW_TREE_MS = 12_000;
 const VIEWPORT_THROTTLE_MS = 72;
 
@@ -32,11 +28,12 @@ interface ForestCanvasProps {
 }
 
 /**
- * Интерактивная карта леса: атмосфера, мир, жесты пан/зум, виртуализация.
- * Жесты на UI-потоке (RNGH + Reanimated) — без рывков JS-потока.
+ * Пейзаж леса в фас (как на концептах): деревья стоят на линии горизонта.
+ * Пан по горизонтали + лёгкий зум; вертикаль почти не уводит «в карту сверху».
  */
 export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const groundY = screenHeight * 0.62;
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -87,8 +84,9 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   const panGesture = Gesture.Pan()
     .minDistance(8)
     .onUpdate((event) => {
+      // В основном горизонтальный обзор леса.
       translateX.value = savedTranslateX.value + event.translationX;
-      translateY.value = savedTranslateY.value + event.translationY;
+      translateY.value = savedTranslateY.value + event.translationY * 0.35;
       runOnJS(reportViewport)(translateX.value, translateY.value, scale.value, false);
     })
     .onEnd(() => {
@@ -121,8 +119,7 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   const spatialIndex = useMemo(() => buildTreeSpatialIndex(trees), [trees]);
 
   const visibleTrees = useMemo(
-    () =>
-      getVisibleTrees(trees, viewport, screenWidth, screenHeight, CULLING_MARGIN, spatialIndex),
+    () => getVisibleTrees(trees, viewport, screenWidth, screenHeight, CULLING_MARGIN, spatialIndex),
     [trees, viewport, screenWidth, screenHeight, spatialIndex],
   );
 
@@ -143,35 +140,26 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
 
       <GestureDetector gesture={composedGesture}>
         <Animated.View style={[{ flex: 1 }, animatedStyle]}>
-          <View
-            pointerEvents="none"
-            style={{
-              position: "absolute",
-              left: screenWidth / 2 - WORLD_SIZE / 2,
-              top: screenHeight / 2 - WORLD_SIZE / 2,
-              width: WORLD_SIZE,
-              height: WORLD_SIZE,
-            }}
-          >
-            <ForestWorld width={WORLD_SIZE} height={WORLD_SIZE} />
-          </View>
-
           {visibleTrees.map((tree) => {
             const created = Date.parse(tree.createdAt);
             const isNew =
-              !reduceMotion &&
-              created === newestCreatedAt &&
-              now - created < NEW_TREE_MS;
-            const heightScale = getSpeciesVisual(tree.species).heightScale;
-            const side = Math.round(TREE_HEIGHT * heightScale);
+              !reduceMotion && created === newestCreatedAt && now - created < NEW_TREE_MS;
 
-            // Точка позиции — основание дерева; смотрим в фас.
+            // Глубина: y в мире → чуть дальше/ближе + масштаб (пейзаж, не карта сверху).
+            const depth = Math.max(0, Math.min(1, (tree.position.y + 220) / 440));
+            const depthScale = 0.62 + depth * 0.5;
+            const heightScale = getSpeciesVisual(tree.species).heightScale;
+            const side = Math.round(TREE_HEIGHT * heightScale * depthScale);
+            const left = screenWidth / 2 + tree.position.x - side / 2;
+            const top = groundY + tree.position.y * 0.22 - side * 0.92;
+
             return (
               <ForestTreeNode
                 key={tree.id}
                 tree={tree}
-                left={screenWidth / 2 + tree.position.x - side / 2}
-                top={screenHeight / 2 + tree.position.y - side}
+                left={left}
+                top={top}
+                size={side}
                 sway={sway}
                 phase={swayPhaseForTree(tree.id)}
                 isNew={isNew}
