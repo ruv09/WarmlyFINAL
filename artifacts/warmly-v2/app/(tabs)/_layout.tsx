@@ -4,8 +4,8 @@ import { useTheme } from "../../src/theme";
 import { TabBarIcon } from "../../src/components/ui";
 
 /**
- * Нижняя навигация без «Дыши».
- * Близко к референсу: Дневник / Лес / Календарь / Профиль (+ Главная).
+ * Нижняя навигация как на концептах: Дневник / Лес / Календарь / Профиль.
+ * Без «Дыши» и без отдельной «Главной» в таббаре.
  */
 export default function TabsLayout() {
   const theme = useTheme();
@@ -13,6 +13,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      initialRouteName="forest"
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: true,
@@ -23,7 +24,7 @@ export default function TabsLayout() {
           fontWeight: theme.typography.weights.medium,
         },
         tabBarStyle: {
-          backgroundColor: isDark ? "#211A36EE" : "#FFFDF8F2",
+          backgroundColor: isDark ? "#211A36F2" : "#FFFDF8F5",
           borderTopWidth: 0,
           borderTopLeftRadius: theme.radius.lg,
           borderTopRightRadius: theme.radius.lg,
@@ -31,7 +32,7 @@ export default function TabsLayout() {
           paddingTop: 6,
           position: "absolute",
           shadowColor: "#000",
-          shadowOpacity: isDark ? 0.25 : 0.06,
+          shadowOpacity: isDark ? 0.28 : 0.06,
           shadowRadius: 12,
           shadowOffset: { width: 0, height: -4 },
         },
@@ -40,8 +41,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Главная",
-          tabBarIcon: ({ focused }) => <TabBarIcon name={focused ? "home" : "home-outline"} focused={focused} />,
+          href: null,
         }}
       />
       <Tabs.Screen

@@ -1,7 +1,8 @@
 /**
- * PNG деревьев Warmly — вид в фас, как на концептах 1/2/4/5.
- * Светлые: мягкий минимализм + природный уют.
- * Тёмные (*-dark.png): сказочный лес / тёплый вечер с огоньками.
+ * PNG деревьев Warmly — как на концепт-бордах:
+ * светлая 1 «Минимализм» + 2 «Природный уют»;
+ * тёмная 4 «Сказочный лес» + 5 «Тёплый вечер».
+ * Вид строго в фас; без стадий роста.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -17,82 +18,87 @@ fs.mkdirSync(OUT, { recursive: true });
 function doc(body) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 100 120">
+  <defs>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="0.35"/>
+    </filter>
+  </defs>
 ${body}
 </svg>`;
 }
 
+/** Только мягкая тень — без «горшка»/кольца, как на референсе. */
 function ground(isDark) {
-  const g = isDark ? "#3A4A38" : "#B8C89A";
-  const gd = isDark ? "#2A3828" : "#8FA872";
+  if (isDark) {
+    return `
+    <ellipse cx="50" cy="112" rx="30" ry="4.5" fill="#000" opacity="0.35"/>
+    <ellipse cx="50" cy="110" rx="22" ry="3.2" fill="#E8B975" opacity="0.12"/>`;
+  }
   return `
-  <ellipse cx="50" cy="112" rx="28" ry="4" fill="#000" opacity="${isDark ? 0.25 : 0.1}"/>
-  ${isDark ? `<ellipse cx="50" cy="108" rx="32" ry="12" fill="#E8B975" opacity="0.22"/>` : `<ellipse cx="50" cy="108" rx="30" ry="10" fill="#FFE9B8" opacity="0.28"/>`}
-  <ellipse cx="50" cy="110" rx="26" ry="5.5" fill="${g}"/>
-  <ellipse cx="40" cy="109" rx="8" ry="3" fill="${gd}" opacity="0.5"/>
-  <ellipse cx="62" cy="110" rx="7" ry="2.5" fill="${gd}" opacity="0.4"/>
-  ${isDark ? "" : `<circle cx="34" cy="108.5" r="1" fill="#E8C878"/><circle cx="68" cy="108.5" r="0.9" fill="#F4EDE4"/>`}`;
+    <ellipse cx="50" cy="112" rx="28" ry="4" fill="#000" opacity="0.08"/>
+    <ellipse cx="50" cy="110.5" rx="20" ry="3" fill="#C8D2AE" opacity="0.55"/>`;
 }
 
 function lights(seed = 1) {
   const pts = [];
   let s = seed * 9973;
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 12; i++) {
     s = (s * 1664525 + 1013904223) >>> 0;
-    const x = 22 + (s % 56);
-    const y = 18 + ((s >> 7) % 58);
+    const x = 18 + (s % 64);
+    const y = 14 + ((s >> 7) % 62);
+    const glow = 2.2 + (i % 3) * 0.4;
     pts.push(`
-      <circle cx="${x}" cy="${y}" r="2.8" fill="#E8B975" opacity="0.22"/>
-      <circle cx="${x}" cy="${y}" r="1.15" fill="#FFF6E0" opacity="0.95"/>`);
+      <circle cx="${x}" cy="${y}" r="${glow}" fill="#E8B975" opacity="0.28"/>
+      <circle cx="${x}" cy="${y}" r="1.05" fill="#FFF8E8" opacity="0.98"/>`);
   }
-  pts.push(`
-    <circle cx="38" cy="104" r="2.4" fill="#E8B975" opacity="0.25"/>
-    <circle cx="38" cy="104" r="1" fill="#FFF6E0"/>
-    <circle cx="62" cy="105" r="2.2" fill="#E8B975" opacity="0.22"/>
-    <circle cx="62" cy="105" r="0.95" fill="#FFF6E0"/>`);
   return pts.join("\n");
 }
 
-function trunk(x, y, w, h, color, roots = true) {
-  let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${w * 0.35}" fill="${color}"/>`;
-  if (roots) {
-    s += `<path d="M${x} ${y + h - 2} Q${x - 6} ${y + h + 2} ${x - 10} ${y + h + 3}" stroke="${color}" stroke-width="${w * 0.45}" stroke-linecap="round" fill="none" opacity="0.75"/>`;
-    s += `<path d="M${x + w} ${y + h - 2} Q${x + w + 6} ${y + h + 2} ${x + w + 10} ${y + h + 3}" stroke="${color}" stroke-width="${w * 0.45}" stroke-linecap="round" fill="none" opacity="0.75"/>`;
-  }
-  return s;
+function trunk(x, y, w, h, color) {
+  const rx = Math.min(w * 0.45, 3.2);
+  return `
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${color}"/>
+    <path d="M${x + 0.5} ${y + h - 1.5} Q${x - 5} ${y + h + 2.5} ${x - 9} ${y + h + 3.5}"
+      stroke="${color}" stroke-width="${w * 0.42}" stroke-linecap="round" fill="none" opacity="0.7"/>
+    <path d="M${x + w - 0.5} ${y + h - 1.5} Q${x + w + 5} ${y + h + 2.5} ${x + w + 9} ${y + h + 3.5}"
+      stroke="${color}" stroke-width="${w * 0.42}" stroke-linecap="round" fill="none" opacity="0.7"/>`;
 }
 
-/** Мягкие комки кроны — главный приём концептов 1 и 2. */
-function clumps(parts, mid, hi, sh) {
+/**
+ * Крона из мягких овалов — главный приём концептов 1 и 2.
+ * parts: [cx, cy, rx, ry, kind]
+ */
+function canopy(parts, mid, hi, sh) {
   return parts
-    .map(
-      ([cx, cy, r, kind]) => {
-        const fill = kind === "hi" ? hi : kind === "sh" ? sh : mid;
-        const op = kind === "sh" ? 0.55 : kind === "hi" ? 0.5 : 0.95;
-        return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" opacity="${op}"/>`;
-      },
-    )
+    .map(([cx, cy, rx, ry, kind]) => {
+      const fill = kind === "hi" ? hi : kind === "sh" ? sh : mid;
+      const op = kind === "sh" ? 0.62 : kind === "hi" ? 0.55 : 0.96;
+      return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" opacity="${op}"/>`;
+    })
     .join("\n");
 }
 
 const species = {
+  // Концепт 1: крупные мягкие комки, sage
   oak: (d) => {
-    const mid = d ? "#4E6848" : "#7FA06F";
-    const hi = d ? "#7A9A70" : "#A8C89A";
-    const sh = d ? "#334232" : "#5D7D5A";
-    const tr = d ? "#5A4030" : "#8B5A3C";
+    const mid = d ? "#4A6444" : "#8AAD7A";
+    const hi = d ? "#6E8E68" : "#B4D0A4";
+    const sh = d ? "#2E3E2C" : "#5E7A54";
+    const tr = d ? "#5A4030" : "#9A6A48";
     return doc(`
       ${ground(d)}
-      ${trunk(46, 62, 8, 44, tr)}
-      ${clumps(
+      ${trunk(45.5, 58, 9, 48, tr)}
+      ${canopy(
         [
-          [30, 52, 18, "sh"],
-          [70, 50, 17, "sh"],
-          [34, 46, 18, "mid"],
-          [66, 44, 17, "mid"],
-          [50, 28, 20, "mid"],
-          [42, 48, 14, "mid"],
-          [58, 46, 13, "mid"],
-          [40, 32, 9, "hi"],
+          [28, 54, 20, 17, "sh"],
+          [72, 52, 19, 16, "sh"],
+          [32, 46, 20, 18, "mid"],
+          [68, 44, 19, 17, "mid"],
+          [50, 26, 24, 22, "mid"],
+          [42, 48, 16, 14, "mid"],
+          [58, 46, 15, 13, "mid"],
+          [38, 30, 10, 8, "hi"],
+          [56, 28, 9, 7, "hi"],
         ],
         mid,
         hi,
@@ -103,23 +109,24 @@ const species = {
   },
 
   birch: (d) => {
-    const mid = d ? "#6A7A58" : "#B5D0A0";
-    const hi = d ? "#9AAA74" : "#E0F0C8";
-    const sh = d ? "#4A5840" : "#8FB87A";
-    const tr = d ? "#E0D8CC" : "#F8F8F8";
+    const mid = d ? "#6A7E58" : "#C2DCB0";
+    const hi = d ? "#96AA78" : "#E8F4D4";
+    const sh = d ? "#465640" : "#9CC488";
+    const tr = d ? "#E8E0D4" : "#FAFAF8";
     return doc(`
       ${ground(d)}
-      ${trunk(47.5, 48, 5, 58, tr)}
-      <rect x="48.5" y="58" width="1.2" height="6" rx="0.4" fill="#4A4038" opacity="0.35"/>
-      <rect x="50.2" y="74" width="1.2" height="5" rx="0.4" fill="#4A4038" opacity="0.3"/>
-      <rect x="48.8" y="90" width="1.1" height="5" rx="0.4" fill="#4A4038" opacity="0.28"/>
-      ${clumps(
+      ${trunk(47.2, 46, 5.6, 60, tr)}
+      <rect x="48.4" y="56" width="1.3" height="7" rx="0.4" fill="#5A4A40" opacity="0.32"/>
+      <rect x="50" y="74" width="1.3" height="6" rx="0.4" fill="#5A4A40" opacity="0.28"/>
+      <rect x="48.6" y="92" width="1.2" height="5" rx="0.4" fill="#5A4A40" opacity="0.25"/>
+      ${canopy(
         [
-          [50, 26, 14, "mid"],
-          [39, 38, 12, "mid"],
-          [61, 40, 12, "mid"],
-          [50, 48, 12, "mid"],
-          [44, 30, 7, "hi"],
+          [50, 24, 16, 14, "mid"],
+          [36, 36, 14, 12, "mid"],
+          [64, 38, 14, 12, "mid"],
+          [50, 46, 14, 12, "mid"],
+          [42, 28, 8, 6, "hi"],
+          [58, 32, 7, 5, "hi"],
         ],
         mid,
         hi,
@@ -130,147 +137,169 @@ const species = {
   },
 
   pine: (d) => {
-    const mid = d ? "#3A5544" : "#5D7D5A";
-    const hi = d ? "#5A7A64" : "#8FB996";
-    const sh = d ? "#283C30" : "#3E5A3C";
-    const tr = d ? "#6A4830" : "#A06740";
+    const mid = d ? "#355244" : "#5F8A68";
+    const hi = d ? "#567A64" : "#8FBC96";
+    const sh = d ? "#24382C" : "#3E5E42";
+    const tr = d ? "#6A4830" : "#A86E48";
     return doc(`
       ${ground(d)}
-      ${trunk(47.5, 64, 5, 42, tr, false)}
-      <path d="M50 12 L64 38 L36 38 Z" fill="${sh}" opacity="0.55"/>
-      <path d="M50 14 L62 38 L38 38 Z" fill="${mid}"/>
-      <path d="M50 30 L68 58 L32 58 Z" fill="${hi}" opacity="0.85"/>
-      <path d="M50 30 L66 58 L34 58 Z" fill="${mid}"/>
-      <path d="M50 48 L72 80 L28 80 Z" fill="${sh}" opacity="0.9"/>
-      <path d="M50 48 L70 80 L30 80 Z" fill="${mid}" opacity="0.95"/>
-      <path d="M50 18 L56 32 L44 32 Z" fill="${hi}" opacity="0.45"/>
+      ${trunk(47.5, 70, 5, 36, tr)}
+      <path d="M50 10 L66 40 L34 40 Z" fill="${sh}" opacity="0.55"/>
+      <path d="M50 12 L63 40 L37 40 Z" fill="${mid}"/>
+      <path d="M50 28 L72 60 L28 60 Z" fill="${hi}" opacity="0.8"/>
+      <path d="M50 28 L69 60 L31 60 Z" fill="${mid}"/>
+      <path d="M50 48 L78 86 L22 86 Z" fill="${sh}" opacity="0.9"/>
+      <path d="M50 48 L75 86 L25 86 Z" fill="${mid}" opacity="0.96"/>
+      <path d="M50 16 L57 32 L43 32 Z" fill="${hi}" opacity="0.5"/>
       ${d ? lights(3) : ""}
     `);
   },
 
   spruce: (d) => {
-    const mid = d ? "#2A4234" : "#4A6A48";
-    const hi = d ? "#4A6354" : "#6A8A64";
-    const sh = d ? "#1A2C24" : "#2E4A30";
-    const tr = d ? "#3E3228" : "#6A4A34";
+    const mid = d ? "#284034" : "#4A6E4C";
+    const hi = d ? "#4A6554" : "#6E9270";
+    const sh = d ? "#182C24" : "#2E4A32";
+    const tr = d ? "#3E3228" : "#6E4E38";
     return doc(`
       ${ground(d)}
-      ${trunk(47.5, 72, 5, 34, tr, false)}
-      <path d="M50 10 L60 30 L40 30 Z" fill="${sh}" opacity="0.6"/>
-      <path d="M50 12 L58 30 L42 30 Z" fill="${mid}"/>
-      <path d="M50 24 L64 48 L36 48 Z" fill="${mid}"/>
-      <path d="M50 40 L68 66 L32 66 Z" fill="${hi}" opacity="0.85"/>
-      <path d="M50 40 L66 66 L34 66 Z" fill="${mid}"/>
-      <path d="M50 56 L74 88 L26 88 Z" fill="${sh}" opacity="0.92"/>
-      <path d="M50 56 L72 88 L28 88 Z" fill="${mid}" opacity="0.95"/>
+      ${trunk(47.5, 76, 5, 30, tr)}
+      <path d="M50 8 L61 30 L39 30 Z" fill="${sh}" opacity="0.6"/>
+      <path d="M50 10 L59 30 L41 30 Z" fill="${mid}"/>
+      <path d="M50 22 L66 50 L34 50 Z" fill="${mid}"/>
+      <path d="M50 40 L72 70 L28 70 Z" fill="${hi}" opacity="0.82"/>
+      <path d="M50 40 L69 70 L31 70 Z" fill="${mid}"/>
+      <path d="M50 58 L78 92 L22 92 Z" fill="${sh}" opacity="0.92"/>
+      <path d="M50 58 L75 92 L25 92 Z" fill="${mid}" opacity="0.96"/>
       ${d ? lights(4) : ""}
     `);
   },
 
+  // Концепт 1: пыльный персик / охра
   maple: (d) => {
-    const mid = d ? "#A06038" : "#E8A23D";
-    const hi = d ? "#C88858" : "#F4C878";
-    const sh = d ? "#6A4024" : "#C07828";
+    const mid = d ? "#A06038" : "#E8A86A";
+    const hi = d ? "#C88858" : "#F6D0A0";
+    const sh = d ? "#6A4024" : "#C07840";
     const tr = d ? "#4A3828" : "#8B5A3C";
     return doc(`
       ${ground(d)}
-      ${trunk(46.5, 60, 7, 46, tr)}
-      <path d="M50 16 C64 20 78 34 74 48 C82 52 76 64 64 66 C60 78 40 78 36 66 C22 64 18 50 26 44 C20 30 36 14 50 16 Z" fill="${sh}" opacity="0.45"/>
-      <path d="M50 18 C62 22 74 34 72 46 C78 50 74 60 64 62 C60 72 40 72 36 62 C24 60 22 48 28 42 C24 30 38 16 50 18 Z" fill="${mid}"/>
-      <circle cx="38" cy="40" r="11" fill="${hi}" opacity="0.4"/>
-      <circle cx="60" cy="44" r="10" fill="${sh}" opacity="0.3"/>
+      ${trunk(46, 58, 8, 48, tr)}
+      ${canopy(
+        [
+          [30, 52, 18, 16, "sh"],
+          [70, 50, 17, 15, "sh"],
+          [34, 44, 18, 17, "mid"],
+          [66, 42, 17, 16, "mid"],
+          [50, 24, 22, 20, "mid"],
+          [44, 46, 14, 12, "mid"],
+          [56, 44, 13, 11, "mid"],
+          [40, 28, 9, 7, "hi"],
+        ],
+        mid,
+        hi,
+        sh,
+      )}
       ${d ? lights(5) : ""}
     `);
   },
 
   linden: (d) => {
-    const mid = d ? "#5A7A48" : "#8FB996";
-    const hi = d ? "#88A868" : "#C5E0B8";
-    const sh = d ? "#3E5432" : "#5D7D5A";
+    const mid = d ? "#567848" : "#96C4A0";
+    const hi = d ? "#84A868" : "#D0ECCC";
+    const sh = d ? "#3A5230" : "#5E8A64";
     const tr = d ? "#5A4634" : "#8B5A3C";
     return doc(`
       ${ground(d)}
-      ${trunk(46.5, 60, 7, 46, tr)}
-      <circle cx="50" cy="42" r="30" fill="${sh}" opacity="0.25"/>
-      <circle cx="50" cy="40" r="28" fill="${mid}"/>
-      <circle cx="50" cy="38" r="22" fill="${mid}" opacity="0.55"/>
-      <ellipse cx="40" cy="32" rx="11" ry="8" fill="${hi}" opacity="0.45"/>
-      ${d ? lights(6) : ""}
-    `);
-  },
-
-  cherry: (d) => {
-    const mid = d ? "#8A5A6A" : "#F4B3C2";
-    const hi = d ? "#B88898" : "#FFE0E8";
-    const sh = d ? "#5A3E4C" : "#E090A8";
-    const tr = d ? "#3E3228" : "#8B5A3C";
-    return doc(`
-      ${ground(d)}
-      ${trunk(46.5, 58, 7, 48, tr)}
-      ${clumps(
+      ${trunk(46, 58, 8, 48, tr)}
+      ${canopy(
         [
-          [30, 48, 16, "sh"],
-          [70, 46, 15, "sh"],
-          [34, 42, 16, "mid"],
-          [66, 40, 15, "mid"],
-          [50, 26, 17, "mid"],
-          [44, 44, 12, "hi"],
+          [50, 42, 32, 30, "sh"],
+          [50, 40, 30, 28, "mid"],
+          [50, 36, 24, 22, "mid"],
+          [38, 30, 12, 9, "hi"],
+          [58, 34, 10, 8, "hi"],
         ],
         mid,
         hi,
         sh,
       )}
-      <circle cx="28" cy="72" r="1.4" fill="${hi}" opacity="0.7"/>
-      <circle cx="74" cy="68" r="1.2" fill="${hi}" opacity="0.65"/>
-      <circle cx="34" cy="84" r="1.1" fill="${mid}" opacity="0.55"/>
+      ${d ? lights(6) : ""}
+    `);
+  },
+
+  // Концепт 1: dusty rose
+  cherry: (d) => {
+    const mid = d ? "#8A5A6A" : "#E8A8B8";
+    const hi = d ? "#B88898" : "#FFE4EC";
+    const sh = d ? "#5A3E4C" : "#D08098";
+    const tr = d ? "#3E3228" : "#8B5A3C";
+    return doc(`
+      ${ground(d)}
+      ${trunk(46, 56, 8, 50, tr)}
+      ${canopy(
+        [
+          [28, 50, 18, 16, "sh"],
+          [72, 48, 17, 15, "sh"],
+          [32, 42, 18, 17, "mid"],
+          [68, 40, 17, 16, "mid"],
+          [50, 24, 20, 18, "mid"],
+          [44, 44, 13, 12, "hi"],
+          [58, 38, 11, 9, "hi"],
+        ],
+        mid,
+        hi,
+        sh,
+      )}
+      <circle cx="26" cy="70" r="1.5" fill="${hi}" opacity="0.75"/>
+      <circle cx="76" cy="66" r="1.3" fill="${hi}" opacity="0.7"/>
+      <circle cx="32" cy="82" r="1.2" fill="${mid}" opacity="0.55"/>
       ${d ? lights(7) : ""}
     `);
   },
 
   apple: (d) => {
-    const mid = d ? "#4E6848" : "#7FA06F";
-    const hi = d ? "#7A9A6C" : "#A8C89A";
-    const sh = d ? "#364832" : "#5D7D5A";
+    const mid = d ? "#4E6848" : "#86B078";
+    const hi = d ? "#7A9A6C" : "#B4D8A8";
+    const sh = d ? "#364832" : "#5E8254";
     const tr = d ? "#4A3828" : "#8B5A3C";
-    const fruit = d ? "#E88870" : "#D4544A";
+    const fruit = d ? "#E88870" : "#E06058";
     return doc(`
       ${ground(d)}
-      ${trunk(46.5, 60, 7, 46, tr)}
-      ${clumps(
+      ${trunk(46, 58, 8, 48, tr)}
+      ${canopy(
         [
-          [34, 48, 16, "mid"],
-          [66, 46, 15, "mid"],
-          [50, 30, 17, "mid"],
-          [50, 46, 12, "mid"],
-          [40, 34, 8, "hi"],
+          [32, 50, 18, 16, "mid"],
+          [68, 48, 17, 15, "mid"],
+          [50, 28, 20, 18, "mid"],
+          [50, 48, 14, 12, "mid"],
+          [38, 34, 9, 7, "hi"],
         ],
         mid,
         hi,
         sh,
       )}
-      <circle cx="38" cy="44" r="2.2" fill="${fruit}"/>
-      <circle cx="56" cy="36" r="2.2" fill="${fruit}"/>
-      <circle cx="64" cy="50" r="2" fill="${fruit}"/>
-      <circle cx="46" cy="52" r="2" fill="${fruit}"/>
+      <circle cx="36" cy="44" r="2.4" fill="${fruit}"/>
+      <circle cx="58" cy="34" r="2.4" fill="${fruit}"/>
+      <circle cx="66" cy="50" r="2.2" fill="${fruit}"/>
+      <circle cx="46" cy="54" r="2.1" fill="${fruit}"/>
       ${d ? lights(8) : ""}
     `);
   },
 
   bush: (d) => {
-    const mid = d ? "#4E6848" : "#7FA06F";
-    const hi = d ? "#7A9A6C" : "#A8C89A";
-    const sh = d ? "#364832" : "#5D7D5A";
+    const mid = d ? "#4E6848" : "#7FAA72";
+    const hi = d ? "#7A9A6C" : "#B0D0A0";
+    const sh = d ? "#364832" : "#5A7A52";
     return doc(`
       ${ground(d)}
-      ${clumps(
+      ${canopy(
         [
-          [32, 78, 16, "sh"],
-          [68, 78, 16, "sh"],
-          [36, 72, 16, "mid"],
-          [64, 72, 16, "mid"],
-          [50, 64, 18, "mid"],
-          [50, 76, 13, "mid"],
-          [42, 66, 8, "hi"],
+          [30, 82, 18, 14, "sh"],
+          [70, 82, 18, 14, "sh"],
+          [34, 74, 18, 15, "mid"],
+          [66, 74, 18, 15, "mid"],
+          [50, 64, 20, 17, "mid"],
+          [50, 78, 15, 12, "mid"],
+          [40, 66, 9, 7, "hi"],
         ],
         mid,
         hi,
@@ -282,49 +311,49 @@ const species = {
 
   willow: (d) => {
     const mid = d ? "#5A6A50" : "#8FB996";
-    const hi = d ? "#849A74" : "#C5E0B8";
+    const hi = d ? "#849A74" : "#C8E8C0";
     const sh = d ? "#3E4A38" : "#5D7D5A";
     const tr = d ? "#5A4634" : "#8B5A3C";
     return doc(`
       ${ground(d)}
-      ${trunk(46.5, 48, 7, 58, tr)}
-      <circle cx="50" cy="28" r="16" fill="${mid}"/>
-      <ellipse cx="28" cy="58" rx="10" ry="30" fill="${mid}" opacity="0.8"/>
-      <ellipse cx="72" cy="60" rx="10" ry="32" fill="${mid}" opacity="0.8"/>
-      <ellipse cx="38" cy="68" rx="8" ry="28" fill="${sh}" opacity="0.5"/>
-      <ellipse cx="62" cy="70" rx="8" ry="30" fill="${sh}" opacity="0.45"/>
-      <ellipse cx="50" cy="74" rx="7" ry="28" fill="${mid}" opacity="0.65"/>
-      <ellipse cx="44" cy="24" rx="8" ry="6" fill="${hi}" opacity="0.4"/>
+      ${trunk(46, 46, 8, 60, tr)}
+      <ellipse cx="50" cy="26" rx="18" ry="16" fill="${mid}"/>
+      <ellipse cx="26" cy="56" rx="11" ry="32" fill="${mid}" opacity="0.82"/>
+      <ellipse cx="74" cy="58" rx="11" ry="34" fill="${mid}" opacity="0.82"/>
+      <ellipse cx="36" cy="68" rx="9" ry="30" fill="${sh}" opacity="0.48"/>
+      <ellipse cx="64" cy="70" rx="9" ry="32" fill="${sh}" opacity="0.44"/>
+      <ellipse cx="50" cy="74" rx="8" ry="30" fill="${mid}" opacity="0.68"/>
+      <ellipse cx="42" cy="22" rx="9" ry="7" fill="${hi}" opacity="0.45"/>
       ${d ? lights(10) : ""}
     `);
   },
 
   rowan: (d) => {
-    const mid = d ? "#4E6448" : "#7FA06F";
-    const hi = d ? "#7A8E68" : "#A8C89A";
-    const sh = d ? "#364432" : "#5D7D5A";
+    const mid = d ? "#4E6448" : "#82A874";
+    const hi = d ? "#7A8E68" : "#B4D0A4";
+    const sh = d ? "#364432" : "#5A7A52";
     const tr = d ? "#5A4634" : "#8B5A3C";
-    const berry = d ? "#E87858" : "#D4544A";
+    const berry = d ? "#E87858" : "#E05448";
     return doc(`
       ${ground(d)}
-      ${trunk(46.5, 58, 7, 48, tr)}
-      ${clumps(
+      ${trunk(46, 56, 8, 50, tr)}
+      ${canopy(
         [
-          [34, 46, 14, "mid"],
-          [66, 44, 13, "mid"],
-          [50, 30, 15, "mid"],
-          [50, 46, 11, "mid"],
-          [40, 34, 7, "hi"],
+          [32, 48, 16, 14, "mid"],
+          [68, 46, 15, 13, "mid"],
+          [50, 28, 18, 16, "mid"],
+          [50, 48, 13, 11, "mid"],
+          [38, 32, 8, 6, "hi"],
         ],
         mid,
         hi,
         sh,
       )}
-      <circle cx="40" cy="48" r="2.1" fill="${berry}"/>
-      <circle cx="44" cy="52" r="1.8" fill="${berry}"/>
-      <circle cx="58" cy="40" r="2" fill="${berry}"/>
-      <circle cx="62" cy="46" r="1.8" fill="${berry}"/>
-      <circle cx="50" cy="50" r="1.9" fill="${berry}"/>
+      <circle cx="38" cy="50" r="2.2" fill="${berry}"/>
+      <circle cx="42" cy="54" r="1.9" fill="${berry}"/>
+      <circle cx="58" cy="40" r="2.1" fill="${berry}"/>
+      <circle cx="64" cy="48" r="1.9" fill="${berry}"/>
+      <circle cx="50" cy="52" r="2" fill="${berry}"/>
       ${d ? lights(11) : ""}
     `);
   },

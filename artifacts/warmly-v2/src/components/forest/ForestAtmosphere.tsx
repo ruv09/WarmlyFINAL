@@ -26,9 +26,10 @@ export const ForestAtmosphere = memo(function ForestAtmosphere({
       <Svg width={width} height={height} style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={isDark ? "#2C2448" : "#FBF7F0"} />
-            <Stop offset="0.45" stopColor={isDark ? "#211A36" : "#F3EBDC"} />
-            <Stop offset="1" stopColor={isDark ? "#1A1428" : "#E8DCC8"} />
+            <Stop offset="0" stopColor={isDark ? "#3A2A58" : "#FFFDF8"} />
+            <Stop offset="0.35" stopColor={isDark ? "#2A1E42" : "#F7F1E6"} />
+            <Stop offset="0.7" stopColor={isDark ? "#1E1632" : "#EDE4D4"} />
+            <Stop offset="1" stopColor={isDark ? "#14101E" : "#D8CEB8"} />
           </LinearGradient>
           <RadialGradient id="sun" cx="82%" cy="16%" rx="30%" ry="22%">
             <Stop offset="0" stopColor="#FFE6B0" stopOpacity={0.65} />

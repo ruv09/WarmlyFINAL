@@ -12,8 +12,8 @@ import { TreeIllustration } from "../tree";
 import { SPRING_CONFIGS } from "../../theme/tokens/animation";
 
 /** Крупный размер как на концептах (не мелкие иконки карты). */
-export const TREE_HEIGHT = 168;
-export const TREE_WIDTH = 168;
+export const TREE_HEIGHT = 210;
+export const TREE_WIDTH = 210;
 export const TREE_SIZE = TREE_HEIGHT;
 
 interface ForestTreeNodeProps {
