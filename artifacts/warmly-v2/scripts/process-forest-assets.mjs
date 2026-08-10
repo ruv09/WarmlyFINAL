@@ -1,10 +1,8 @@
 /**
  * Готовит иллюстрированные PNG деревьев:
- * — убирает кремовый/белый фон → прозрачность
+ * — убирает кремовый/белый/чёрный фон → прозрачность
  * — кладёт в assets/forest/trees/{species}/{species}_0N.png
  * — делает *_dark.png со светлячками
- *
- * Источники: /opt/cursor/artifacts/assets/warmly-*-src.png (и oak-ref)
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -13,9 +11,9 @@ import sharp from "sharp";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_ROOT = path.join(__dirname, "../assets/forest/trees");
-/** Исходники иллюстраций (локально или из /opt/cursor/artifacts/assets). */
-const SRC_DIR = process.env.WARMLY_TREE_SRC
-  || (fs.existsSync(path.join(__dirname, "../assets/forest/sources"))
+const SRC_DIR =
+  process.env.WARMLY_TREE_SRC ||
+  (fs.existsSync(path.join(__dirname, "../assets/forest/sources"))
     ? path.join(__dirname, "../assets/forest/sources")
     : "/opt/cursor/artifacts/assets");
 const SIZE = 640;
@@ -38,31 +36,23 @@ const SOURCES = {
   rowan: [{ file: "warmly-rowan-src.png", variant: 1 }],
 };
 
-function isBackground(r, g, b, a) {
-  if (a < 8) return true;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  const sat = max === 0 ? 0 : (max - min) / max;
-  // Кремовый / молочный фон референсов
-  if (lum > 210 && sat < 0.18) return true;
-  if (lum > 195 && sat < 0.12) return true;
-  if (r > 220 && g > 210 && b > 190 && sat < 0.22) return true;
-  // Почти белый
-  if (r > 235 && g > 235 && b > 230) return true;
-  return false;
+function sampleCorners(data, w, h, ch) {
+  const pts = [
+    [2, 2],
+    [w - 3, 2],
+    [2, h - 3],
+    [w - 3, h - 3],
+    [(w / 2) | 0, 2],
+    [2, (h / 2) | 0],
+  ];
+  return pts.map(([x, y]) => {
+    const o = (y * w + x) * ch;
+    return [data[o], data[o + 1], data[o + 2]];
+  });
 }
 
-function edgeFade(r, g, b, a) {
-  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const sat = max === 0 ? 0 : (max - min) / max;
-  if (lum > 185 && sat < 0.28) {
-    const t = Math.min(1, (lum - 185) / 55);
-    return Math.round(a * (1 - t * 0.85));
-  }
-  return a;
+function colorDist(a, b) {
+  return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 }
 
 async function removeBackground(inputPath) {
@@ -70,26 +60,47 @@ async function removeBackground(inputPath) {
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
-
-  const { width, height, channels } = info;
+  const { width: w, height: h, channels: ch } = info;
   const out = Buffer.from(data);
+  const corners = sampleCorners(data, w, h, ch);
+  const bg = corners[0];
+  const bgLum = 0.2126 * bg[0] + 0.7152 * bg[1] + 0.0722 * bg[2];
 
-  for (let i = 0; i < width * height; i++) {
-    const o = i * channels;
+  for (let i = 0; i < w * h; i++) {
+    const o = i * ch;
     const r = out[o];
     const g = out[o + 1];
     const b = out[o + 2];
-    let a = out[o + 3];
-    if (isBackground(r, g, b, a)) {
-      out[o + 3] = 0;
+    const a = out[o + 3];
+    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const sat = max === 0 ? 0 : (max - min) / max;
+    let kill = false;
+
+    if (colorDist([r, g, b], bg) < 28) kill = true;
+    if (bgLum < 40) {
+      if (lum < 28 && sat < 0.25) kill = true;
+      if (lum < 45 && sat < 0.12) kill = true;
     } else {
-      out[o + 3] = edgeFade(r, g, b, a);
+      if (lum > 205 && sat < 0.2) kill = true;
+      if (lum > 190 && sat < 0.12) kill = true;
+      if (r > 220 && g > 210 && b > 190 && sat < 0.25) kill = true;
+    }
+
+    if (kill) {
+      out[o + 3] = 0;
+    } else if (bgLum >= 40 && lum > 180 && sat < 0.3) {
+      const t = Math.min(1, (lum - 180) / 60);
+      out[o + 3] = Math.round(a * (1 - t * 0.85));
+    } else if (bgLum < 40 && lum < 55 && sat < 0.2) {
+      const t = Math.min(1, (55 - lum) / 40);
+      out[o + 3] = Math.round(a * (1 - t * 0.9));
     }
   }
 
-  // Trim transparent margins, then pad into square canvas
-  const trimmed = await sharp(out, { raw: { width, height, channels: 4 } })
-    .trim({ threshold: 8 })
+  const trimmed = await sharp(out, { raw: { width: w, height: h, channels: 4 } })
+    .trim({ threshold: 10 })
     .png()
     .toBuffer();
 
@@ -126,8 +137,8 @@ function fireflySvg(seed) {
   const dots = [];
   for (let i = 0; i < 10; i++) {
     s = (s * 1664525 + 1013904223) >>> 0;
-    const x = 140 + (s % 480);
-    const y = 80 + ((s >> 8) % 420);
+    const x = 120 + (s % 400);
+    const y = 70 + ((s >> 8) % 360);
     const r = 3 + (i % 3);
     dots.push(`
       <circle cx="${x}" cy="${y}" r="${r * 2.2}" fill="#E8B975" opacity="0.18"/>
@@ -135,20 +146,17 @@ function fireflySvg(seed) {
   }
   return `<?xml version="1.0"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}">
-  <ellipse cx="384" cy="720" rx="160" ry="36" fill="#E8B975" opacity="0.16"/>
+  <ellipse cx="320" cy="600" rx="130" ry="30" fill="#E8B975" opacity="0.16"/>
   ${dots.join("\n")}
 </svg>`;
 }
 
 async function makeDark(lightPng, seed) {
-  // Чуть глубже цвета + светлячки / тёплое свечение у основания
   const deepened = await sharp(lightPng)
-    .modulate({ brightness: 0.88, saturation: 1.08 })
+    .modulate({ brightness: 0.9, saturation: 1.06 })
     .png()
     .toBuffer();
-
   const lights = await sharp(Buffer.from(fireflySvg(seed))).png().toBuffer();
-
   return sharp({
     create: {
       width: SIZE,
@@ -165,17 +173,13 @@ async function makeDark(lightPng, seed) {
     .toBuffer();
 }
 
-async function mirrorVariant(lightPng) {
-  return sharp(lightPng).flop().png().toBuffer();
-}
-
 fs.mkdirSync(OUT_ROOT, { recursive: true });
 
 for (const [species, entries] of Object.entries(SOURCES)) {
   const dir = path.join(OUT_ROOT, species);
   fs.mkdirSync(dir, { recursive: true });
-
   const produced = [];
+
   for (const entry of entries) {
     const src = path.join(SRC_DIR, entry.file);
     if (!fs.existsSync(src)) {
@@ -185,25 +189,20 @@ for (const [species, entries] of Object.entries(SOURCES)) {
     const light = await removeBackground(src);
     const lightName = `${species}_${String(entry.variant).padStart(2, "0")}.png`;
     const darkName = `${species}_${String(entry.variant).padStart(2, "0")}_dark.png`;
-    const lightPath = path.join(dir, lightName);
-    const darkPath = path.join(dir, darkName);
-    await sharp(light).png({ compressionLevel: 9 }).toFile(lightPath);
+    await sharp(light).png({ compressionLevel: 9 }).toFile(path.join(dir, lightName));
     await sharp(await makeDark(light, entry.variant + species.length))
       .png({ compressionLevel: 9 })
-      .toFile(darkPath);
-    console.log("wrote", path.relative(OUT_ROOT, lightPath), path.relative(OUT_ROOT, darkPath));
+      .toFile(path.join(dir, darkName));
+    console.log("wrote", species, lightName);
     produced.push(light);
   }
 
-  // Второй вариант зеркалом, если есть только один исходник
   if (produced.length === 1) {
-    const flipped = await mirrorVariant(produced[0]);
-    const lightName = `${species}_02.png`;
-    const darkName = `${species}_02_dark.png`;
-    await sharp(flipped).png({ compressionLevel: 9 }).toFile(path.join(dir, lightName));
-    await sharp(await makeDark(flipped, 20 + species.length))
+    const flipped = await sharp(produced[0]).flop().png().toBuffer();
+    await sharp(flipped).png({ compressionLevel: 9 }).toFile(path.join(dir, `${species}_02.png`));
+    await sharp(await makeDark(flipped, 30 + species.length))
       .png({ compressionLevel: 9 })
-      .toFile(path.join(dir, darkName));
+      .toFile(path.join(dir, `${species}_02_dark.png`));
     console.log("wrote mirror", species, "_02");
   }
 }
