@@ -7,16 +7,18 @@ import { useTheme } from "../../theme";
 interface TreeIllustrationProps {
   tree: Tree;
   size?: number;
-  showLights?: boolean;
+  /** Для дальнего плана — чуть бледнее */
+  depthFade?: number;
 }
 
 /**
- * Дерево в фас — PNG из assets/trees.
- * Светлая тема: концепты 1–2; тёмная: 4–5 (отдельные ассеты с огоньками).
+ * Иллюстрированное дерево (PNG) — не геометрия SVG.
+ * Код отвечает только за размер/тему/вариант ассета.
  */
 export const TreeIllustration = memo(function TreeIllustration({
   tree,
-  size = 160,
+  size = 200,
+  depthFade = 1,
 }: TreeIllustrationProps) {
   const theme = useTheme();
   const isDark = theme.mode === "dark";
@@ -24,9 +26,14 @@ export const TreeIllustration = memo(function TreeIllustration({
   const side = Math.round(size * visual.heightScale);
 
   return (
-    <View style={[styles.treeContainer, { width: side, height: side }]}>
+    <View
+      style={[
+        styles.treeContainer,
+        { width: side, height: side, opacity: Math.max(0.55, Math.min(1, depthFade)) },
+      ]}
+    >
       <Image
-        source={getTreeImage(tree.species, isDark)}
+        source={getTreeImage(tree.species, isDark, tree.variant)}
         style={{ width: side, height: side }}
         resizeMode="contain"
         accessibilityLabel={visual.labelRu}
@@ -38,6 +45,6 @@ export const TreeIllustration = memo(function TreeIllustration({
 const styles = StyleSheet.create({
   treeContainer: {
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-end",
   },
 });

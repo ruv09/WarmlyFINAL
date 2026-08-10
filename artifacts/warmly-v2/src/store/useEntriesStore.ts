@@ -1,6 +1,12 @@
 import { create } from "zustand";
 import { CreateEntryInput, Entry, Tree, UpdateEntryInput } from "../types";
-import { assignNextSpecies, entryRepository, placeNextTree, treeRepository } from "../services";
+import {
+  assignNextSpecies,
+  entryRepository,
+  placeNextTree,
+  placementMeta,
+  treeRepository,
+} from "../services";
 import { requireMoodById } from "../constants/moods";
 import { generateId, toDateKey, toTimeString } from "../utils";
 import { useForestStore } from "./useForestStore";
@@ -40,11 +46,21 @@ export const useEntriesStore = create<EntriesState>((set, get) => ({
     const nowIso = now.toISOString();
 
     const existingTrees = await treeRepository.getAll();
-    const previousSpecies = existingTrees.at(-1)?.species;
-    const species = assignNextSpecies(previousSpecies);
-    const position = placeNextTree(existingTrees.map((tree) => tree.position));
+    const recentSpecies = existingTrees.slice(-3).map((tree) => tree.species);
+    const species = assignNextSpecies(recentSpecies);
+    const position = placeNextTree(existingTrees);
+    const meta = placementMeta(position);
+    const variant = Math.random() < 0.5 ? 1 : 2;
 
-    const tree: Tree = { id: generateId(), species, position, createdAt: nowIso };
+    const tree: Tree = {
+      id: generateId(),
+      species,
+      position,
+      scale: meta.scale,
+      depth: meta.depth,
+      variant,
+      createdAt: nowIso,
+    };
     await treeRepository.add(tree);
 
     const entry: Entry = {

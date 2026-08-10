@@ -10,7 +10,7 @@ import { Tree } from "../types";
 import { pluralRu } from "../utils";
 
 /**
- * Экран «Лес» — как на концептах 1/2/4/5: заголовок, счётчик, пейзаж в фас.
+ * Экран «Лес» — акцент на иллюстрированной сцене, UI вторичен.
  */
 export function ForestScreen() {
   const theme = useTheme();
@@ -43,18 +43,9 @@ export function ForestScreen() {
             </Text>
             <Text
               style={{
-                marginTop: 2,
-                fontSize: theme.typography.sizes.caption,
-                color: theme.colors.textSecondary,
-              }}
-            >
-              твоё пространство заботы
-            </Text>
-            <Text
-              style={{
-                marginTop: theme.spacing("md"),
-                fontSize: 48,
-                lineHeight: 52,
+                marginTop: 4,
+                fontSize: 34,
+                lineHeight: 38,
                 fontWeight: theme.typography.weights.bold,
                 color: theme.colors.textPrimary,
               }}
@@ -76,11 +67,11 @@ export function ForestScreen() {
             style={[
               styles.menuBtn,
               {
-                backgroundColor: isDark ? "#2A2340CC" : "#FFFFFFCC",
-                borderColor: isDark ? "#FFFFFF22" : "#00000010",
+                backgroundColor: isDark ? "#2A2340AA" : "#FFFFFFAA",
+                borderColor: isDark ? "#FFFFFF18" : "#0000000D",
               },
             ]}
-            accessibilityLabel="Меню"
+            accessibilityLabel="Профиль"
           >
             <Ionicons name="menu" size={22} color={theme.colors.textPrimary} />
           </Pressable>

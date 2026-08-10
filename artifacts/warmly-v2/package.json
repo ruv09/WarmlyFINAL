@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "dev": "expo start",
-    "generate:trees": "node scripts/generate-tree-assets.mjs"
+    "generate:trees": "node scripts/process-forest-assets.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "^6.1.2",

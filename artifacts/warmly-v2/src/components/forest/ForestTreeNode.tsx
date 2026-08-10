@@ -11,9 +11,9 @@ import { Tree } from "../../types";
 import { TreeIllustration } from "../tree";
 import { SPRING_CONFIGS } from "../../theme/tokens/animation";
 
-/** Крупный размер как на концептах (не мелкие иконки карты). */
-export const TREE_HEIGHT = 210;
-export const TREE_WIDTH = 210;
+/** Базовый размер иллюстрации на среднем плане. */
+export const TREE_HEIGHT = 236;
+export const TREE_WIDTH = 236;
 export const TREE_SIZE = TREE_HEIGHT;
 
 interface ForestTreeNodeProps {
@@ -21,6 +21,7 @@ interface ForestTreeNodeProps {
   left: number;
   top: number;
   size: number;
+  depthFade: number;
   sway: SharedValue<number>;
   phase: number;
   isNew: boolean;
@@ -32,6 +33,7 @@ export const ForestTreeNode = memo(function ForestTreeNode({
   left,
   top,
   size,
+  depthFade,
   sway,
   phase,
   isNew,
@@ -56,8 +58,8 @@ export const ForestTreeNode = memo(function ForestTreeNode({
   }, [appear, isNew, tree.id]);
 
   const animatedStyle = useAnimatedStyle(() => {
-    const angle = Math.sin(sway.value + phase) * 1.15;
-    const scale = 0.75 + appear.value * 0.25;
+    const angle = Math.sin(sway.value + phase) * 1.05;
+    const scale = 0.78 + appear.value * 0.22;
     return {
       opacity: appear.value,
       transform: [
@@ -72,11 +74,11 @@ export const ForestTreeNode = memo(function ForestTreeNode({
   return (
     <Pressable
       onPress={() => onPress(tree)}
-      hitSlop={12}
+      hitSlop={10}
       style={{ position: "absolute", left, top, width: size, height: size }}
     >
       <Animated.View style={animatedStyle}>
-        <TreeIllustration tree={tree} size={size} />
+        <TreeIllustration tree={tree} size={size} depthFade={depthFade} />
       </Animated.View>
     </Pressable>
   );

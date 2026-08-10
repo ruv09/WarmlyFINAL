@@ -10,15 +10,15 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { runOnJS } from "react-native-worklets";
-import { Tree } from "../../types";
+import { Tree, normalizeTree } from "../../types";
 import { buildTreeSpatialIndex, getVisibleTrees } from "../../utils/viewportCulling";
 import { ForestAtmosphere } from "./ForestAtmosphere";
 import { ForestTreeNode, TREE_HEIGHT, swayPhaseForTree } from "./ForestTreeNode";
 import { getSpeciesVisual } from "../../constants/treeSpecies";
 
-const MIN_SCALE = 0.7;
-const MAX_SCALE = 1.8;
-const CULLING_MARGIN = 180;
+const MIN_SCALE = 0.65;
+const MAX_SCALE = 1.85;
+const CULLING_MARGIN = 240;
 const NEW_TREE_MS = 12_000;
 const VIEWPORT_THROTTLE_MS = 72;
 
@@ -28,12 +28,11 @@ interface ForestCanvasProps {
 }
 
 /**
- * Пейзаж леса в фас (как на концептах): деревья стоят на линии горизонта.
- * Пан по горизонтали + лёгкий зум; вертикаль почти не уводит «в карту сверху».
+ * Иллюстрированный пейзаж леса: даль / середина / перед, pan + pinch-zoom.
  */
 export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const groundY = screenHeight * 0.62;
+  const groundY = screenHeight * 0.6;
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -46,6 +45,11 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   const [viewport, setViewport] = useState({ x: 0, y: 0, scale: 1 });
   const [reduceMotion, setReduceMotion] = useState(false);
   const lastReportRef = useRef(0);
+
+  const normalizedTrees = useMemo(
+    () => trees.map((tree) => normalizeTree(tree)),
+    [trees],
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -67,7 +71,7 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
     }
     sway.value = 0;
     sway.value = withRepeat(
-      withTiming(Math.PI * 2, { duration: 5600, easing: Easing.linear }),
+      withTiming(Math.PI * 2, { duration: 6200, easing: Easing.linear }),
       -1,
       false,
     );
@@ -84,9 +88,8 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   const panGesture = Gesture.Pan()
     .minDistance(8)
     .onUpdate((event) => {
-      // В основном горизонтальный обзор леса.
       translateX.value = savedTranslateX.value + event.translationX;
-      translateY.value = savedTranslateY.value + event.translationY * 0.35;
+      translateY.value = savedTranslateY.value + event.translationY * 0.28;
       runOnJS(reportViewport)(translateX.value, translateY.value, scale.value, false);
     })
     .onEnd(() => {
@@ -116,21 +119,29 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
     ],
   }));
 
-  const spatialIndex = useMemo(() => buildTreeSpatialIndex(trees), [trees]);
+  const spatialIndex = useMemo(() => buildTreeSpatialIndex(normalizedTrees), [normalizedTrees]);
 
   const visibleTrees = useMemo(
-    () => getVisibleTrees(trees, viewport, screenWidth, screenHeight, CULLING_MARGIN, spatialIndex),
-    [trees, viewport, screenWidth, screenHeight, spatialIndex],
+    () =>
+      getVisibleTrees(
+        normalizedTrees,
+        viewport,
+        screenWidth,
+        screenHeight,
+        CULLING_MARGIN,
+        spatialIndex,
+      ),
+    [normalizedTrees, viewport, screenWidth, screenHeight, spatialIndex],
   );
 
   const newestCreatedAt = useMemo(() => {
     let max = 0;
-    for (const tree of trees) {
+    for (const tree of normalizedTrees) {
       const t = Date.parse(tree.createdAt);
       if (t > max) max = t;
     }
     return max;
-  }, [trees]);
+  }, [normalizedTrees]);
 
   const now = Date.now();
 
@@ -145,13 +156,14 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
             const isNew =
               !reduceMotion && created === newestCreatedAt && now - created < NEW_TREE_MS;
 
-            // Глубина: y в мире → чуть дальше/ближе + масштаб (пейзаж, не карта сверху).
-            const depth = Math.max(0, Math.min(1, (tree.position.y + 220) / 440));
-            const depthScale = 0.62 + depth * 0.5;
+            const depth = tree.depth;
+            const depthScale = 0.52 + depth * 0.58;
             const heightScale = getSpeciesVisual(tree.species).heightScale;
-            const side = Math.round(TREE_HEIGHT * heightScale * depthScale);
+            const side = Math.round(TREE_HEIGHT * heightScale * depthScale * tree.scale);
+            // Дальние чуть светлее/прозрачнее; передние насыщеннее.
+            const depthFade = 0.62 + depth * 0.38;
             const left = screenWidth / 2 + tree.position.x - side / 2;
-            const top = groundY + tree.position.y * 0.22 - side * 0.92;
+            const top = groundY + tree.position.y * 0.34 - side * 0.9;
 
             return (
               <ForestTreeNode
@@ -160,6 +172,7 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
                 left={left}
                 top={top}
                 size={side}
+                depthFade={depthFade}
                 sway={sway}
                 phase={swayPhaseForTree(tree.id)}
                 isNew={isNew}
