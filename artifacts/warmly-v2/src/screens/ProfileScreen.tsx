@@ -12,7 +12,7 @@ import { ROUTES } from "../constants/routes";
 import { ThemeMode } from "../types";
 import { getMoodById } from "../constants/moods";
 import { getAvatarPreset } from "../constants/avatars";
-import { clearStoredUserAvatar, exportEntries, pickAndStoreUserAvatar } from "../services";
+import { exportEntries } from "../services";
 import { formatHumanDate, getFallbackQuote, treesLabel } from "../utils";
 
 const THEME_OPTIONS: { label: string; value: ThemeMode; preview: [string, string] }[] = [
@@ -52,18 +52,15 @@ export function ProfileScreen() {
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(settings.name);
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
-  const [photoError, setPhotoError] = useState(false);
 
   const mostFrequentMood = stats.mostFrequentMoodId
     ? getMoodById(stats.mostFrequentMoodId)
     : undefined;
 
-  const avatarSource = useMemo(() => {
-    if (settings.avatarId === "custom" && settings.customAvatarUri) {
-      return { uri: settings.customAvatarUri };
-    }
-    return getAvatarPreset(settings.avatarId).image;
-  }, [settings.avatarId, settings.customAvatarUri]);
+  const avatarSource = useMemo(
+    () => getAvatarPreset(settings.avatarId).image,
+    [settings.avatarId],
+  );
 
   const joinedLabel = useMemo(() => {
     if (!settings.joinedAt) return "с Warmly";
@@ -75,20 +72,8 @@ export function ProfileScreen() {
     : getFallbackQuote();
 
   async function handleSelectPreset(id: string) {
-    await clearStoredUserAvatar().catch(() => undefined);
     await updateSettings({ avatarId: id, customAvatarUri: "" });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-  }
-
-  async function handlePickPhoto() {
-    setPhotoError(false);
-    const uri = await pickAndStoreUserAvatar();
-    if (!uri) {
-      setPhotoError(true);
-      return;
-    }
-    await updateSettings({ avatarId: "custom", customAvatarUri: uri });
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
   }
 
   async function handleExport() {
@@ -157,7 +142,7 @@ export function ProfileScreen() {
                 justifyContent: "center",
               }}
             >
-              <Ionicons name="camera" size={12} color={theme.colors.surface} />
+              <Ionicons name="pencil" size={12} color={theme.colors.surface} />
             </View>
           </Pressable>
           <View style={{ flex: 1 }}>
@@ -200,11 +185,6 @@ export function ProfileScreen() {
                 Сменить аватар
               </Text>
             </Pressable>
-            {photoError && (
-              <Text style={{ marginTop: 4, color: theme.colors.textSecondary, fontSize: 11 }}>
-                Нужен доступ к фото или выбор отменён
-              </Text>
-            )}
           </View>
         </View>
         <Pressable
@@ -415,10 +395,8 @@ export function ProfileScreen() {
       <AvatarPickerModal
         visible={avatarPickerOpen}
         selectedPresetId={settings.avatarId}
-        customUri={settings.customAvatarUri}
         onClose={() => setAvatarPickerOpen(false)}
         onSelectPreset={handleSelectPreset}
-        onPickPhoto={handlePickPhoto}
       />
     </Screen>
   );

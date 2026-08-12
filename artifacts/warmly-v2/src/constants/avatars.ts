@@ -24,11 +24,10 @@ export type AvatarPresetId =
   | "bird"
   | "moose"
   | "axolotl"
-  | "koala"
-  | "custom";
+  | "koala";
 
 export interface AvatarPreset {
-  id: Exclude<AvatarPresetId, "custom">;
+  id: AvatarPresetId;
   labelRu: string;
   image: ImageSourcePropType;
 }

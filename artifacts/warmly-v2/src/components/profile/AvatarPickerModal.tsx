@@ -1,6 +1,5 @@
 import React from "react";
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AVATAR_PRESETS } from "../../constants/avatars";
 import { useTheme } from "../../theme";
@@ -9,26 +8,21 @@ import { Button } from "../ui";
 interface AvatarPickerModalProps {
   visible: boolean;
   selectedPresetId: string;
-  customUri?: string;
   onClose: () => void;
   onSelectPreset: (id: string) => void;
-  onPickPhoto: () => void;
 }
 
 /**
- * Выбор аватара: готовые животные Warmly или своё фото.
+ * Выбор аватара: готовые животные-компаньоны Warmly.
  */
 export function AvatarPickerModal({
   visible,
   selectedPresetId,
-  customUri,
   onClose,
   onSelectPreset,
-  onPickPhoto,
 }: AvatarPickerModalProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const isCustom = selectedPresetId === "custom" && Boolean(customUri);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -62,50 +56,15 @@ export function AvatarPickerModal({
               marginBottom: theme.spacing("md"),
             }}
           >
-            Выбери компаньона Warmly или своё фото
+            Выбери компаньона Warmly
           </Text>
 
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.grid}
           >
-            <Pressable onPress={onPickPhoto} style={styles.cell}>
-              <View
-                style={[
-                  styles.avatarRing,
-                  {
-                    borderColor: isCustom ? theme.colors.accent : theme.colors.border,
-                    borderWidth: isCustom ? 2.5 : 1,
-                    backgroundColor: theme.colors.background,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  },
-                ]}
-              >
-                {isCustom && customUri ? (
-                  <Image source={{ uri: customUri }} style={styles.avatarImage} />
-                ) : (
-                  <Ionicons name="camera-outline" size={26} color={theme.colors.textSecondary} />
-                )}
-              </View>
-              <Text
-                style={{
-                  marginTop: 6,
-                  fontSize: theme.typography.sizes.caption,
-                  color: isCustom ? theme.colors.accent : theme.colors.textSecondary,
-                  fontWeight: isCustom
-                    ? theme.typography.weights.semibold
-                    : theme.typography.weights.regular,
-                  textAlign: "center",
-                }}
-                numberOfLines={1}
-              >
-                Фото
-              </Text>
-            </Pressable>
-
             {AVATAR_PRESETS.map((preset) => {
-              const selected = !isCustom && selectedPresetId === preset.id;
+              const selected = selectedPresetId === preset.id;
               return (
                 <Pressable
                   key={preset.id}
