@@ -7,17 +7,16 @@ import { useTheme } from "../../theme";
 interface TreeIllustrationProps {
   tree: Tree;
   size?: number;
-  /** Для дальнего плана — чуть бледнее */
   depthFade?: number;
 }
 
 /**
- * Иллюстрированное дерево (PNG) — не геометрия SVG.
- * Код отвечает только за размер/тему/вариант ассета.
+ * Мягкая pastel-иллюстрация из assets/trees/*.png
+ * (не геометрия View/SVG).
  */
 export const TreeIllustration = memo(function TreeIllustration({
   tree,
-  size = 200,
+  size = 160,
   depthFade = 1,
 }: TreeIllustrationProps) {
   const theme = useTheme();

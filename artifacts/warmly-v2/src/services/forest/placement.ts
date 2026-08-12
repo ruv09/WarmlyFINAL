@@ -1,12 +1,12 @@
 import { Tree, TreePosition } from "../../types";
 
 /** Минимальное расстояние между деревьями в мировых единицах. */
-const MIN_DISTANCE = 110;
-const WORLD_MIN_X = -520;
-const WORLD_MAX_X = 520;
+const MIN_DISTANCE = 150;
+const WORLD_MIN_X = -640;
+const WORLD_MAX_X = 640;
 /** Дальний план (меньше) → передний план (больше). */
-const WORLD_MIN_Y = -210;
-const WORLD_MAX_Y = 170;
+const WORLD_MIN_Y = -240;
+const WORLD_MAX_Y = 180;
 
 const DEPTH_BANDS = [
   { minY: -210, maxY: -90, weight: 0.28 }, // даль
