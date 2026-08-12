@@ -30,7 +30,7 @@ importers:
         specifier: ~15.0.8
         version: 15.0.8(expo@54.0.36)
       expo-image-picker:
-        specifier: ^17.0.11
+        specifier: ~17.0.11
         version: 17.0.11(expo@54.0.36)
       expo-linking:
         specifier: ~8.0.12
