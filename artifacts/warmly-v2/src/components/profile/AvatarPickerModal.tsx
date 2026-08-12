@@ -1,6 +1,7 @@
 import React from "react";
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AVATAR_PRESETS } from "../../constants/avatars";
 import { useTheme } from "../../theme";
 import { Button } from "../ui";
@@ -26,6 +27,7 @@ export function AvatarPickerModal({
   onPickPhoto,
 }: AvatarPickerModalProps) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const isCustom = selectedPresetId === "custom" && Boolean(customUri);
 
   return (
@@ -38,6 +40,8 @@ export function AvatarPickerModal({
             {
               backgroundColor: theme.colors.surface,
               borderColor: theme.colors.border,
+              paddingBottom: Math.max(insets.bottom, 16) + 12,
+              maxHeight: "88%",
             },
           ]}
         >
@@ -61,43 +65,11 @@ export function AvatarPickerModal({
             Выбери компаньона Warmly или своё фото
           </Text>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
-            {AVATAR_PRESETS.map((preset) => {
-              const selected = !isCustom && selectedPresetId === preset.id;
-              return (
-                <Pressable
-                  key={preset.id}
-                  onPress={() => onSelectPreset(preset.id)}
-                  style={{ alignItems: "center", width: 76 }}
-                >
-                  <View
-                    style={[
-                      styles.avatarRing,
-                      {
-                        borderColor: selected ? theme.colors.accent : theme.colors.border,
-                        borderWidth: selected ? 2.5 : 1,
-                      },
-                    ]}
-                  >
-                    <Image source={preset.image} style={styles.avatarImage} />
-                  </View>
-                  <Text
-                    style={{
-                      marginTop: 6,
-                      fontSize: theme.typography.sizes.caption,
-                      color: selected ? theme.colors.accent : theme.colors.textSecondary,
-                      fontWeight: selected
-                        ? theme.typography.weights.semibold
-                        : theme.typography.weights.regular,
-                    }}
-                  >
-                    {preset.labelRu}
-                  </Text>
-                </Pressable>
-              );
-            })}
-
-            <Pressable onPress={onPickPhoto} style={{ alignItems: "center", width: 76 }}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.grid}
+          >
+            <Pressable onPress={onPickPhoto} style={styles.cell}>
               <View
                 style={[
                   styles.avatarRing,
@@ -124,14 +96,53 @@ export function AvatarPickerModal({
                   fontWeight: isCustom
                     ? theme.typography.weights.semibold
                     : theme.typography.weights.regular,
+                  textAlign: "center",
                 }}
+                numberOfLines={1}
               >
                 Фото
               </Text>
             </Pressable>
+
+            {AVATAR_PRESETS.map((preset) => {
+              const selected = !isCustom && selectedPresetId === preset.id;
+              return (
+                <Pressable
+                  key={preset.id}
+                  onPress={() => onSelectPreset(preset.id)}
+                  style={styles.cell}
+                >
+                  <View
+                    style={[
+                      styles.avatarRing,
+                      {
+                        borderColor: selected ? theme.colors.accent : theme.colors.border,
+                        borderWidth: selected ? 2.5 : 1,
+                      },
+                    ]}
+                  >
+                    <Image source={preset.image} style={styles.avatarImage} />
+                  </View>
+                  <Text
+                    style={{
+                      marginTop: 6,
+                      fontSize: theme.typography.sizes.caption,
+                      color: selected ? theme.colors.accent : theme.colors.textSecondary,
+                      fontWeight: selected
+                        ? theme.typography.weights.semibold
+                        : theme.typography.weights.regular,
+                      textAlign: "center",
+                    }}
+                    numberOfLines={1}
+                  >
+                    {preset.labelRu}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </ScrollView>
 
-          <View style={{ marginTop: theme.spacing("lg") }}>
+          <View style={{ marginTop: theme.spacing("md") }}>
             <Button label="Готово" onPress={onClose} />
           </View>
         </Pressable>
@@ -152,7 +163,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 28,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    paddingBottom: 4,
+  },
+  cell: {
+    width: "22%",
+    flexGrow: 1,
+    maxWidth: "23%",
+    alignItems: "center",
   },
   avatarRing: {
     width: 64,
