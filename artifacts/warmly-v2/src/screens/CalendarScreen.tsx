@@ -7,13 +7,12 @@ import { EntryCard } from "../components/entry";
 import { useEntries } from "../hooks";
 import { useTheme } from "../theme";
 import { ROUTES } from "../constants/routes";
+import { getMoodById } from "../constants/moods";
 import { formatHumanDate, toDateKey } from "../utils/date";
 import { buildMonthGrid, formatMonthYear, WEEKDAY_LABELS_RU } from "../utils/calendarGrid";
 
 /**
- * Сетка месяца (как в референсе) вместо горизонтального списка дат:
- * дни недели Пн-Вс, точка под днём с записями, кружок у выбранного/
- * сегодняшнего дня. Список записей выбранного дня — под сеткой.
+ * Календарь по макету: сетка с цветными точками настроения + карточки дня.
  */
 export function CalendarScreen() {
   const theme = useTheme();
@@ -24,7 +23,16 @@ export function CalendarScreen() {
   const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() });
   const [selectedDate, setSelectedDate] = useState<string>(toDateKey());
 
-  const datesWithEntries = useMemo(() => new Set(entries.map((entry) => entry.date)), [entries]);
+  const moodColorByDate = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const entry of entries) {
+      if (map.has(entry.date)) continue;
+      const mood = getMoodById(entry.moodId);
+      map.set(entry.date, mood?.color ?? theme.colors.accentWarm);
+    }
+    return map;
+  }, [entries, theme.colors.accentWarm]);
+
   const grid = useMemo(() => buildMonthGrid(cursor.year, cursor.month), [cursor]);
   const todayKey = useMemo(() => toDateKey(today), [today]);
 
@@ -43,7 +51,7 @@ export function CalendarScreen() {
   const renderEntry = useCallback(
     ({ item }: { item: (typeof entriesForSelectedDate)[number] }) => (
       <View style={{ marginBottom: theme.spacing("sm") }}>
-        <EntryCard entry={item} onPress={() => router.push(ROUTES.entry(item.id))} />
+        <EntryCard compact entry={item} onPress={() => router.push(ROUTES.entry(item.id))} />
       </View>
     ),
     [theme, router],
@@ -58,13 +66,22 @@ export function CalendarScreen() {
     <Screen scroll={false} edges={["top", "left", "right"]}>
       <Text
         style={{
-          fontSize: theme.typography.sizes.title,
-          fontWeight: theme.typography.weights.semibold,
+          fontSize: theme.typography.sizes.largeTitle,
+          fontWeight: theme.typography.weights.bold,
           color: theme.colors.textPrimary,
-          marginBottom: theme.spacing("md"),
         }}
       >
         Календарь
+      </Text>
+      <Text
+        style={{
+          marginTop: 2,
+          marginBottom: theme.spacing("md"),
+          color: theme.colors.textSecondary,
+          fontSize: theme.typography.sizes.caption,
+        }}
+      >
+        твои записи и настроение
       </Text>
 
       <View
@@ -107,7 +124,7 @@ export function CalendarScreen() {
           {week.map((day) => {
             const isSelected = day.dateKey === selectedDate;
             const isToday = day.dateKey === todayKey;
-            const hasEntries = datesWithEntries.has(day.dateKey);
+            const moodColor = moodColorByDate.get(day.dateKey);
 
             return (
               <Pressable
@@ -117,8 +134,8 @@ export function CalendarScreen() {
               >
                 <View
                   style={{
-                    width: 30,
-                    height: 30,
+                    width: 32,
+                    height: 32,
                     borderRadius: theme.radius.full,
                     alignItems: "center",
                     justifyContent: "center",
@@ -143,11 +160,11 @@ export function CalendarScreen() {
                 </View>
                 <View
                   style={{
-                    width: 4,
-                    height: 4,
-                    borderRadius: 2,
+                    width: 5,
+                    height: 5,
+                    borderRadius: 3,
                     marginTop: 3,
-                    backgroundColor: hasEntries ? theme.colors.accentWarm : "transparent",
+                    backgroundColor: moodColor ?? "transparent",
                   }}
                 />
               </Pressable>
@@ -159,7 +176,8 @@ export function CalendarScreen() {
       <Text
         style={{
           color: theme.colors.textSecondary,
-          marginVertical: theme.spacing("md"),
+          marginTop: theme.spacing("md"),
+          marginBottom: theme.spacing("sm"),
         }}
       >
         {formatHumanDate(selectedDate)}
@@ -174,6 +192,7 @@ export function CalendarScreen() {
             keyExtractor={(entry) => entry.id}
             renderItem={renderEntry}
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 88 }}
           />
         )}
       </View>

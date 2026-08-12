@@ -8,30 +8,34 @@ import { MoodPicker } from "../components/entry";
 import { useEntries } from "../hooks";
 import { useTheme } from "../theme";
 import { MoodId } from "../types";
+import { ENTRY_TEXT_MAX } from "../constants/moods";
 import { pickSupportPhrase } from "../utils";
 
+/** Модальная новая запись — тот же UX, что и Дневник. */
 export function NewEntryScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { createEntry } = useEntries();
 
-  const [moodId, setMoodId] = useState<MoodId | undefined>();
+  const [moodId, setMoodId] = useState<MoodId | undefined>("good");
   const [note, setNote] = useState("");
-  const [smallWin, setSmallWin] = useState("");
+  const [extraNote, setExtraNote] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [supportPhrase, setSupportPhrase] = useState<string | null>(null);
 
-  const canSave = Boolean(moodId) && !isSaving;
+  const canSave = Boolean(moodId) && note.trim().length > 0 && !isSaving;
 
   async function handleSave() {
-    if (!moodId) return;
+    if (!moodId || !note.trim()) return;
     setIsSaving(true);
     try {
-      await createEntry({ moodId, note, smallWin: smallWin || undefined });
-      const phrase = pickSupportPhrase();
-      setSupportPhrase(phrase);
+      await createEntry({
+        moodId,
+        note: note.trim(),
+        smallWin: extraNote.trim() || undefined,
+      });
+      setSupportPhrase(pickSupportPhrase());
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
-      // Короткая пауза, чтобы пользователь увидел тёплую фразу из v1.
       setTimeout(() => router.back(), 900);
     } finally {
       setIsSaving(false);
@@ -41,7 +45,8 @@ export function NewEntryScreen() {
   const label = (text: string) => (
     <Text
       style={{
-        color: theme.colors.textSecondary,
+        color: theme.colors.textPrimary,
+        fontWeight: theme.typography.weights.semibold,
         marginTop: theme.spacing("lg"),
         marginBottom: theme.spacing("sm"),
       }}
@@ -50,86 +55,77 @@ export function NewEntryScreen() {
     </Text>
   );
 
+  if (supportPhrase) {
+    return (
+      <KeyboardScreen>
+        <Text style={{ color: theme.colors.accent, fontWeight: theme.typography.weights.semibold }}>
+          Warmly рядом
+        </Text>
+        <Text style={{ marginTop: 8, color: theme.colors.textPrimary, fontSize: theme.typography.sizes.subtitle }}>
+          {supportPhrase}
+        </Text>
+      </KeyboardScreen>
+    );
+  }
+
   return (
     <KeyboardScreen>
-      {supportPhrase ? (
-        <View
-          style={{
-            backgroundColor: theme.colors.surface,
-            borderRadius: theme.radius.lg,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            padding: theme.spacing("lg"),
-            gap: theme.spacing("sm"),
-          }}
-        >
-          <Text
-            style={{
-              fontSize: theme.typography.sizes.caption,
-              fontWeight: theme.typography.weights.semibold,
-              color: theme.colors.accent,
-              textTransform: "uppercase",
-              letterSpacing: 0.8,
-            }}
-          >
-            Warmly говорит
-          </Text>
-          <Text
-            style={{
-              fontSize: theme.typography.sizes.subtitle,
-              color: theme.colors.textPrimary,
-              lineHeight: 24,
-            }}
-          >
-            {supportPhrase}
-          </Text>
-        </View>
-      ) : (
-        <>
-          {label("Какое у вас настроение?")}
-          <MoodPicker selectedMoodId={moodId} onSelect={setMoodId} />
+      {label("Как ты себя чувствуешь?")}
+      <MoodPicker selectedMoodId={moodId} onSelect={setMoodId} />
 
-          {label("Заметка (необязательно)")}
-          <TextInput
-            value={note}
-            onChangeText={setNote}
-            multiline
-            placeholder="Что произошло сегодня?"
-            placeholderTextColor={theme.colors.textSecondary}
-            maxFontSizeMultiplier={theme.typography.scaleLimits.content}
-            style={{
-              minHeight: 100,
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-              borderRadius: theme.radius.md,
-              padding: theme.spacing("md"),
-              color: theme.colors.textPrimary,
-              textAlignVertical: "top",
-              fontSize: theme.typography.sizes.body,
-            }}
-          />
+      {label("Что произошло?")}
+      <TextInput
+        value={note}
+        onChangeText={(text) => setNote(text.slice(0, ENTRY_TEXT_MAX))}
+        multiline
+        maxLength={ENTRY_TEXT_MAX}
+        placeholder="Коротко опиши день…"
+        placeholderTextColor={theme.colors.textSecondary}
+        style={{
+          minHeight: 100,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          borderRadius: theme.radius.lg,
+          padding: theme.spacing("md"),
+          color: theme.colors.textPrimary,
+          textAlignVertical: "top",
+          backgroundColor: theme.colors.surface,
+        }}
+      />
+      <Text style={{ alignSelf: "flex-end", color: theme.colors.textSecondary, fontSize: 12 }}>
+        {note.length}/{ENTRY_TEXT_MAX}
+      </Text>
 
-          {label("Маленькая победа (необязательно)")}
-          <TextInput
-            value={smallWin}
-            onChangeText={setSmallWin}
-            placeholder="Чем сегодня можно гордиться?"
-            placeholderTextColor={theme.colors.textSecondary}
-            maxFontSizeMultiplier={theme.typography.scaleLimits.content}
-            style={{
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-              borderRadius: theme.radius.md,
-              padding: theme.spacing("md"),
-              color: theme.colors.textPrimary,
-              fontSize: theme.typography.sizes.body,
-            }}
-          />
+      {label("Добавить заметку")}
+      <TextInput
+        value={extraNote}
+        onChangeText={(text) => setExtraNote(text.slice(0, ENTRY_TEXT_MAX))}
+        multiline
+        maxLength={ENTRY_TEXT_MAX}
+        placeholder="Необязательно"
+        placeholderTextColor={theme.colors.textSecondary}
+        style={{
+          minHeight: 80,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          borderRadius: theme.radius.lg,
+          padding: theme.spacing("md"),
+          color: theme.colors.textPrimary,
+          textAlignVertical: "top",
+          backgroundColor: theme.colors.surface,
+        }}
+      />
+      <Text style={{ alignSelf: "flex-end", color: theme.colors.textSecondary, fontSize: 12 }}>
+        {extraNote.length}/{ENTRY_TEXT_MAX}
+      </Text>
 
-          <Text style={{ height: theme.spacing("xl") }} />
-          <Button label="Сохранить" onPress={handleSave} disabled={!canSave} />
-        </>
-      )}
+      <View style={{ height: theme.spacing("xl") }} />
+      <Button
+        label={isSaving ? "Сохранение…" : "Сохранить запись"}
+        icon="leaf"
+        onPress={handleSave}
+        disabled={!canSave}
+      />
     </KeyboardScreen>
   );
 }

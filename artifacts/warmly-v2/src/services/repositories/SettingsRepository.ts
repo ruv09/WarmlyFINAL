@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS: Settings = {
   notifications: { enabled: false, morningTime: "09:00", eveningTime: "21:00" },
   name: "",
   isOnboarded: false,
+  joinedAt: "",
   supportivePhrasesEnabled: true,
   dailyPhrase: "",
   dailyPhraseDate: "",
@@ -31,6 +32,7 @@ export class SettingsRepository {
         ...(stored.notifications ?? {}),
       },
       recentPhrases: Array.isArray(stored.recentPhrases) ? stored.recentPhrases : [],
+      joinedAt: stored.joinedAt || stored.dailyPhraseDate || DEFAULT_SETTINGS.joinedAt,
     };
   }
 
