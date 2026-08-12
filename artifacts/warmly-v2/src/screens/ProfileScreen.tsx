@@ -5,12 +5,14 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Screen } from "../components/layout";
 import { Button } from "../components/ui";
+import { AvatarPickerModal } from "../components/profile";
 import { useEntries, useFavorites, useSettings, useStatistics } from "../hooks";
 import { useTheme } from "../theme";
 import { ROUTES } from "../constants/routes";
 import { ThemeMode } from "../types";
 import { getMoodById } from "../constants/moods";
-import { exportEntries } from "../services";
+import { getAvatarPreset } from "../constants/avatars";
+import { clearStoredUserAvatar, exportEntries, pickAndStoreUserAvatar } from "../services";
 import { formatHumanDate, getFallbackQuote, treesLabel } from "../utils";
 
 const THEME_OPTIONS: { label: string; value: ThemeMode; preview: [string, string] }[] = [
@@ -49,10 +51,19 @@ export function ProfileScreen() {
   const [exportError, setExportError] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(settings.name);
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
+  const [photoError, setPhotoError] = useState(false);
 
   const mostFrequentMood = stats.mostFrequentMoodId
     ? getMoodById(stats.mostFrequentMoodId)
     : undefined;
+
+  const avatarSource = useMemo(() => {
+    if (settings.avatarId === "custom" && settings.customAvatarUri) {
+      return { uri: settings.customAvatarUri };
+    }
+    return getAvatarPreset(settings.avatarId).image;
+  }, [settings.avatarId, settings.customAvatarUri]);
 
   const joinedLabel = useMemo(() => {
     if (!settings.joinedAt) return "с Warmly";
@@ -62,6 +73,23 @@ export function ProfileScreen() {
   const thoughtOfDay = settings.supportivePhrasesEnabled
     ? settings.dailyPhrase || getFallbackQuote()
     : getFallbackQuote();
+
+  async function handleSelectPreset(id: string) {
+    await clearStoredUserAvatar().catch(() => undefined);
+    await updateSettings({ avatarId: id, customAvatarUri: "" });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+  }
+
+  async function handlePickPhoto() {
+    setPhotoError(false);
+    const uri = await pickAndStoreUserAvatar();
+    if (!uri) {
+      setPhotoError(true);
+      return;
+    }
+    await updateSettings({ avatarId: "custom", customAvatarUri: uri });
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+  }
 
   async function handleExport() {
     setIsExporting(true);
@@ -102,7 +130,8 @@ export function ProfileScreen() {
     <Screen edges={["top", "left", "right"]}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
         <View style={{ flexDirection: "row", gap: 14, flex: 1, alignItems: "center" }}>
-          <View
+          <Pressable
+            onPress={() => setAvatarPickerOpen(true)}
             style={{
               width: 64,
               height: 64,
@@ -112,13 +141,25 @@ export function ProfileScreen() {
               borderWidth: 2,
               borderColor: theme.colors.border,
             }}
+            accessibilityLabel="Изменить аватар"
           >
-            <Image
-              source={require("../../assets/brand/fox-avatar.png")}
-              style={{ width: 64, height: 64 }}
-              resizeMode="cover"
-            />
-          </View>
+            <Image source={avatarSource} style={{ width: 64, height: 64 }} resizeMode="cover" />
+            <View
+              style={{
+                position: "absolute",
+                right: 0,
+                bottom: 0,
+                width: 22,
+                height: 22,
+                borderRadius: 11,
+                backgroundColor: theme.colors.accent,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="camera" size={12} color={theme.colors.surface} />
+            </View>
+          </Pressable>
           <View style={{ flex: 1 }}>
             {editingName ? (
               <TextInput
@@ -148,6 +189,22 @@ export function ProfileScreen() {
             <Text style={{ marginTop: 2, color: theme.colors.textSecondary, fontSize: theme.typography.sizes.caption }}>
               {joinedLabel}
             </Text>
+            <Pressable onPress={() => setAvatarPickerOpen(true)} hitSlop={6}>
+              <Text
+                style={{
+                  marginTop: 4,
+                  color: theme.colors.accent,
+                  fontSize: theme.typography.sizes.caption,
+                }}
+              >
+                Сменить аватар
+              </Text>
+            </Pressable>
+            {photoError && (
+              <Text style={{ marginTop: 4, color: theme.colors.textSecondary, fontSize: 11 }}>
+                Нужен доступ к фото или выбор отменён
+              </Text>
+            )}
           </View>
         </View>
         <Pressable
@@ -354,6 +411,15 @@ export function ProfileScreen() {
           Не получилось поделиться файлом. Попробуйте ещё раз.
         </Text>
       )}
+
+      <AvatarPickerModal
+        visible={avatarPickerOpen}
+        selectedPresetId={settings.avatarId}
+        customUri={settings.customAvatarUri}
+        onClose={() => setAvatarPickerOpen(false)}
+        onSelectPreset={handleSelectPreset}
+        onPickPhoto={handlePickPhoto}
+      />
     </Screen>
   );
 }

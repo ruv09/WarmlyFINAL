@@ -16,6 +16,12 @@ export interface Settings {
   /** Дата первой настройки / присоединения (YYYY-MM-DD). */
   joinedAt: string;
   /**
+   * Id готового аватара (fox, owl…) или "custom" для своего фото.
+   */
+  avatarId: string;
+  /** URI своего фото (если avatarId === "custom"). */
+  customAvatarUri: string;
+  /**
    * Включены ли поддерживающие фразы (мысль дня на главной).
    * Перенесено из Warmly v1 как сильная сторона продукта.
    */

@@ -13,7 +13,11 @@
     },
     "android": {
       "package": "com.warmly.app",
-      "permissions": ["POST_NOTIFICATIONS"]
+      "permissions": [
+        "POST_NOTIFICATIONS",
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -21,6 +25,12 @@
         "expo-notifications",
         {
           "color": "#7FA06F"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Warmly использует фото, чтобы сделать аватар профиля своим."
         }
       ]
     ],

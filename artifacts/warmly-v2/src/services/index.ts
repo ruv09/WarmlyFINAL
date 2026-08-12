@@ -17,6 +17,7 @@ export const settingsRepository = new SettingsRepository(storageClient);
 export const favoritesRepository = new FavoritesRepository(storageClient);
 
 export * from "./forest";
+export * from "./avatarService";
 export * from "./notificationService";
 export * from "./exportService";
 export { DEFAULT_SETTINGS } from "./repositories";

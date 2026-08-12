@@ -8,6 +8,8 @@ export const DEFAULT_SETTINGS: Settings = {
   name: "",
   isOnboarded: false,
   joinedAt: "",
+  avatarId: "fox",
+  customAvatarUri: "",
   supportivePhrasesEnabled: true,
   dailyPhrase: "",
   dailyPhraseDate: "",
