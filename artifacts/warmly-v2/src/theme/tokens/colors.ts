@@ -1,6 +1,6 @@
 /**
- * Светлая: минимализм + природный уют (концепты 1–2).
- * Тёмная: сказочный лес + тёплый вечер (концепты 4–5), не инверсия.
+ * Светлая: концепт 2 «Природный уют» — кремовый, охра, олива.
+ * Тёмная: концепты 4–5 «Сказочный лес» + «Тёплый вечер» — индиго, золото.
  */
 export interface ColorPalette {
   background: string;
@@ -14,23 +14,23 @@ export interface ColorPalette {
 }
 
 export const lightColors: ColorPalette = {
-  background: "#F7F1E6",
-  surface: "#FFFDF8",
-  textPrimary: "#2E2A26",
-  textSecondary: "#8B8275",
-  accent: "#7FA06F",
-  accentWarm: "#D98B6F",
-  border: "#E8DFD0",
-  overlay: "#FFFDF8E6",
+  background: "#F3EBDC",
+  surface: "#FFF9F0",
+  textPrimary: "#3A342C",
+  textSecondary: "#9A8F7E",
+  accent: "#8A9A6E",
+  accentWarm: "#C9956A",
+  border: "#E4D8C4",
+  overlay: "#FFF9F0E8",
 };
 
 export const darkColors: ColorPalette = {
-  background: "#1A1428",
-  surface: "#2A2240",
-  textPrimary: "#F0EAE2",
-  textSecondary: "#B3A9C4",
-  accent: "#8FB996",
+  background: "#1A1230",
+  surface: "#2A2048",
+  textPrimary: "#F2EBE3",
+  textSecondary: "#A89BC0",
+  accent: "#9BB88A",
   accentWarm: "#E8B975",
-  border: "#3A3350",
-  overlay: "#1A1428E6",
+  border: "#3A3258",
+  overlay: "#1A1230E8",
 };

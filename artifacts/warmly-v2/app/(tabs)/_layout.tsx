@@ -4,8 +4,8 @@ import { useTheme } from "../../src/theme";
 import { TabBarIcon } from "../../src/components/ui";
 
 /**
- * Нижняя навигация как на концептах: Дневник / Лес / Календарь / Профиль.
- * Без «Дыши» и без отдельной «Главной» в таббаре.
+ * Навигация как на концептах, без «Дыши»:
+ * Дневник / Лес / Календарь / Профиль.
  */
 export default function TabsLayout() {
   const theme = useTheme();
@@ -24,26 +24,22 @@ export default function TabsLayout() {
           fontWeight: theme.typography.weights.medium,
         },
         tabBarStyle: {
-          backgroundColor: isDark ? "#211A36F2" : "#FFFDF8F5",
+          backgroundColor: isDark ? "#21183AF5" : "#FFF9F0F5",
           borderTopWidth: 0,
-          borderTopLeftRadius: theme.radius.lg,
-          borderTopRightRadius: theme.radius.lg,
-          height: 64,
+          borderTopLeftRadius: 18,
+          borderTopRightRadius: 18,
+          height: 66,
           paddingTop: 6,
+          paddingBottom: 6,
           position: "absolute",
           shadowColor: "#000",
-          shadowOpacity: isDark ? 0.28 : 0.06,
-          shadowRadius: 12,
+          shadowOpacity: isDark ? 0.3 : 0.07,
+          shadowRadius: 14,
           shadowOffset: { width: 0, height: -4 },
         },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          href: null,
-        }}
-      />
+      <Tabs.Screen name="index" options={{ href: null }} />
       <Tabs.Screen
         name="journal"
         options={{

@@ -10,7 +10,7 @@ import { Tree } from "../types";
 import { pluralRu } from "../utils";
 
 /**
- * Экран «Лес» — акцент на иллюстрированной сцене, UI вторичен.
+ * Экран «Лес» — UI как на концептах 2 / 4 / 5.
  */
 export function ForestScreen() {
   const theme = useTheme();
@@ -34,7 +34,8 @@ export function ForestScreen() {
           <View style={styles.headerBlock} pointerEvents="none">
             <Text
               style={{
-                fontSize: theme.typography.sizes.largeTitle,
+                fontSize: 30,
+                lineHeight: 34,
                 fontWeight: theme.typography.weights.bold,
                 color: theme.colors.textPrimary,
               }}
@@ -43,9 +44,18 @@ export function ForestScreen() {
             </Text>
             <Text
               style={{
-                marginTop: 4,
-                fontSize: 34,
-                lineHeight: 38,
+                marginTop: 2,
+                fontSize: theme.typography.sizes.caption,
+                color: theme.colors.textSecondary,
+              }}
+            >
+              твоё пространство заботы
+            </Text>
+            <Text
+              style={{
+                marginTop: theme.spacing("md"),
+                fontSize: 48,
+                lineHeight: 52,
                 fontWeight: theme.typography.weights.bold,
                 color: theme.colors.textPrimary,
               }}
@@ -54,6 +64,7 @@ export function ForestScreen() {
             </Text>
             <Text
               style={{
+                marginTop: 2,
                 fontSize: theme.typography.sizes.caption,
                 color: theme.colors.textSecondary,
               }}
@@ -61,20 +72,38 @@ export function ForestScreen() {
               {plantedLabel}
             </Text>
           </View>
-          <Pressable
-            onPress={() => router.push("/(tabs)/profile")}
-            hitSlop={12}
-            style={[
-              styles.menuBtn,
-              {
-                backgroundColor: isDark ? "#2A2340AA" : "#FFFFFFAA",
-                borderColor: isDark ? "#FFFFFF18" : "#0000000D",
-              },
-            ]}
-            accessibilityLabel="Профиль"
-          >
-            <Ionicons name="menu" size={22} color={theme.colors.textPrimary} />
-          </Pressable>
+
+          <View style={styles.headerActions}>
+            <View
+              style={[
+                styles.iconBtn,
+                {
+                  backgroundColor: isDark ? "#2A2340BB" : "#FFF9F0CC",
+                  borderColor: isDark ? "#FFFFFF14" : "#0000000A",
+                },
+              ]}
+            >
+              <Ionicons
+                name="leaf-outline"
+                size={18}
+                color={isDark ? theme.colors.accentWarm : theme.colors.accent}
+              />
+            </View>
+            <Pressable
+              onPress={() => router.push("/(tabs)/profile")}
+              hitSlop={12}
+              style={[
+                styles.iconBtn,
+                {
+                  backgroundColor: isDark ? "#2A2340BB" : "#FFF9F0CC",
+                  borderColor: isDark ? "#FFFFFF14" : "#0000000A",
+                },
+              ]}
+              accessibilityLabel="Меню"
+            >
+              <Ionicons name="menu" size={20} color={theme.colors.textPrimary} />
+            </Pressable>
+          </View>
         </View>
       </SafeAreaView>
 
@@ -126,10 +155,14 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: 12,
   },
-  menuBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  headerActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: StyleSheet.hairlineWidth,
