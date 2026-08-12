@@ -1,22 +1,26 @@
 import { Tree, TreePosition } from "../../types";
 
-/** Минимальное расстояние между деревьями в мировых единицах. */
-const MIN_DISTANCE = 150;
-const WORLD_MIN_X = -640;
-const WORLD_MAX_X = 640;
-/** Дальний план (меньше) → передний план (больше). */
-const WORLD_MIN_Y = -240;
-const WORLD_MAX_Y = 180;
+/**
+ * Раскладка «панорама»: деревья сажаются в слоты вдоль широкой сцены.
+ * Важно: мировые X ≈ пиксели на экране, а дерево ~220px —
+ * поэтому MIN_DISTANCE должен быть больше ширины кроны.
+ */
+const MIN_DISTANCE = 260;
+const WORLD_MIN_X = -1400;
+const WORLD_MAX_X = 1400;
+const WORLD_MIN_Y = -180;
+const WORLD_MAX_Y = 160;
 
+/** Слоты глубины (экранные полосы), чтобы не сваливаться в одну линию. */
 const DEPTH_BANDS = [
-  { minY: -210, maxY: -90, weight: 0.28 }, // даль
-  { minY: -90, maxY: 40, weight: 0.44 }, // середина
-  { minY: 40, maxY: 170, weight: 0.28 }, // перед
+  { minY: -180, maxY: -80, weight: 0.3 }, // даль
+  { minY: -80, maxY: 40, weight: 0.4 }, // середина
+  { minY: 40, maxY: 160, weight: 0.3 }, // перед
 ] as const;
 
 function distance(a: TreePosition, b: TreePosition): number {
-  // Горизонталь важнее — лес растянут вдоль горизонта.
-  return Math.hypot(a.x - b.x, (a.y - b.y) * 1.35);
+  // По X почти 1:1 с экраном; по Y чуть сильнее, чтобы полосы не слипались.
+  return Math.hypot(a.x - b.x, (a.y - b.y) * 1.6);
 }
 
 function isFarEnough(candidate: TreePosition, existing: TreePosition[]): boolean {
@@ -27,19 +31,28 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
-function pickDepthBand(existingCount: number): (typeof DEPTH_BANDS)[number] {
-  // Первые деревья разносятся по полосам, чтобы не копиться в центре.
-  if (existingCount === 0) return DEPTH_BANDS[1];
-  if (existingCount === 1) return DEPTH_BANDS[0];
-  if (existingCount === 2) return DEPTH_BANDS[2];
-
-  const roll = Math.random();
-  let acc = 0;
-  for (const band of DEPTH_BANDS) {
-    acc += band.weight;
-    if (roll <= acc) return band;
+function hash01(seed: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
   }
-  return DEPTH_BANDS[1];
+  return (h >>> 0) / 4294967295;
+}
+
+/**
+ * Детерминированные «карманы» посадки: чередование сторон от центра наружу.
+ * Так первые деревья видны на старте, дальше лес уходит в панораму.
+ */
+function slotCenterX(index: number): number {
+  if (index === 0) return 0;
+  const ring = Math.ceil(index / 2);
+  const side = index % 2 === 1 ? -1 : 1;
+  return side * ring * 300;
+}
+
+function pickBand(index: number): (typeof DEPTH_BANDS)[number] {
+  return DEPTH_BANDS[index % DEPTH_BANDS.length];
 }
 
 function depthFromY(y: number): number {
@@ -47,56 +60,58 @@ function depthFromY(y: number): number {
 }
 
 /**
- * Контролируемое размещение: разные X/Y, разные глубины, без кучи в центре.
+ * Следующее дерево — в свободный слот панорамы, без кучи в центре.
  */
 export function placeNextTree(existing: Pick<Tree, "position">[]): TreePosition {
   const existingPositions = existing.map((tree) => tree.position);
+  const index = existingPositions.length;
 
-  if (existingPositions.length === 0) {
-    return { x: -40, y: 55 };
-  }
-
-  // Предпочитаем свободные «карманы» по X, а не окрестность уже стоящих.
-  for (let attempt = 0; attempt < 96; attempt++) {
-    const band = pickDepthBand(existingPositions.length);
-    const xSlots = 7;
-    const slot = attempt % xSlots;
-    const slotCenter =
-      WORLD_MIN_X + ((slot + 0.5) / xSlots) * (WORLD_MAX_X - WORLD_MIN_X);
-    const jitterX = (Math.random() - 0.5) * ((WORLD_MAX_X - WORLD_MIN_X) / xSlots) * 0.85;
+  // Сначала пробуем канонический слот для этого порядкового номера.
+  for (let pass = 0; pass < 24; pass++) {
+    const slotIndex = index + pass;
+    const band = pickBand(slotIndex);
+    const baseX = slotCenterX(slotIndex);
+    const jitter = (hash01(`slot:${slotIndex}:${pass}`) - 0.5) * 90;
+    const yJitter = hash01(`y:${slotIndex}:${pass}`);
     const candidate: TreePosition = {
-      x: clamp(slotCenter + jitterX, WORLD_MIN_X, WORLD_MAX_X),
-      y: band.minY + Math.random() * (band.maxY - band.minY),
+      x: clamp(baseX + jitter, WORLD_MIN_X, WORLD_MAX_X),
+      y: band.minY + yJitter * (band.maxY - band.minY),
     };
     if (isFarEnough(candidate, existingPositions)) {
       return candidate;
     }
   }
 
-  // Запасной путь: отталкивание от ближайшего соседа в свободную сторону.
-  let best: TreePosition | null = null;
+  // Запас: ищем максимальную дыру по всей ширине.
+  let best: TreePosition = { x: WORLD_MAX_X * 0.6, y: 20 };
   let bestScore = -Infinity;
-  for (let i = 0; i < 48; i++) {
-    const band = pickDepthBand(existingPositions.length);
+  for (let i = 0; i < 80; i++) {
+    const band = DEPTH_BANDS[i % DEPTH_BANDS.length];
     const candidate: TreePosition = {
-      x: WORLD_MIN_X + Math.random() * (WORLD_MAX_X - WORLD_MIN_X),
-      y: band.minY + Math.random() * (band.maxY - band.minY),
+      x: WORLD_MIN_X + (i / 80) * (WORLD_MAX_X - WORLD_MIN_X) + (hash01(`f${i}`) - 0.5) * 40,
+      y: band.minY + hash01(`fy${i}`) * (band.maxY - band.minY),
     };
-    const minDist = Math.min(...existingPositions.map((p) => distance(p, candidate)));
-    const centerPenalty = Math.abs(candidate.x) * 0.02;
-    const score = minDist - centerPenalty;
-    if (score > bestScore) {
-      bestScore = score;
+    const minDist =
+      existingPositions.length === 0
+        ? MIN_DISTANCE
+        : Math.min(...existingPositions.map((p) => distance(p, candidate)));
+    if (minDist > bestScore) {
+      bestScore = minDist;
       best = candidate;
     }
   }
-
-  return best ?? { x: WORLD_MAX_X * 0.7, y: 20 };
+  return best;
 }
 
 export function placementMeta(position: TreePosition): { depth: number; scale: number } {
   const depth = depthFromY(position.y);
-  // Ближе — чуть крупнее; плюс лёгкая вариация.
-  const scale = 0.82 + depth * 0.28 + (Math.random() - 0.5) * 0.08;
-  return { depth, scale: clamp(scale, 0.72, 1.22) };
+  const scale = 0.86 + depth * 0.22 + (hash01(`s:${position.x}:${position.y}`) - 0.5) * 0.06;
+  return { depth, scale: clamp(scale, 0.78, 1.18) };
 }
+
+export const FOREST_WORLD = {
+  minX: WORLD_MIN_X,
+  maxX: WORLD_MAX_X,
+  minY: WORLD_MIN_Y,
+  maxY: WORLD_MAX_Y,
+};

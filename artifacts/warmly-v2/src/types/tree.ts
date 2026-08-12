@@ -26,7 +26,7 @@ export interface TreePosition {
 }
 
 /** Поднимать при смене правил размещения, чтобы старый лес не оставался кучей. */
-export const FOREST_LAYOUT_VERSION = 3;
+export const FOREST_LAYOUT_VERSION = 4;
 
 export interface Tree {
   id: string;

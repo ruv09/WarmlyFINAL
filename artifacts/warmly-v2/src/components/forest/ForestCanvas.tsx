@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { AccessibilityInfo, useWindowDimensions, View } from "react-native";
+import { AccessibilityInfo, Text, useWindowDimensions, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Easing,
@@ -15,12 +15,17 @@ import { buildTreeSpatialIndex, getVisibleTrees } from "../../utils/viewportCull
 import { ForestAtmosphere } from "./ForestAtmosphere";
 import { ForestTreeNode, TREE_HEIGHT, swayPhaseForTree } from "./ForestTreeNode";
 import { getSpeciesVisual } from "../../constants/treeSpecies";
+import { useTheme } from "../../theme";
 
-const MIN_SCALE = 0.65;
-const MAX_SCALE = 1.85;
-const CULLING_MARGIN = 240;
+const MIN_SCALE = 0.7;
+const MAX_SCALE = 1.6;
+const CULLING_MARGIN = 320;
 const NEW_TREE_MS = 12_000;
 const VIEWPORT_THROTTLE_MS = 72;
+/** Насколько сильно мировые Y видны на экране (раньше 0.34 сжимало лес в кучу). */
+const Y_SCREEN_FACTOR = 0.72;
+const MAX_PAN_X = 1600;
+const MAX_PAN_Y = 180;
 
 interface ForestCanvasProps {
   trees: Tree[];
@@ -28,11 +33,13 @@ interface ForestCanvasProps {
 }
 
 /**
- * Иллюстрированный пейзаж леса: даль / середина / перед, pan + pinch-zoom.
+ * Панорама леса: свайп влево/вправо (прогулка), pinch-zoom.
+ * Не 360° — это 2D пейзаж, как на концептах.
  */
 export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
+  const theme = useTheme();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const groundY = screenHeight * 0.6;
+  const groundY = screenHeight * 0.58;
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -44,6 +51,7 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
 
   const [viewport, setViewport] = useState({ x: 0, y: 0, scale: 1 });
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const lastReportRef = useRef(0);
 
   const normalizedTrees = useMemo(
@@ -62,6 +70,16 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
       sub?.remove?.();
     };
   }, []);
+
+  useEffect(() => {
+    if (normalizedTrees.length < 3) {
+      setShowHint(false);
+      return;
+    }
+    setShowHint(true);
+    const timer = setTimeout(() => setShowHint(false), 4200);
+    return () => clearTimeout(timer);
+  }, [normalizedTrees.length]);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -86,11 +104,17 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   }
 
   const panGesture = Gesture.Pan()
-    .minDistance(8)
+    .minDistance(6)
     .onUpdate((event) => {
-      translateX.value = savedTranslateX.value + event.translationX;
-      translateY.value = savedTranslateY.value + event.translationY * 0.28;
-      runOnJS(reportViewport)(translateX.value, translateY.value, scale.value, false);
+      const nextX = Math.max(-MAX_PAN_X, Math.min(MAX_PAN_X, savedTranslateX.value + event.translationX));
+      const nextY = Math.max(
+        -MAX_PAN_Y,
+        Math.min(MAX_PAN_Y, savedTranslateY.value + event.translationY * 0.22),
+      );
+      translateX.value = nextX;
+      translateY.value = nextY;
+      runOnJS(reportViewport)(nextX, nextY, scale.value, false);
+      runOnJS(setShowHint)(false);
     })
     .onEnd(() => {
       savedTranslateX.value = translateX.value;
@@ -157,13 +181,12 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
               !reduceMotion && created === newestCreatedAt && now - created < NEW_TREE_MS;
 
             const depth = tree.depth;
-            const depthScale = 0.52 + depth * 0.58;
+            const depthScale = 0.55 + depth * 0.5;
             const heightScale = getSpeciesVisual(tree.species).heightScale;
             const side = Math.round(TREE_HEIGHT * heightScale * depthScale * tree.scale);
-            // Дальние чуть светлее/прозрачнее; передние насыщеннее.
-            const depthFade = 0.62 + depth * 0.38;
+            const depthFade = 0.58 + depth * 0.42;
             const left = screenWidth / 2 + tree.position.x - side / 2;
-            const top = groundY + tree.position.y * 0.34 - side * 0.9;
+            const top = groundY + tree.position.y * Y_SCREEN_FACTOR - side * 0.88;
 
             return (
               <ForestTreeNode
@@ -182,6 +205,35 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
           })}
         </Animated.View>
       </GestureDetector>
+
+      {showHint && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            bottom: 92,
+            alignSelf: "center",
+            left: 24,
+            right: 24,
+            alignItems: "center",
+          }}
+        >
+          <Text
+            style={{
+              backgroundColor: theme.colors.overlay,
+              color: theme.colors.textSecondary,
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              borderRadius: 12,
+              overflow: "hidden",
+              fontSize: theme.typography.sizes.caption,
+              textAlign: "center",
+            }}
+          >
+            Свайпни влево или вправо — пройдись по лесу
+          </Text>
+        </View>
+      )}
     </View>
   );
 }

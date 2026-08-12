@@ -12,8 +12,8 @@ import { TreeIllustration } from "../tree";
 import { SPRING_CONFIGS } from "../../theme/tokens/animation";
 
 /** Базовый размер иллюстрации на среднем плане. */
-export const TREE_HEIGHT = 236;
-export const TREE_WIDTH = 236;
+export const TREE_HEIGHT = 200;
+export const TREE_WIDTH = 200;
 export const TREE_SIZE = TREE_HEIGHT;
 
 interface ForestTreeNodeProps {
