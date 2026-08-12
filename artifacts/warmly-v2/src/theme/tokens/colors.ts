@@ -1,11 +1,6 @@
 /**
- * Цветовые палитры — единственное место в приложении, где
- * прописаны hex-значения цветов. Компонент никогда не пишет
- * `color: "#2E2A26"` — только `theme.colors.textPrimary`.
- *
- * Обе палитры соответствуют художественным референсам (визуальные
- * концепции "Природный уют" для светлой темы, объединение
- * "Сказочный лес" + "Тёплый вечер" для тёмной — см. /THEME.md).
+ * Светлая: минимализм + природный уют (концепты 1–2).
+ * Тёмная: сказочный лес + тёплый вечер (концепты 4–5), не инверсия.
  */
 export interface ColorPalette {
   background: string;
@@ -13,36 +8,29 @@ export interface ColorPalette {
   textPrimary: string;
   textSecondary: string;
   accent: string;
-  /** Тёплый акцентный цвет — огоньки, светлячки, ягоды, солнечные
-   *  блики на статистике. Отдельно от `accent` (зелёный, "живой"
-   *  цвет леса): это "тёплый свет", а не "рост". */
   accentWarm: string;
   border: string;
-  /** Полупрозрачная плашка поверх иллюстрированного фона (карточка
-   *  "Мой лес") — текст должен читаться поверх любой картинки. */
   overlay: string;
 }
 
-/** Светлая тема — «Природный уют»: тёплое утро, овсяный фон. */
 export const lightColors: ColorPalette = {
-  background: "#F3EBDC",
-  surface: "#FFF9F0",
-  textPrimary: "#3A332B",
+  background: "#F7F1E6",
+  surface: "#FFFDF8",
+  textPrimary: "#2E2A26",
   textSecondary: "#8B8275",
   accent: "#7FA06F",
   accentWarm: "#D98B6F",
-  border: "#E5DBC8",
-  overlay: "#FFF9F0D9",
+  border: "#E8DFD0",
+  overlay: "#FFFDF8E6",
 };
 
-/** Тёмная тема — «Тёплый вечер»: сумерки, не инверсия светлой. */
 export const darkColors: ColorPalette = {
-  background: "#1C1828",
-  surface: "#2A243C",
+  background: "#1A1428",
+  surface: "#2A2240",
   textPrimary: "#F0EAE2",
   textSecondary: "#B3A9C4",
   accent: "#8FB996",
   accentWarm: "#E8B975",
   border: "#3A3350",
-  overlay: "#1C1828D9",
+  overlay: "#1A1428E6",
 };

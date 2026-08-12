@@ -1,57 +1,75 @@
 /**
- * Виды деревьев — см. constants/treeSpecies.ts для визуального
- * профиля каждого вида. Список специально не завязан на MoodId:
- * требование "все деревья должны быть разными" и "не повторять вид
- * подряд" несовместимо с жёсткой связью настроение -> вид.
+ * Виды деревьев Warmly 2.0 — иллюстрированные PNG в фас.
+ * Без стадий роста: одна запись = одно полноценное дерево.
  */
 export type TreeSpecies =
   | "oak"
   | "birch"
+  | "pine"
+  | "spruce"
   | "maple"
   | "linden"
-  | "pine"
-  | "apple"
   | "sakura"
-  | "rowan"
+  | "apple"
+  | "bush"
   | "willow"
-  | "poplar"
-  | "aspen"
-  | "chestnut"
-  | "alder"
-  | "elm"
-  | "spruce"
-  | "juniper"
-  | "cypress"
-  | "thuja"
-  | "magnolia"
-  | "dogwood"
-  | "viburnum"
-  | "plane"
-  | "acacia"
-  | "baobab"
-  | "olive"
-  | "bamboo"
-  | "ginkgo"
-  | "jacaranda";
+  | "rowan";
 
-/** Координаты в условных единицах мира леса (не пиксели экрана —
- *  экранные координаты вычисляются из этих при отрисовке, с учётом
- *  текущего панорамирования/зума). */
 export interface TreePosition {
+  /** Мировые координаты вдоль горизонтали сцены */
   x: number;
+  /**
+   * Глубина сцены: меньший y — дальше, больший y — ближе к зрителю.
+   * Не путать с картой сверху.
+   */
   y: number;
 }
 
-/**
- * Дерево. Версия 2: механика роста полностью отменена — дерево
- * не имеет стадий и не меняется со временем. Каждая запись сразу
- * создаёт полностью выросшее дерево.
- */
 export interface Tree {
   id: string;
   species: TreeSpecies;
-  /** Постоянная позиция в мире, вычисляется один раз при создании
-   *  (services/forest/placement.ts) и больше не пересчитывается. */
   position: TreePosition;
+  /** Локальный масштаб экземпляра (вариация размера) */
+  scale: number;
+  /** 0 — дальний план, 1 — передний */
+  depth: number;
+  /** Индекс варианта ассета (01 / 02) */
+  variant: number;
   createdAt: string;
+}
+
+/** Нормализация старых деревьев без scale/depth/variant. */
+export function normalizeTree(raw: Partial<Tree> & Pick<Tree, "id" | "species" | "position" | "createdAt">): Tree {
+  const y = raw.position?.y ?? 0;
+  const depth =
+    typeof raw.depth === "number" && Number.isFinite(raw.depth)
+      ? Math.max(0, Math.min(1, raw.depth))
+      : Math.max(0, Math.min(1, (y + 220) / 440));
+  const scale =
+    typeof raw.scale === "number" && Number.isFinite(raw.scale)
+      ? Math.max(0.7, Math.min(1.25, raw.scale))
+      : 0.9 + (hash01(raw.id + ":s") * 0.22);
+  const variant =
+    typeof raw.variant === "number" && Number.isFinite(raw.variant)
+      ? (Math.abs(Math.floor(raw.variant)) % 2) + 1
+      : (hash01(raw.id + ":v") < 0.5 ? 1 : 2);
+
+  return {
+    id: raw.id,
+    species: raw.species,
+    position: raw.position,
+    scale,
+    depth,
+    variant,
+    createdAt: raw.createdAt,
+  };
+}
+
+function hash01(input: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) / 4294967295;
 }

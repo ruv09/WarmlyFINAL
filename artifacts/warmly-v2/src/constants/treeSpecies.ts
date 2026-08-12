@@ -1,470 +1,227 @@
+import { ImageSourcePropType } from "react-native";
 import { TreeSpecies } from "../types";
-
-/**
- * Силуэт в фас (вид спереди), в духе ботанической иллюстрации.
- * Несколько видов делят геометрию, различаясь палитрой и акцентами.
- */
-export type CanopyShape =
-  | "roundBroad"
-  | "airyOval"
-  | "autumnWide"
-  | "tallPine"
-  | "fruitRound"
-  | "blossomCloud"
-  | "weeping"
-  | "columnar"
-  | "conicalEvergreen"
-  | "flameEvergreen"
-  | "chestnutSpikes"
-  | "flatTop"
-  | "bottle"
-  | "oliveTwisted"
-  | "bambooClump"
-  | "ginkgoFan"
-  | "jacarandaCloud";
 
 export interface SpeciesVisual {
   species: TreeSpecies;
   labelRu: string;
-  canopyShape: CanopyShape;
-  /** Относительная высота силуэта (для композиции на карте). */
+  /** Базовая высота вида относительно других */
   heightScale: number;
-  canopyColor: string;
-  canopyHighlight: string;
-  canopyShade: string;
-  trunkColor: string;
-  canopyColorDark: string;
-  canopyHighlightDark: string;
-  canopyShadeDark: string;
-  trunkColorDark: string;
-  accentColor?: string;
-  accentColorDark?: string;
-  hasEveningLights?: boolean;
+  /** Варианты иллюстраций: light / dark */
+  variants: Array<{
+    image: ImageSourcePropType;
+    imageDark: ImageSourcePropType;
+  }>;
 }
 
-function species(
-  partial: Omit<SpeciesVisual, "hasEveningLights"> & { hasEveningLights?: boolean },
-): SpeciesVisual {
-  return { hasEveningLights: true, ...partial };
-}
-
-/**
- * 28 видов из ботанического референса — акварельные пастельные тона.
- * Тёмная тема: отдельная вечерняя палитра, не инверсия.
- */
 export const TREE_SPECIES_CATALOG: SpeciesVisual[] = [
-  species({
+  {
     species: "oak",
     labelRu: "Дуб",
-    canopyShape: "roundBroad",
-    heightScale: 1,
-    canopyColor: "#7A9A68",
-    canopyHighlight: "#A8C08A",
-    canopyShade: "#5A784C",
-    trunkColor: "#7A5A3C",
-    canopyColorDark: "#4A6048",
-    canopyHighlightDark: "#6A8064",
-    canopyShadeDark: "#334232",
-    trunkColorDark: "#5A4030",
-  }),
-  species({
+    heightScale: 1.12,
+    variants: [
+      {
+        image: require("../../assets/forest/trees/oak/oak_01.png"),
+        imageDark: require("../../assets/forest/trees/oak/oak_01_dark.png"),
+      },
+      {
+        image: require("../../assets/forest/trees/oak/oak_02.png"),
+        imageDark: require("../../assets/forest/trees/oak/oak_02_dark.png"),
+      },
+    ],
+  },
+  {
     species: "birch",
     labelRu: "Берёза",
-    canopyShape: "airyOval",
-    heightScale: 1.05,
-    canopyColor: "#B8D090",
-    canopyHighlight: "#D8E8B0",
-    canopyShade: "#90B070",
-    trunkColor: "#F2EDE4",
-    canopyColorDark: "#6A7A58",
-    canopyHighlightDark: "#8A9A74",
-    canopyShadeDark: "#4A5840",
-    trunkColorDark: "#D8D0C4",
-  }),
-  species({
-    species: "maple",
-    labelRu: "Клён",
-    canopyShape: "autumnWide",
-    heightScale: 1,
-    canopyColor: "#E08A3C",
-    canopyHighlight: "#F0B060",
-    canopyShade: "#C06828",
-    trunkColor: "#6E5642",
-    canopyColorDark: "#A06030",
-    canopyHighlightDark: "#C08048",
-    canopyShadeDark: "#704020",
-    trunkColorDark: "#4A3A2E",
-  }),
-  species({
-    species: "linden",
-    labelRu: "Липа",
-    canopyShape: "roundBroad",
-    heightScale: 0.98,
-    canopyColor: "#9CB86E",
-    canopyHighlight: "#C0D898",
-    canopyShade: "#789850",
-    trunkColor: "#7A6349",
-    canopyColorDark: "#5A6A48",
-    canopyHighlightDark: "#7A8A64",
-    canopyShadeDark: "#3E4A32",
-    trunkColorDark: "#5A4636",
-  }),
-  species({
+    heightScale: 1.16,
+    variants: [
+      {
+        image: require("../../assets/forest/trees/birch/birch_01.png"),
+        imageDark: require("../../assets/forest/trees/birch/birch_01_dark.png"),
+      },
+      {
+        image: require("../../assets/forest/trees/birch/birch_02.png"),
+        imageDark: require("../../assets/forest/trees/birch/birch_02_dark.png"),
+      },
+    ],
+  },
+  {
     species: "pine",
     labelRu: "Сосна",
-    canopyShape: "tallPine",
-    heightScale: 1.15,
-    canopyColor: "#5F8A62",
-    canopyHighlight: "#88B08A",
-    canopyShade: "#3E6644",
-    trunkColor: "#A07048",
-    canopyColorDark: "#3A5540",
-    canopyHighlightDark: "#5A7460",
-    canopyShadeDark: "#283C30",
-    trunkColorDark: "#6A4830",
-  }),
-  species({
-    species: "apple",
-    labelRu: "Яблоня",
-    canopyShape: "fruitRound",
-    heightScale: 0.9,
-    canopyColor: "#8FB87A",
-    canopyHighlight: "#B8D8A0",
-    canopyShade: "#6A9458",
-    trunkColor: "#6E5642",
-    canopyColorDark: "#4E6848",
-    canopyHighlightDark: "#6E8864",
-    canopyShadeDark: "#364832",
-    trunkColorDark: "#4A3A2E",
-    accentColor: "#E07070",
-    accentColorDark: "#E8A070",
-  }),
-  species({
-    species: "sakura",
-    labelRu: "Сакура",
-    canopyShape: "blossomCloud",
-    heightScale: 0.95,
-    canopyColor: "#F0B8C8",
-    canopyHighlight: "#FFE0E8",
-    canopyShade: "#E090A8",
-    trunkColor: "#6A5040",
-    canopyColorDark: "#8A5A6A",
-    canopyHighlightDark: "#B08090",
-    canopyShadeDark: "#5A3E4C",
-    trunkColorDark: "#3E3228",
-    accentColor: "#FFF0F4",
-    accentColorDark: "#F0C8D4",
-  }),
-  species({
-    species: "rowan",
-    labelRu: "Рябина",
-    canopyShape: "fruitRound",
-    heightScale: 0.95,
-    canopyColor: "#8FAA70",
-    canopyHighlight: "#B4C894",
-    canopyShade: "#6A8650",
-    trunkColor: "#7A6349",
-    canopyColorDark: "#4E6448",
-    canopyHighlightDark: "#6E8464",
-    canopyShadeDark: "#364432",
-    trunkColorDark: "#5A4636",
-    accentColor: "#E06030",
-    accentColorDark: "#E88850",
-  }),
-  species({
-    species: "willow",
-    labelRu: "Ива",
-    canopyShape: "weeping",
-    heightScale: 1.05,
-    canopyColor: "#A8C078",
-    canopyHighlight: "#C8D8A0",
-    canopyShade: "#849858",
-    trunkColor: "#7A6349",
-    canopyColorDark: "#5A6A50",
-    canopyHighlightDark: "#7A8A6C",
-    canopyShadeDark: "#3E4A38",
-    trunkColorDark: "#5A4636",
-  }),
-  species({
-    species: "poplar",
-    labelRu: "Тополь",
-    canopyShape: "columnar",
-    heightScale: 1.2,
-    canopyColor: "#7AAA68",
-    canopyHighlight: "#A0C888",
-    canopyShade: "#588848",
-    trunkColor: "#8A6A48",
-    canopyColorDark: "#4A6448",
-    canopyHighlightDark: "#6A8464",
-    canopyShadeDark: "#324232",
-    trunkColorDark: "#5A4030",
-  }),
-  species({
-    species: "aspen",
-    labelRu: "Осина",
-    canopyShape: "autumnWide",
-    heightScale: 1,
-    canopyColor: "#E8C060",
-    canopyHighlight: "#F8E090",
-    canopyShade: "#D0A040",
-    trunkColor: "#A08870",
-    canopyColorDark: "#A08840",
-    canopyHighlightDark: "#C0A858",
-    canopyShadeDark: "#706028",
-    trunkColorDark: "#6A5848",
-  }),
-  species({
-    species: "chestnut",
-    labelRu: "Каштан",
-    canopyShape: "chestnutSpikes",
-    heightScale: 1,
-    canopyColor: "#6A9858",
-    canopyHighlight: "#90B878",
-    canopyShade: "#4A7440",
-    trunkColor: "#6A4A34",
-    canopyColorDark: "#3E5A38",
-    canopyHighlightDark: "#5E7A54",
-    canopyShadeDark: "#2A3E28",
-    trunkColorDark: "#4A3224",
-    accentColor: "#F4F0E8",
-    accentColorDark: "#E8D8C0",
-  }),
-  species({
-    species: "alder",
-    labelRu: "Ольха",
-    canopyShape: "roundBroad",
-    heightScale: 0.95,
-    canopyColor: "#6E9A62",
-    canopyHighlight: "#96BC88",
-    canopyShade: "#4E7848",
-    trunkColor: "#5A4636",
-    canopyColorDark: "#3E5A40",
-    canopyHighlightDark: "#5E7A5C",
-    canopyShadeDark: "#2A3E2C",
-    trunkColorDark: "#3E3228",
-  }),
-  species({
-    species: "elm",
-    labelRu: "Вяз",
-    canopyShape: "roundBroad",
-    heightScale: 1,
-    canopyColor: "#789E68",
-    canopyHighlight: "#A0C088",
-    canopyShade: "#587A48",
-    trunkColor: "#6E5642",
-    canopyColorDark: "#465A40",
-    canopyHighlightDark: "#667A5C",
-    canopyShadeDark: "#304030",
-    trunkColorDark: "#4A3A2E",
-  }),
-  species({
+    heightScale: 1.22,
+    variants: [
+      {
+        image: require("../../assets/forest/trees/pine/pine_01.png"),
+        imageDark: require("../../assets/forest/trees/pine/pine_01_dark.png"),
+      },
+      {
+        image: require("../../assets/forest/trees/pine/pine_02.png"),
+        imageDark: require("../../assets/forest/trees/pine/pine_02_dark.png"),
+      },
+    ],
+  },
+  {
     species: "spruce",
     labelRu: "Ель",
-    canopyShape: "conicalEvergreen",
-    heightScale: 1.15,
-    canopyColor: "#3E6A4A",
-    canopyHighlight: "#5E8A68",
-    canopyShade: "#2A4A34",
-    trunkColor: "#5C4A3A",
-    canopyColorDark: "#2A4234",
-    canopyHighlightDark: "#4A6354",
-    canopyShadeDark: "#1A2C24",
-    trunkColorDark: "#3E3228",
-  }),
-  species({
-    species: "juniper",
-    labelRu: "Можжевельник",
-    canopyShape: "flameEvergreen",
+    heightScale: 1.2,
+    variants: [
+      {
+        image: require("../../assets/forest/trees/spruce/spruce_01.png"),
+        imageDark: require("../../assets/forest/trees/spruce/spruce_01_dark.png"),
+      },
+      {
+        image: require("../../assets/forest/trees/spruce/spruce_02.png"),
+        imageDark: require("../../assets/forest/trees/spruce/spruce_02_dark.png"),
+      },
+    ],
+  },
+  {
+    species: "maple",
+    labelRu: "Клён",
+    heightScale: 1.08,
+    variants: [
+      {
+        image: require("../../assets/forest/trees/maple/maple_01.png"),
+        imageDark: require("../../assets/forest/trees/maple/maple_01_dark.png"),
+      },
+      {
+        image: require("../../assets/forest/trees/maple/maple_02.png"),
+        imageDark: require("../../assets/forest/trees/maple/maple_02_dark.png"),
+      },
+    ],
+  },
+  {
+    species: "linden",
+    labelRu: "Липа",
+    heightScale: 1.05,
+    variants: [
+      {
+        image: require("../../assets/forest/trees/linden/linden_01.png"),
+        imageDark: require("../../assets/forest/trees/linden/linden_01_dark.png"),
+      },
+      {
+        image: require("../../assets/forest/trees/linden/linden_02.png"),
+        imageDark: require("../../assets/forest/trees/linden/linden_02_dark.png"),
+      },
+    ],
+  },
+  {
+    species: "sakura",
+    labelRu: "Сакура",
+    heightScale: 1.02,
+    variants: [
+      {
+        image: require("../../assets/forest/trees/sakura/sakura_01.png"),
+        imageDark: require("../../assets/forest/trees/sakura/sakura_01_dark.png"),
+      },
+      {
+        image: require("../../assets/forest/trees/sakura/sakura_02.png"),
+        imageDark: require("../../assets/forest/trees/sakura/sakura_02_dark.png"),
+      },
+    ],
+  },
+  {
+    species: "apple",
+    labelRu: "Яблоня",
+    heightScale: 0.92,
+    variants: [
+      {
+        image: require("../../assets/forest/trees/apple/apple_01.png"),
+        imageDark: require("../../assets/forest/trees/apple/apple_01_dark.png"),
+      },
+      {
+        image: require("../../assets/forest/trees/apple/apple_02.png"),
+        imageDark: require("../../assets/forest/trees/apple/apple_02_dark.png"),
+      },
+    ],
+  },
+  {
+    species: "bush",
+    labelRu: "Куст",
+    heightScale: 0.68,
+    variants: [
+      {
+        image: require("../../assets/forest/trees/bush/bush_01.png"),
+        imageDark: require("../../assets/forest/trees/bush/bush_01_dark.png"),
+      },
+      {
+        image: require("../../assets/forest/trees/bush/bush_02.png"),
+        imageDark: require("../../assets/forest/trees/bush/bush_02_dark.png"),
+      },
+    ],
+  },
+  {
+    species: "willow",
+    labelRu: "Ива",
     heightScale: 1.1,
-    canopyColor: "#5A8A78",
-    canopyHighlight: "#80B0A0",
-    canopyShade: "#3A6858",
-    trunkColor: "#6A5848",
-    canopyColorDark: "#3A5A50",
-    canopyHighlightDark: "#5A7A6C",
-    canopyShadeDark: "#283C38",
-    trunkColorDark: "#4A3C34",
-  }),
-  species({
-    species: "cypress",
-    labelRu: "Кипарис",
-    canopyShape: "columnar",
-    heightScale: 1.25,
-    canopyColor: "#2E5A40",
-    canopyHighlight: "#4A7858",
-    canopyShade: "#1E4030",
-    trunkColor: "#4A3A2E",
-    canopyColorDark: "#1E3A2C",
-    canopyHighlightDark: "#3A5A44",
-    canopyShadeDark: "#142820",
-    trunkColorDark: "#32281E",
-  }),
-  species({
-    species: "thuja",
-    labelRu: "Туя",
-    canopyShape: "conicalEvergreen",
-    heightScale: 1.05,
-    canopyColor: "#5A8A58",
-    canopyHighlight: "#80B078",
-    canopyShade: "#3E6840",
-    trunkColor: "#6A5040",
-    canopyColorDark: "#3A5A3C",
-    canopyHighlightDark: "#5A7A58",
-    canopyShadeDark: "#283C2A",
-    trunkColorDark: "#4A382C",
-  }),
-  species({
-    species: "magnolia",
-    labelRu: "Магнолия",
-    canopyShape: "blossomCloud",
-    heightScale: 0.95,
-    canopyColor: "#E8C8D4",
-    canopyHighlight: "#FFF0F4",
-    canopyShade: "#D0A0B0",
-    trunkColor: "#6E5642",
-    canopyColorDark: "#7A5A68",
-    canopyHighlightDark: "#A08090",
-    canopyShadeDark: "#543E4C",
-    trunkColorDark: "#4A3A2E",
-    accentColor: "#F8E0E8",
-    accentColorDark: "#E8C0D0",
-  }),
-  species({
-    species: "dogwood",
-    labelRu: "Кизил",
-    canopyShape: "blossomCloud",
-    heightScale: 0.88,
-    canopyColor: "#90B878",
-    canopyHighlight: "#C0D8A8",
-    canopyShade: "#6A9458",
-    trunkColor: "#7A5A40",
-    canopyColorDark: "#4E6848",
-    canopyHighlightDark: "#708C64",
-    canopyShadeDark: "#364832",
-    trunkColorDark: "#4A3828",
-    accentColor: "#F8F4EC",
-    accentColorDark: "#E8E0D0",
-  }),
-  species({
-    species: "viburnum",
-    labelRu: "Калина",
-    canopyShape: "blossomCloud",
-    heightScale: 0.85,
-    canopyColor: "#7AAA68",
-    canopyHighlight: "#A8D088",
-    canopyShade: "#588848",
-    trunkColor: "#6A5040",
-    canopyColorDark: "#466048",
-    canopyHighlightDark: "#668064",
-    canopyShadeDark: "#304232",
-    trunkColorDark: "#443428",
-    accentColor: "#FFFFFF",
-    accentColorDark: "#E8E0D8",
-  }),
-  species({
-    species: "plane",
-    labelRu: "Платан",
-    canopyShape: "roundBroad",
-    heightScale: 1.05,
-    canopyColor: "#8AAA60",
-    canopyHighlight: "#B8D080",
-    canopyShade: "#688840",
-    trunkColor: "#C0A888",
-    canopyColorDark: "#506040",
-    canopyHighlightDark: "#70805C",
-    canopyShadeDark: "#384430",
-    trunkColorDark: "#8A7460",
-  }),
-  species({
-    species: "acacia",
-    labelRu: "Акация",
-    canopyShape: "flatTop",
-    heightScale: 0.95,
-    canopyColor: "#A8C060",
-    canopyHighlight: "#D0E088",
-    canopyShade: "#809840",
-    trunkColor: "#8A6A40",
-    canopyColorDark: "#607040",
-    canopyHighlightDark: "#88905C",
-    canopyShadeDark: "#445028",
-    trunkColorDark: "#5A4830",
-  }),
-  species({
-    species: "baobab",
-    labelRu: "Баобаб",
-    canopyShape: "bottle",
-    heightScale: 0.95,
-    canopyColor: "#90A858",
-    canopyHighlight: "#B8C878",
-    canopyShade: "#688040",
-    trunkColor: "#C8A878",
-    canopyColorDark: "#586840",
-    canopyHighlightDark: "#78885C",
-    canopyShadeDark: "#3C4830",
-    trunkColorDark: "#8A7450",
-  }),
-  species({
-    species: "olive",
-    labelRu: "Олива",
-    canopyShape: "oliveTwisted",
-    heightScale: 0.9,
-    canopyColor: "#A8B878",
-    canopyHighlight: "#D0D8A0",
-    canopyShade: "#889858",
-    trunkColor: "#8A7458",
-    canopyColorDark: "#607050",
-    canopyHighlightDark: "#889070",
-    canopyShadeDark: "#445038",
-    trunkColorDark: "#5A4A38",
-  }),
-  species({
-    species: "bamboo",
-    labelRu: "Бамбук",
-    canopyShape: "bambooClump",
-    heightScale: 1.15,
-    canopyColor: "#6AAA58",
-    canopyHighlight: "#98D080",
-    canopyShade: "#488840",
-    trunkColor: "#A0C868",
-    canopyColorDark: "#3E6840",
-    canopyHighlightDark: "#5E8860",
-    canopyShadeDark: "#2A4830",
-    trunkColorDark: "#608048",
-  }),
-  species({
-    species: "ginkgo",
-    labelRu: "Гинкго",
-    canopyShape: "ginkgoFan",
-    heightScale: 1,
-    canopyColor: "#F0D040",
-    canopyHighlight: "#FFE878",
-    canopyShade: "#D0B028",
-    trunkColor: "#8A6A40",
-    canopyColorDark: "#A88830",
-    canopyHighlightDark: "#C8A848",
-    canopyShadeDark: "#786020",
-    trunkColorDark: "#5A4830",
-  }),
-  species({
-    species: "jacaranda",
-    labelRu: "Жакаранда",
-    canopyShape: "jacarandaCloud",
-    heightScale: 1,
-    canopyColor: "#A070C8",
-    canopyHighlight: "#D0A0E8",
-    canopyShade: "#7850A0",
-    trunkColor: "#6A5040",
-    canopyColorDark: "#604080",
-    canopyHighlightDark: "#8860A8",
-    canopyShadeDark: "#402860",
-    trunkColorDark: "#443428",
-    accentColor: "#E8C8F8",
-    accentColorDark: "#C8A0E0",
-  }),
+    variants: [
+      {
+        image: require("../../assets/forest/trees/willow/willow_01.png"),
+        imageDark: require("../../assets/forest/trees/willow/willow_01_dark.png"),
+      },
+      {
+        image: require("../../assets/forest/trees/willow/willow_02.png"),
+        imageDark: require("../../assets/forest/trees/willow/willow_02_dark.png"),
+      },
+    ],
+  },
+  {
+    species: "rowan",
+    labelRu: "Рябина",
+    heightScale: 0.96,
+    variants: [
+      {
+        image: require("../../assets/forest/trees/rowan/rowan_01.png"),
+        imageDark: require("../../assets/forest/trees/rowan/rowan_01_dark.png"),
+      },
+      {
+        image: require("../../assets/forest/trees/rowan/rowan_02.png"),
+        imageDark: require("../../assets/forest/trees/rowan/rowan_02_dark.png"),
+      },
+    ],
+  },
 ];
 
-const bySpecies = new Map(TREE_SPECIES_CATALOG.map((visual) => [visual.species, visual]));
+const LEGACY_SPECIES_MAP: Record<string, TreeSpecies> = {
+  cherry: "sakura",
+  poplar: "birch",
+  chestnut: "oak",
+  seabuckthorn: "bush",
+  aspen: "maple",
+  alder: "linden",
+  elm: "oak",
+  juniper: "pine",
+  cypress: "spruce",
+  thuja: "spruce",
+  magnolia: "sakura",
+  dogwood: "sakura",
+  viburnum: "rowan",
+  plane: "oak",
+  acacia: "bush",
+  baobab: "oak",
+  olive: "bush",
+  bamboo: "birch",
+  ginkgo: "maple",
+  jacaranda: "sakura",
+};
 
-export function getSpeciesVisual(species: TreeSpecies): SpeciesVisual {
-  return bySpecies.get(species) ?? TREE_SPECIES_CATALOG[0];
+const bySpecies = new Map(TREE_SPECIES_CATALOG.map((v) => [v.species, v]));
+
+export function resolveSpecies(species: string): TreeSpecies {
+  if (bySpecies.has(species as TreeSpecies)) return species as TreeSpecies;
+  return LEGACY_SPECIES_MAP[species] ?? "oak";
+}
+
+export function getSpeciesVisual(species: string): SpeciesVisual {
+  return bySpecies.get(resolveSpecies(species)) ?? TREE_SPECIES_CATALOG[0];
+}
+
+export function getTreeImage(
+  species: string,
+  dark: boolean,
+  variant = 1,
+): ImageSourcePropType {
+  const visual = getSpeciesVisual(species);
+  const index = Math.max(0, Math.min(visual.variants.length - 1, (variant || 1) - 1));
+  const asset = visual.variants[index] ?? visual.variants[0];
+  return dark ? asset.imageDark : asset.image;
 }

@@ -2,18 +2,20 @@ import { TREE_SPECIES_CATALOG } from "../../constants/treeSpecies";
 import { TreeSpecies } from "../../types";
 
 /**
- * Выбирает вид дерева для новой записи. Сознательно не зависит от
- * настроения записи (MoodId) — настроение отображается в карточке
- * дерева при нажатии, но не должно определять вид дерева: иначе
- * повторяющееся настроение давало бы одинаковый вид дерева, что
- * прямо противоречит требованию "все деревья должны быть разными".
- * Единственное правило — не повторять непосредственно предыдущий
- * вид без необходимости.
+ * Выбирает вид дерева так, чтобы лес становился разнообразнее.
+ * Не зависит от настроения записи. Без стадий роста.
  */
-export function assignNextSpecies(previousSpecies: TreeSpecies | undefined): TreeSpecies {
+export function assignNextSpecies(recentSpecies: TreeSpecies[] = []): TreeSpecies {
   const all = TREE_SPECIES_CATALOG.map((visual) => visual.species);
-  const candidates =
-    previousSpecies && all.length > 1 ? all.filter((species) => species !== previousSpecies) : all;
+  const recent = recentSpecies.slice(-3);
+  const avoid = new Set(recent);
+
+  let candidates = all.filter((species) => !avoid.has(species));
+  if (candidates.length === 0) {
+    const last = recent[recent.length - 1];
+    candidates = last && all.length > 1 ? all.filter((species) => species !== last) : all;
+  }
+
   const index = Math.floor(Math.random() * candidates.length);
   return candidates[index];
 }

@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ForestCanvas, TreeInfoCard } from "../components/forest";
 import { useEntries, useForest } from "../hooks";
@@ -8,11 +10,11 @@ import { Tree } from "../types";
 import { pluralRu } from "../utils";
 
 /**
- * Лес на весь экран — главный визуальный и эмоциональный экран Warmly.
- * Хром минимален: заголовок и счётчик поверх карты, без карточек-героев.
+ * Экран «Лес» — акцент на иллюстрированной сцене, UI вторичен.
  */
 export function ForestScreen() {
   const theme = useTheme();
+  const isDark = theme.mode === "dark";
   const { trees, total, isLoading } = useForest();
   const { entries } = useEntries();
   const [selectedTree, setSelectedTree] = useState<Tree | null>(null);
@@ -21,42 +23,58 @@ export function ForestScreen() {
     ? entries.find((entry) => entry.treeId === selectedTree.id)
     : undefined;
 
-  const countLabel = pluralRu(total, "дерево", "дерева", "деревьев");
+  const plantedLabel = pluralRu(total, "дерево посажено", "дерева посажено", "деревьев посажено");
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ForestCanvas trees={isLoading ? [] : trees} onSelectTree={setSelectedTree} />
 
       <SafeAreaView edges={["top", "left", "right"]} style={styles.chrome} pointerEvents="box-none">
-        <View
-          style={[
-            styles.header,
-            {
-              backgroundColor: theme.colors.overlay,
-              borderRadius: theme.radius.lg,
-              borderColor: theme.colors.border,
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Text
-            style={{
-              fontSize: theme.typography.sizes.title,
-              fontWeight: theme.typography.weights.semibold,
-              color: theme.colors.textPrimary,
-            }}
+        <View style={styles.headerRow}>
+          <View style={styles.headerBlock} pointerEvents="none">
+            <Text
+              style={{
+                fontSize: theme.typography.sizes.largeTitle,
+                fontWeight: theme.typography.weights.bold,
+                color: theme.colors.textPrimary,
+              }}
+            >
+              Мой лес
+            </Text>
+            <Text
+              style={{
+                marginTop: 4,
+                fontSize: 34,
+                lineHeight: 38,
+                fontWeight: theme.typography.weights.bold,
+                color: theme.colors.textPrimary,
+              }}
+            >
+              {total}
+            </Text>
+            <Text
+              style={{
+                fontSize: theme.typography.sizes.caption,
+                color: theme.colors.textSecondary,
+              }}
+            >
+              {plantedLabel}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => router.push("/(tabs)/profile")}
+            hitSlop={12}
+            style={[
+              styles.menuBtn,
+              {
+                backgroundColor: isDark ? "#2A2340AA" : "#FFFFFFAA",
+                borderColor: isDark ? "#FFFFFF18" : "#0000000D",
+              },
+            ]}
+            accessibilityLabel="Профиль"
           >
-            Мой лес
-          </Text>
-          <Text
-            style={{
-              marginTop: 2,
-              fontSize: theme.typography.sizes.caption,
-              color: theme.colors.textSecondary,
-            }}
-          >
-            {total > 0 ? `${total} ${countLabel}` : "твоё пространство заботы"}
-          </Text>
+            <Ionicons name="menu" size={22} color={theme.colors.textPrimary} />
+          </Pressable>
         </View>
       </SafeAreaView>
 
@@ -96,13 +114,24 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 16,
-    paddingTop: 4,
+    paddingHorizontal: 20,
+    paddingTop: 8,
   },
-  header: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+  },
+  headerBlock: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  menuBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: StyleSheet.hairlineWidth,
   },
   empty: {

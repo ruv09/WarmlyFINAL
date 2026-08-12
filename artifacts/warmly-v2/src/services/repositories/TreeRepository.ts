@@ -1,26 +1,60 @@
-import { Tree } from "../../types";
+import { Tree, normalizeTree } from "../../types";
 import { StorageClient } from "../storage/StorageClient";
 import { STORAGE_KEYS } from "../../constants/storageKeys";
+import { placeNextTree, placementMeta } from "../forest/placement";
+
+type RawTree = Partial<Tree> & Pick<Tree, "id" | "species" | "position" | "createdAt">;
 
 /**
- * Дерево неизменяемо после создания (см. /FOREST.md — отказ от
- * механики роста): репозиторию не нужен метод массового обновления,
- * только добавление и удаление.
+ * Дерево неизменяемо после создания (без механики роста).
+ * Старые записи без scale/depth перераскладываются один раз в новую композицию.
  */
 export class TreeRepository {
   constructor(private readonly storage: StorageClient) {}
 
   async getAll(): Promise<Tree[]> {
-    return (await this.storage.getItem<Tree[]>(STORAGE_KEYS.trees)) ?? [];
+    const raw = (await this.storage.getItem<RawTree[]>(STORAGE_KEYS.trees)) ?? [];
+    if (raw.length === 0) return [];
+
+    const needsRelayout = raw.some(
+      (tree) => typeof tree.depth !== "number" || typeof tree.scale !== "number",
+    );
+
+    if (!needsRelayout) {
+      return raw.map((tree) => normalizeTree(tree));
+    }
+
+    const ordered = [...raw].sort((a, b) =>
+      a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0,
+    );
+    const placed: Tree[] = [];
+    for (const tree of ordered) {
+      const position = placeNextTree(placed);
+      const meta = placementMeta(position);
+      placed.push(
+        normalizeTree({
+          ...tree,
+          position,
+          scale: meta.scale,
+          depth: meta.depth,
+          variant: typeof tree.variant === "number" ? tree.variant : undefined,
+        }),
+      );
+    }
+    await this.saveAll(placed);
+    return placed;
   }
 
   async saveAll(trees: Tree[]): Promise<void> {
-    await this.storage.setItem(STORAGE_KEYS.trees, trees);
+    await this.storage.setItem(
+      STORAGE_KEYS.trees,
+      trees.map((tree) => normalizeTree(tree)),
+    );
   }
 
   async add(tree: Tree): Promise<void> {
     const trees = await this.getAll();
-    trees.push(tree);
+    trees.push(normalizeTree(tree));
     await this.saveAll(trees);
   }
 

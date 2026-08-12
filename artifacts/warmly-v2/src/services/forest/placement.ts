@@ -1,72 +1,102 @@
-import { TreePosition } from "../../types";
+import { Tree, TreePosition } from "../../types";
 
-const MIN_DISTANCE = 58;
-const MAX_DISTANCE_FROM_ANCHOR = 160;
-const MAX_ATTEMPTS_PER_ANCHOR = 28;
-const MAX_ANCHOR_ROUNDS = 14;
+/** Минимальное расстояние между деревьями в мировых единицах. */
+const MIN_DISTANCE = 110;
+const WORLD_MIN_X = -520;
+const WORLD_MAX_X = 520;
+/** Дальний план (меньше) → передний план (больше). */
+const WORLD_MIN_Y = -210;
+const WORLD_MAX_Y = 170;
+
+const DEPTH_BANDS = [
+  { minY: -210, maxY: -90, weight: 0.28 }, // даль
+  { minY: -90, maxY: 40, weight: 0.44 }, // середина
+  { minY: 40, maxY: 170, weight: 0.28 }, // перед
+] as const;
 
 function distance(a: TreePosition, b: TreePosition): number {
-  return Math.hypot(a.x - b.x, a.y - b.y);
+  // Горизонталь важнее — лес растянут вдоль горизонта.
+  return Math.hypot(a.x - b.x, (a.y - b.y) * 1.35);
 }
 
-function isFarEnoughFromAll(candidate: TreePosition, existing: TreePosition[]): boolean {
+function isFarEnough(candidate: TreePosition, existing: TreePosition[]): boolean {
   return existing.every((point) => distance(point, candidate) >= MIN_DISTANCE);
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function pickDepthBand(existingCount: number): (typeof DEPTH_BANDS)[number] {
+  // Первые деревья разносятся по полосам, чтобы не копиться в центре.
+  if (existingCount === 0) return DEPTH_BANDS[1];
+  if (existingCount === 1) return DEPTH_BANDS[0];
+  if (existingCount === 2) return DEPTH_BANDS[2];
+
+  const roll = Math.random();
+  let acc = 0;
+  for (const band of DEPTH_BANDS) {
+    acc += band.weight;
+    if (roll <= acc) return band;
+  }
+  return DEPTH_BANDS[1];
+}
+
+function depthFromY(y: number): number {
+  return clamp((y - WORLD_MIN_Y) / (WORLD_MAX_Y - WORLD_MIN_Y), 0, 1);
+}
+
 /**
- * Находит естественное место для нового дерева — упрощённый,
- * инкрементальный вариант dart-throwing/Poisson-disc sampling.
- *
- * Идея: новое дерево появляется рядом со случайным уже существующим
- * ("якорем"), на случайном расстоянии и под случайным углом от него.
- * Это заставляет лес расти органично наружу от уже занятой области
- * (требование "лес постепенно расширяется, без ощущения жёстких
- * границ"), а не разбрасывает деревья равномерно по бесконечному
- * пространству. Минимальная дистанция до ВСЕХ остальных деревьев
- * гарантирует отсутствие пересечений; случайные угол и дистанция
- * от якоря естественным образом создают неровные промежутки и
- * небольшие полянки — в отличие от сетки, где расстояния всегда
- * одинаковы.
- *
- * Почему не классический Poisson-disc sampling по всей области сразу:
- * деревья появляются по одному, в реальном времени, по мере создания
- * записей — а не все сразу для готового набора точек. Этот алгоритм —
- * инкрементальная версия того же принципа.
- *
- * Производительность: сложность одной попытки — O(n) от количества
- * уже существующих деревьев, но вызывается функция ровно один раз
- * при создании записи — событие, определяемое темпом пользователя
- * (не кадром рендера). Даже при тысяче деревьев это разовые доли
- * миллисекунды. Частая операция — не размещение, а отрисовка, и она
- * оптимизируется отдельно, виртуализацией видимой области
- * (см. utils/viewportCulling.ts).
+ * Контролируемое размещение: разные X/Y, разные глубины, без кучи в центре.
  */
-export function placeNextTree(existingPositions: TreePosition[]): TreePosition {
+export function placeNextTree(existing: Pick<Tree, "position">[]): TreePosition {
+  const existingPositions = existing.map((tree) => tree.position);
+
   if (existingPositions.length === 0) {
-    return { x: 0, y: 0 };
+    return { x: -40, y: 55 };
   }
 
-  for (let anchorRound = 0; anchorRound < MAX_ANCHOR_ROUNDS; anchorRound++) {
-    const anchor = existingPositions[Math.floor(Math.random() * existingPositions.length)];
-
-    for (let attempt = 0; attempt < MAX_ATTEMPTS_PER_ANCHOR; attempt++) {
-      const angle = Math.random() * Math.PI * 2;
-      const dist = MIN_DISTANCE + Math.random() * (MAX_DISTANCE_FROM_ANCHOR - MIN_DISTANCE);
-      // Чуть шире по горизонтали — лес читается как территория, а не столбик.
-      const candidate: TreePosition = {
-        x: anchor.x + Math.cos(angle) * dist * 1.15,
-        y: anchor.y + Math.sin(angle) * dist * 0.9,
-      };
-      if (isFarEnoughFromAll(candidate, existingPositions)) {
-        return candidate;
-      }
+  // Предпочитаем свободные «карманы» по X, а не окрестность уже стоящих.
+  for (let attempt = 0; attempt < 96; attempt++) {
+    const band = pickDepthBand(existingPositions.length);
+    const xSlots = 7;
+    const slot = attempt % xSlots;
+    const slotCenter =
+      WORLD_MIN_X + ((slot + 0.5) / xSlots) * (WORLD_MAX_X - WORLD_MIN_X);
+    const jitterX = (Math.random() - 0.5) * ((WORLD_MAX_X - WORLD_MIN_X) / xSlots) * 0.85;
+    const candidate: TreePosition = {
+      x: clamp(slotCenter + jitterX, WORLD_MIN_X, WORLD_MAX_X),
+      y: band.minY + Math.random() * (band.maxY - band.minY),
+    };
+    if (isFarEnough(candidate, existingPositions)) {
+      return candidate;
     }
   }
 
-  const fallbackAnchor = existingPositions[Math.floor(Math.random() * existingPositions.length)];
-  const angle = Math.random() * Math.PI * 2;
-  return {
-    x: fallbackAnchor.x + Math.cos(angle) * MAX_DISTANCE_FROM_ANCHOR * 1.5,
-    y: fallbackAnchor.y + Math.sin(angle) * MAX_DISTANCE_FROM_ANCHOR * 1.5,
-  };
+  // Запасной путь: отталкивание от ближайшего соседа в свободную сторону.
+  let best: TreePosition | null = null;
+  let bestScore = -Infinity;
+  for (let i = 0; i < 48; i++) {
+    const band = pickDepthBand(existingPositions.length);
+    const candidate: TreePosition = {
+      x: WORLD_MIN_X + Math.random() * (WORLD_MAX_X - WORLD_MIN_X),
+      y: band.minY + Math.random() * (band.maxY - band.minY),
+    };
+    const minDist = Math.min(...existingPositions.map((p) => distance(p, candidate)));
+    const centerPenalty = Math.abs(candidate.x) * 0.02;
+    const score = minDist - centerPenalty;
+    if (score > bestScore) {
+      bestScore = score;
+      best = candidate;
+    }
+  }
+
+  return best ?? { x: WORLD_MAX_X * 0.7, y: 20 };
+}
+
+export function placementMeta(position: TreePosition): { depth: number; scale: number } {
+  const depth = depthFromY(position.y);
+  // Ближе — чуть крупнее; плюс лёгкая вариация.
+  const scale = 0.82 + depth * 0.28 + (Math.random() - 0.5) * 0.08;
+  return { depth, scale: clamp(scale, 0.72, 1.22) };
 }
