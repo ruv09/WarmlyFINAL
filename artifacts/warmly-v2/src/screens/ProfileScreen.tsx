@@ -207,7 +207,12 @@ export function ProfileScreen() {
           marginBottom: theme.spacing("sm"),
         }}
       >
-        <Text style={{ color: theme.colors.textPrimary }}>Включить напоминания</Text>
+        <View style={{ flex: 1, paddingRight: theme.spacing("md") }}>
+          <Text style={{ color: theme.colors.textPrimary }}>Напоминания</Text>
+          <Text style={{ color: theme.colors.textSecondary, fontSize: theme.typography.sizes.caption }}>
+            Утром — мысль дня, вечером — запись в лес
+          </Text>
+        </View>
         <Switch
           value={settings.notifications.enabled}
           onValueChange={(enabled) => {

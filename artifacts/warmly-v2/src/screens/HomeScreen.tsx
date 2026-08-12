@@ -1,35 +1,32 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Screen } from "../components/layout";
 import { Button } from "../components/ui";
 import { EntryCard } from "../components/entry";
-import { TreeIllustration } from "../components/tree";
 import { FadeView } from "../components/animation";
-import { useEntries, useFavorites, useForest } from "../hooks";
+import { useEntries, useFavorites } from "../hooks";
 import { useSettingsStore } from "../store";
 import { useTheme } from "../theme";
 import { ROUTES } from "../constants/routes";
-import { getFallbackQuote, getGreeting, treesLabel } from "../utils";
+import { getFallbackQuote, getGreeting } from "../utils";
 
 /**
- * Главная: приветствие по имени, мысль дня с избранным (из v1),
- * записи сегодня и превью леса.
+ * Главная Warmly: поддерживающая фраза — главный акцент экрана.
  */
 export function HomeScreen() {
   const theme = useTheme();
+  const isDark = theme.mode === "dark";
   const router = useRouter();
   const { todayEntries } = useEntries();
-  const { trees, total } = useForest();
   const { favorites, addFavorite } = useFavorites();
   const settings = useSettingsStore((s) => s.settings);
   const [savedFlash, setSavedFlash] = useState(false);
 
   const greeting = useMemo(() => getGreeting(settings.name), [settings.name]);
   const hasEntriesToday = todayEntries.length > 0;
-  const previewTrees = trees.slice(-3);
 
   const quote = useMemo(() => {
     if (settings.supportivePhrasesEnabled) {
@@ -49,61 +46,70 @@ export function HomeScreen() {
   }
 
   return (
-    <Screen edges={["top", "left", "right"]}>
+    <Screen edges={["top", "left", "right"]} scroll>
       <Text
         style={{
+          fontSize: theme.typography.sizes.caption,
+          color: theme.colors.textSecondary,
+          letterSpacing: 0.4,
+        }}
+      >
+        Warmly
+      </Text>
+      <Text
+        style={{
+          marginTop: 4,
           fontSize: theme.typography.sizes.largeTitle,
-          fontWeight: theme.typography.weights.semibold,
+          fontWeight: theme.typography.weights.bold,
           color: theme.colors.textPrimary,
         }}
       >
         {greeting}
       </Text>
-      <Text
-        style={{
-          marginTop: 4,
-          marginBottom: theme.spacing("lg"),
-          fontSize: theme.typography.sizes.body,
-          color: theme.colors.textSecondary,
-        }}
-        maxFontSizeMultiplier={theme.typography.scaleLimits.content}
-      >
-        Заботься о себе сегодня
-      </Text>
 
+      {/* Мысль дня — герой экрана */}
       <View
-        style={{
-          backgroundColor: theme.colors.surface,
-          borderRadius: theme.radius.lg,
-          borderWidth: 1,
-          borderColor: theme.colors.border,
-          padding: theme.spacing("lg"),
-          marginBottom: theme.spacing("lg"),
-          gap: theme.spacing("sm"),
-        }}
+        style={[
+          styles.phraseHero,
+          {
+            backgroundColor: isDark ? "#2A2048" : "#FFF9F0",
+            borderColor: isDark ? "#3A3258" : "#E4D8C4",
+            marginTop: theme.spacing("lg"),
+            marginBottom: theme.spacing("lg"),
+          },
+        ]}
       >
         <Text
           style={{
             fontSize: theme.typography.sizes.caption,
             fontWeight: theme.typography.weights.semibold,
-            color: theme.colors.accent,
+            color: isDark ? theme.colors.accentWarm : theme.colors.accent,
             textTransform: "uppercase",
-            letterSpacing: 0.8,
+            letterSpacing: 1,
+            marginBottom: theme.spacing("md"),
           }}
         >
           Мысль дня
         </Text>
         <Text
           style={{
-            fontSize: theme.typography.sizes.subtitle,
+            fontSize: 26,
+            lineHeight: 34,
+            fontWeight: theme.typography.weights.semibold,
             color: theme.colors.textPrimary,
-            fontStyle: "italic",
-            lineHeight: 26,
           }}
         >
           {quote}
         </Text>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+
+        <View
+          style={{
+            marginTop: theme.spacing("lg"),
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <Pressable
             onPress={handleAddFav}
             style={{
@@ -122,7 +128,7 @@ export function HomeScreen() {
               color={isFav || savedFlash ? theme.colors.accentWarm : theme.colors.textSecondary}
             />
             <Text style={{ color: theme.colors.textSecondary, fontSize: theme.typography.sizes.caption }}>
-              {savedFlash ? "Сохранено!" : isFav ? "В избранном" : "В избранное"}
+              {savedFlash ? "Сохранено" : isFav ? "В избранном" : "В избранное"}
             </Text>
           </Pressable>
           {favorites.length > 0 && (
@@ -135,19 +141,29 @@ export function HomeScreen() {
         </View>
       </View>
 
-      <FadeView visible={!hasEntriesToday} style={{ display: hasEntriesToday ? "none" : "flex" }}>
+      {!hasEntriesToday && (
         <Text
           style={{
             color: theme.colors.textSecondary,
-            marginBottom: theme.spacing("lg"),
+            marginBottom: theme.spacing("md"),
+            lineHeight: 22,
           }}
         >
-          Сегодня вы ещё ничего не записали.
+          Сегодня ещё нет записи — посади дерево в своём лесу.
         </Text>
-      </FadeView>
+      )}
 
       {hasEntriesToday && (
-        <View style={{ marginBottom: theme.spacing("lg"), gap: theme.spacing("sm") }}>
+        <View style={{ marginBottom: theme.spacing("md"), gap: theme.spacing("sm") }}>
+          <Text
+            style={{
+              color: theme.colors.textSecondary,
+              fontSize: theme.typography.sizes.caption,
+              marginBottom: 4,
+            }}
+          >
+            Сегодня
+          </Text>
           {todayEntries.map((entry) => (
             <FadeView key={entry.id} visible>
               <EntryCard entry={entry} onPress={() => router.push(ROUTES.entry(entry.id))} />
@@ -158,26 +174,22 @@ export function HomeScreen() {
 
       <Button label="Новая запись" onPress={() => router.push(ROUTES.entryNew)} />
 
-      {total > 0 && (
-        <Pressable
-          onPress={() => router.push(ROUTES.forest)}
-          style={{ marginTop: theme.spacing("xxl") }}
-        >
-          <Text
-            style={{
-              color: theme.colors.textSecondary,
-              marginBottom: theme.spacing("sm"),
-            }}
-          >
-            В вашем лесу {treesLabel(total)}
-          </Text>
-          <View style={{ flexDirection: "row", gap: theme.spacing("sm") }}>
-            {previewTrees.map((tree) => (
-              <TreeIllustration key={tree.id} tree={tree} size={96} />
-            ))}
-          </View>
-        </Pressable>
-      )}
+      <Pressable
+        onPress={() => router.push(ROUTES.forest)}
+        style={{ marginTop: theme.spacing("lg"), marginBottom: theme.spacing("xxl") }}
+      >
+        <Text style={{ color: theme.colors.accent, fontSize: theme.typography.sizes.body }}>
+          Открыть мой лес →
+        </Text>
+      </Pressable>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  phraseHero: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 22,
+  },
+});

@@ -4,8 +4,8 @@ import { useTheme } from "../../src/theme";
 import { TabBarIcon } from "../../src/components/ui";
 
 /**
- * Навигация как на концептах, без «Дыши»:
- * Дневник / Лес / Календарь / Профиль.
+ * Главная с поддерживающей фразой — первый экран.
+ * Дальше: Дневник / Лес / Календарь / Профиль. Без «Дыши».
  */
 export default function TabsLayout() {
   const theme = useTheme();
@@ -13,7 +13,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
-      initialRouteName="forest"
+      initialRouteName="index"
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: true,
@@ -39,7 +39,13 @@ export default function TabsLayout() {
         },
       }}
     >
-      <Tabs.Screen name="index" options={{ href: null }} />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Главная",
+          tabBarIcon: ({ focused }) => <TabBarIcon name={focused ? "home" : "home-outline"} focused={focused} />,
+        }}
+      />
       <Tabs.Screen
         name="journal"
         options={{

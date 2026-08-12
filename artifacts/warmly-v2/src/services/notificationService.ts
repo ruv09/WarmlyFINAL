@@ -88,13 +88,13 @@ export async function syncNotifications(settings: NotificationSettings): Promise
   await scheduleDaily(
     MORNING_ID,
     settings.morningTime,
-    "Warmly 💛",
-    "Доброе утро. Отметьте, как вы себя чувствуете сегодня.",
+    "Warmly",
+    "Доброе утро. Открой мысль дня — и будь чуть мягче к себе.",
   );
   await scheduleDaily(
     EVENING_ID,
     settings.eveningTime,
-    "Warmly 🌙",
-    "Как прошёл день? Пара минут — и день будет сохранён в вашем лесу.",
+    "Warmly",
+    "Как прошёл день? Пара минут — и в лесу вырастет новое дерево.",
   );
 }
