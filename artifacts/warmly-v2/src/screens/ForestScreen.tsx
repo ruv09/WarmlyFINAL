@@ -113,8 +113,8 @@ export function ForestScreen() {
             style={{
               color: theme.colors.textSecondary,
               textAlign: "center",
-              fontSize: theme.typography.sizes.body,
-              lineHeight: theme.typography.sizes.body * 1.4,
+              fontSize: theme.typography.sizes.caption,
+              lineHeight: 18,
               backgroundColor: theme.colors.overlay,
               paddingHorizontal: theme.spacing("md"),
               paddingVertical: theme.spacing("sm"),
@@ -122,7 +122,7 @@ export function ForestScreen() {
               overflow: "hidden",
             }}
           >
-            Сделайте первую запись —{`\n`}в лесу появится первое дерево.
+            Лес уже здесь. Первая запись станет твоим деревом.
           </Text>
         </View>
       )}

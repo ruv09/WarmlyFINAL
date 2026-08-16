@@ -11,19 +11,20 @@ import { Tree } from "../../types";
 import { TreeIllustration } from "../tree";
 import { SPRING_CONFIGS } from "../../theme/tokens/animation";
 import { getSpeciesVisual } from "../../constants/treeSpecies";
-import { nearPass, projectTreeScreen, TREE_BASE_SIZE } from "../../services/forest/camera";
+import { passBy, perspective, projectFromCamera, TREE_BASE_SIZE } from "../../services/forest/camera";
+import { SceneTree } from "../../utils/viewportCulling";
 
 export const TREE_HEIGHT = TREE_BASE_SIZE;
 export const TREE_WIDTH = TREE_BASE_SIZE;
 export const TREE_SIZE = TREE_HEIGHT;
 
 interface ForestTreeNodeProps {
-  tree: Tree;
+  scene: SceneTree;
   screenWidth: number;
   groundY: number;
   camX: SharedValue<number>;
   camY: SharedValue<number>;
-  zoom: SharedValue<number>;
+  camZ: SharedValue<number>;
   sway: SharedValue<number>;
   phase: number;
   isNew: boolean;
@@ -32,12 +33,12 @@ interface ForestTreeNodeProps {
 }
 
 export const ForestTreeNode = memo(function ForestTreeNode({
-  tree,
+  scene,
   screenWidth,
   groundY,
   camX,
   camY,
-  zoom,
+  camZ,
   sway,
   phase,
   isNew,
@@ -45,11 +46,10 @@ export const ForestTreeNode = memo(function ForestTreeNode({
   onPress,
 }: ForestTreeNodeProps) {
   const appear = useSharedValue(isNew ? 0 : 1);
-  const heightScale = getSpeciesVisual(tree.species).heightScale;
-  const depth = tree.depth;
-  const worldX = tree.position.x;
-  const worldY = tree.position.y;
-  const treeScale = tree.scale;
+  const heightScale = getSpeciesVisual(scene.species).heightScale;
+  const worldX = scene.x;
+  const worldZ = scene.z;
+  const treeScale = scene.scale;
 
   useEffect(() => {
     if (!isNew) {
@@ -65,46 +65,68 @@ export const ForestTreeNode = memo(function ForestTreeNode({
         mass: SPRING_CONFIGS.soft.mass,
       }),
     );
-  }, [appear, isNew, tree.id]);
+  }, [appear, isNew, scene.id]);
 
   const animatedStyle = useAnimatedStyle(() => {
-    const pass = nearPass(depth, zoom.value);
-    const depthScale = 0.42 + depth * 0.7;
-    const size = TREE_BASE_SIZE * heightScale * depthScale * treeScale * zoom.value * pass.boost;
-    const { left, top } = projectTreeScreen(
+    const relZ = worldZ - camZ.value;
+    const persp = perspective(relZ);
+    const pass = passBy(relZ);
+    const size = TREE_BASE_SIZE * heightScale * treeScale * persp * pass.boost;
+    const { left, top } = projectFromCamera(
       worldX,
-      worldY,
-      depth,
+      worldZ,
       camX.value,
       camY.value,
-      zoom.value,
+      camZ.value,
       screenWidth,
       groundY,
       size,
     );
-    const swayAmp = reduceMotion ? 0 : 0.35 + depth * 0.75;
+    const nearness = Math.max(0, Math.min(1, 1 - relZ / 900));
+    const swayAmp = reduceMotion ? 0 : 0.25 + nearness * 0.85;
     const angle = Math.sin(sway.value + phase) * swayAmp;
-    const appearScale = 0.86 + appear.value * 0.14;
     return {
       width: size,
       height: size,
       left,
       top,
-      opacity: appear.value * pass.opacity * (0.55 + depth * 0.45),
-      zIndex: Math.round(20 + depth * 80),
+      opacity: appear.value * pass.opacity * (0.42 + nearness * 0.58),
+      zIndex: Math.round(10000 - relZ),
       transform: [
         { translateY: size / 2 },
         { rotate: `${angle}deg` },
         { translateY: -size / 2 },
-        { scale: appearScale },
+        { scale: 0.88 + appear.value * 0.12 },
       ],
     };
   });
 
+  const fakeTree: Tree | null = scene.source ?? null;
+
   return (
-    <Animated.View style={[{ position: "absolute" }, animatedStyle]}>
-      <Pressable onPress={() => onPress(tree)} hitSlop={10} style={{ flex: 1 }}>
-        <TreeIllustration tree={tree} fillParent depthFade={1} />
+    <Animated.View style={[{ position: "absolute" }, animatedStyle]} pointerEvents={scene.interactive ? "auto" : "none"}>
+      <Pressable
+        onPress={() => {
+          if (fakeTree) onPress(fakeTree);
+        }}
+        hitSlop={10}
+        style={{ flex: 1 }}
+      >
+        <TreeIllustration
+          tree={
+            fakeTree ?? {
+              id: scene.id,
+              species: scene.species,
+              position: { x: scene.x, y: 0 },
+              scale: scene.scale,
+              depth: 0.5,
+              variant: scene.variant,
+              createdAt: scene.createdAt,
+            }
+          }
+          fillParent
+          depthFade={1}
+        />
       </Pressable>
     </Animated.View>
   );

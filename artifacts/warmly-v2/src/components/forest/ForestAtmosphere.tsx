@@ -12,7 +12,6 @@ import Svg, {
   Stop,
 } from "react-native-svg";
 import { useTheme } from "../../theme";
-import { MID_PARALLAX } from "../../services/forest/camera";
 
 interface ForestAtmosphereProps {
   width: number;
@@ -20,18 +19,37 @@ interface ForestAtmosphereProps {
   groundY: number;
   camX: SharedValue<number>;
   camY: SharedValue<number>;
-  zoom: SharedValue<number>;
+  camZ: SharedValue<number>;
 }
 
-function useParallaxStyle(camX: SharedValue<number>, factor: number, extra = 80) {
+function useLookStyle(camX: SharedValue<number>, factor: number, extra = 80) {
   return useAnimatedStyle(() => ({
-    transform: [{ translateX: -camX.value * factor * MID_PARALLAX }],
+    transform: [{ translateX: -camX.value * factor }],
     width: "100%",
     height: "100%",
     position: "absolute" as const,
     left: -extra,
     right: -extra,
   }));
+}
+
+function useWalkStyle(camZ: SharedValue<number>, cycle: number, extra: number) {
+  return useAnimatedStyle(() => {
+    const phase = ((camZ.value % cycle) + cycle) % cycle;
+    const t = phase / cycle;
+    return {
+      transform: [
+        { translateY: t * 36 },
+        { scale: 1 + t * 0.22 },
+      ],
+      opacity: 1 - t * 0.72,
+      width: "100%",
+      height: "100%",
+      position: "absolute" as const,
+      left: -extra,
+      right: -extra,
+    };
+  });
 }
 
 /**
@@ -43,16 +61,17 @@ export const ForestAtmosphere = memo(function ForestAtmosphere({
   height,
   groundY,
   camX,
+  camZ,
 }: ForestAtmosphereProps) {
   const theme = useTheme();
   const isDark = theme.mode === "dark";
   const extra = Math.round(width * 0.45);
   const sceneW = width + extra * 2;
 
-  const farStyle = useParallaxStyle(camX, 0.18, extra);
-  const midStyle = useParallaxStyle(camX, 0.42, extra);
-  const nearStyle = useParallaxStyle(camX, 0.78, extra);
-  const fgStyle = useParallaxStyle(camX, 1.12, extra);
+  const farStyle = useLookStyle(camX, 0.12, extra);
+  const midStyle = useLookStyle(camX, 0.28, extra);
+  const nearStyle = useLookStyle(camX, 0.55, extra);
+  const fgStyle = useWalkStyle(camZ, 240, extra);
 
   const farFill = isDark ? "#1A1430" : "#C5D0B0";
   const midFill = isDark ? "#161028" : "#A8B98C";

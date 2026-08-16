@@ -13,20 +13,19 @@ import Animated, {
 } from "react-native-reanimated";
 import { runOnJS } from "react-native-worklets";
 import { Tree, normalizeTree } from "../../types";
-import { buildTreeSpatialIndex, getVisibleTrees } from "../../utils/viewportCulling";
+import { getVisibleSceneTrees, SceneTree } from "../../utils/viewportCulling";
 import { ForestAtmosphere } from "./ForestAtmosphere";
 import { ForestAmbient } from "./ForestAmbient";
 import { ForestTreeNode, swayPhaseForTree } from "./ForestTreeNode";
 import { useTheme } from "../../theme";
 import {
-  MAX_ZOOM,
-  MID_PARALLAX,
-  MIN_ZOOM,
-  Y_SCREEN_FACTOR,
-  cameraPanBounds,
-  clampZoom,
+  MAX_LOOK_X,
+  MAX_LOOK_Y,
+  WALK_PER_PINCH,
+  clampLookX,
+  clampLookY,
 } from "../../services/forest/camera";
-import { FOREST_WORLD } from "../../services/forest/placement";
+import { treesForCamera } from "../../services/forest/chunks";
 
 const NEW_TREE_MS = 12_000;
 const VIEWPORT_THROTTLE_MS = 80;
@@ -36,14 +35,9 @@ interface ForestCanvasProps {
   onSelectTree: (tree: Tree) => void;
 }
 
-function clamp(v: number, min: number, max: number) {
-  "worklet";
-  return Math.max(min, Math.min(max, v));
-}
-
 /**
- * 2.5D-лес: камера (pan + pinch с фокусом), параллакс слоёв,
- * деревья проецируются на UI-потоке.
+ * Камера внутри леса: pinch = шаг вглубь (cameraDepth),
+ * pan = ограниченный взгляд влево/вправо. Не карта.
  */
 export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   const theme = useTheme();
@@ -52,20 +46,19 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
 
   const camX = useSharedValue(0);
   const camY = useSharedValue(0);
-  const zoom = useSharedValue(1);
+  const camZ = useSharedValue(0);
   const savedCamX = useSharedValue(0);
   const savedCamY = useSharedValue(0);
-  const savedZoom = useSharedValue(1);
-  const pinchWorldX = useSharedValue(0);
-  const pinchWorldY = useSharedValue(0);
+  const savedCamZ = useSharedValue(0);
+  const pinchFocalX = useSharedValue(0);
   const sway = useSharedValue(0);
 
-  const [viewport, setViewport] = useState({ camX: 0, camY: 0, zoom: 1 });
+  const [viewport, setViewport] = useState({ camX: 0, camY: 0, camZ: 0 });
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [showHint, setShowHint] = useState(false);
+  const [showHint, setShowHint] = useState(true);
   const lastReportRef = useRef(0);
 
-  const normalizedTrees = useMemo(() => trees.map((tree) => normalizeTree(tree)), [trees]);
+  const userTrees = useMemo(() => trees.map((tree) => normalizeTree(tree)), [trees]);
 
   useEffect(() => {
     let mounted = true;
@@ -80,14 +73,9 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   }, []);
 
   useEffect(() => {
-    if (normalizedTrees.length < 3) {
-      setShowHint(false);
-      return;
-    }
-    setShowHint(true);
-    const timer = setTimeout(() => setShowHint(false), 4800);
+    const timer = setTimeout(() => setShowHint(false), 5200);
     return () => clearTimeout(timer);
-  }, [normalizedTrees.length]);
+  }, []);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -108,11 +96,11 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
     const now = Date.now();
     if (!force && now - lastReportRef.current < VIEWPORT_THROTTLE_MS) return;
     lastReportRef.current = now;
-    setViewport({ camX: x, camY: y, zoom: z });
+    setViewport({ camX: x, camY: y, camZ: z });
   }
 
   useAnimatedReaction(
-    () => ({ x: camX.value, y: camY.value, z: zoom.value }),
+    () => ({ x: camX.value, y: camY.value, z: camZ.value }),
     (curr) => {
       runOnJS(reportViewport)(curr.x, curr.y, curr.z, false);
     },
@@ -128,73 +116,88 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
       savedCamY.value = camY.value;
     })
     .onUpdate((event) => {
-      const z = zoom.value * MID_PARALLAX;
-      const bounds = cameraPanBounds(zoom.value, FOREST_WORLD.minX, FOREST_WORLD.maxX);
-      camX.value = clamp(savedCamX.value - event.translationX / z, bounds.minX, bounds.maxX);
-      camY.value = clamp(savedCamY.value - (event.translationY * 0.32) / z, bounds.minY, bounds.maxY);
+      camX.value = clampLookX(savedCamX.value - event.translationX * 0.45);
+      camY.value = clampLookY(savedCamY.value - event.translationY * 0.12);
       runOnJS(setShowHint)(false);
     })
     .onEnd((event) => {
-      const z = zoom.value * MID_PARALLAX;
-      const bounds = cameraPanBounds(zoom.value, FOREST_WORLD.minX, FOREST_WORLD.maxX);
       camX.value = withDecay({
-        velocity: -event.velocityX / z,
-        clamp: [bounds.minX, bounds.maxX],
-        deceleration: 0.997,
+        velocity: -event.velocityX * 0.45,
+        clamp: [-MAX_LOOK_X, MAX_LOOK_X],
+        deceleration: 0.996,
       });
       camY.value = withDecay({
-        velocity: -(event.velocityY * 0.32) / z,
-        clamp: [bounds.minY, bounds.maxY],
-        deceleration: 0.997,
+        velocity: -event.velocityY * 0.12,
+        clamp: [-MAX_LOOK_Y, MAX_LOOK_Y],
+        deceleration: 0.996,
       });
     });
 
   const pinchGesture = Gesture.Pinch()
     .onBegin((event) => {
+      cancelAnimation(camZ);
       cancelAnimation(camX);
-      cancelAnimation(camY);
-      cancelAnimation(zoom);
-      savedZoom.value = zoom.value;
-      const z = zoom.value * MID_PARALLAX;
-      pinchWorldX.value = camX.value + (event.focalX - screenWidth / 2) / z;
-      pinchWorldY.value =
-        camY.value + (event.focalY - groundY) / (z * Y_SCREEN_FACTOR);
+      savedCamZ.value = camZ.value;
+      savedCamX.value = camX.value;
+      pinchFocalX.value = event.focalX;
     })
     .onUpdate((event) => {
-      const nextZoom = clampZoom(savedZoom.value * event.scale);
-      zoom.value = nextZoom;
-      const z = nextZoom * MID_PARALLAX;
-      const bounds = cameraPanBounds(nextZoom, FOREST_WORLD.minX, FOREST_WORLD.maxX);
-      camX.value = clamp(pinchWorldX.value - (event.focalX - screenWidth / 2) / z, bounds.minX, bounds.maxX);
-      camY.value = clamp(
-        pinchWorldY.value - (event.focalY - groundY) / (z * Y_SCREEN_FACTOR),
-        bounds.minY,
-        bounds.maxY,
-      );
+      const walk = (event.scale - 1) * WALK_PER_PINCH;
+      camZ.value = Math.max(0, savedCamZ.value + walk);
+      const look = ((pinchFocalX.value - screenWidth / 2) / (screenWidth / 2)) * 70 * Math.max(-1, Math.min(1, walk / 200));
+      camX.value = clampLookX(savedCamX.value + look);
       runOnJS(setShowHint)(false);
     });
 
   const composedGesture = Gesture.Simultaneous(panGesture, pinchGesture);
 
-  const spatialIndex = useMemo(() => buildTreeSpatialIndex(normalizedTrees), [normalizedTrees]);
+  const sceneTrees: SceneTree[] = useMemo(() => {
+    const ambient = treesForCamera(viewport.camZ).map((tree) => ({
+      id: tree.id,
+      species: tree.species,
+      x: tree.x,
+      z: tree.z,
+      scale: tree.scale,
+      variant: tree.variant,
+      interactive: false,
+      createdAt: "ambient",
+    }));
+
+    const personal = userTrees.map((tree) => ({
+      id: tree.id,
+      species: tree.species,
+      x: tree.position.x,
+      z: tree.worldZ ?? 160,
+      scale: tree.scale * 1.06,
+      variant: tree.variant,
+      interactive: true,
+      source: tree,
+      createdAt: tree.createdAt,
+    }));
+
+    const occupied = personal.map((t) => ({ x: t.x, z: t.z }));
+    const filteredAmbient = ambient.filter((amb) =>
+      occupied.every((p) => Math.hypot(p.x - amb.x, (p.z - amb.z) * 0.6) > 90),
+    );
+
+    return [...filteredAmbient, ...personal];
+  }, [userTrees, viewport.camZ]);
 
   const visibleTrees = useMemo(
-    () =>
-      getVisibleTrees(normalizedTrees, viewport, screenWidth, screenHeight, groundY, spatialIndex),
-    [normalizedTrees, viewport, screenWidth, screenHeight, groundY, spatialIndex],
+    () => getVisibleSceneTrees(sceneTrees, viewport, screenWidth),
+    [sceneTrees, viewport, screenWidth],
   );
 
   const newestCreatedAt = useMemo(() => {
     let max = 0;
-    for (const tree of normalizedTrees) {
+    for (const tree of userTrees) {
       const t = Date.parse(tree.createdAt);
       if (t > max) max = t;
     }
     return max;
-  }, [normalizedTrees]);
+  }, [userTrees]);
 
   const now = Date.now();
-
   const hitLayerStyle = useAnimatedStyle(() => ({ flex: 1 }));
 
   return (
@@ -205,7 +208,7 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
         groundY={groundY}
         camX={camX}
         camY={camY}
-        zoom={zoom}
+        camZ={camZ}
       />
 
       <ForestAmbient
@@ -218,21 +221,24 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
 
       <GestureDetector gesture={composedGesture}>
         <Animated.View style={hitLayerStyle} collapsable={false}>
-          {visibleTrees.map((tree) => {
-            const created = Date.parse(tree.createdAt);
+          {visibleTrees.map((scene) => {
+            const created = Date.parse(scene.createdAt);
             const isNew =
-              !reduceMotion && created === newestCreatedAt && now - created < NEW_TREE_MS;
+              scene.interactive &&
+              !reduceMotion &&
+              created === newestCreatedAt &&
+              now - created < NEW_TREE_MS;
             return (
               <ForestTreeNode
-                key={tree.id}
-                tree={tree}
+                key={scene.id}
+                scene={scene}
                 screenWidth={screenWidth}
                 groundY={groundY}
                 camX={camX}
                 camY={camY}
-                zoom={zoom}
+                camZ={camZ}
                 sway={sway}
-                phase={swayPhaseForTree(tree.id)}
+                phase={swayPhaseForTree(scene.id)}
                 isNew={isNew}
                 reduceMotion={reduceMotion}
                 onPress={onSelectTree}
@@ -266,7 +272,7 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
               textAlign: "center",
             }}
           >
-            Пройдись по лесу — свайп и щипок двумя пальцами
+            Сведи пальцы — шагни вглубь леса
           </Text>
         </View>
       )}

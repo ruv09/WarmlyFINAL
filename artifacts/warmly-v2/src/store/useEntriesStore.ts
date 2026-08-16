@@ -48,18 +48,19 @@ export const useEntriesStore = create<EntriesState>((set, get) => ({
     const existingTrees = await treeRepository.getAll();
     const recentSpecies = existingTrees.slice(-3).map((tree) => tree.species);
     const species = assignNextSpecies(recentSpecies);
-    const position = placeNextTree(existingTrees);
-    const meta = placementMeta(position);
+    const planted = placeNextTree(existingTrees);
+    const meta = placementMeta(planted);
     const treeId = generateId();
     const variant = hashVariant(treeId);
 
     const tree: Tree = {
       id: treeId,
       species,
-      position,
+      position: { x: planted.x, y: planted.y },
       scale: meta.scale,
       depth: meta.depth,
       layer: meta.layer,
+      worldZ: meta.worldZ,
       variant,
       layoutVersion: FOREST_LAYOUT_VERSION,
       createdAt: nowIso,
