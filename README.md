@@ -65,6 +65,21 @@ pnpm start
 Для установки на телефон нужен подписанный release (keystore) или debug-сборка:
 `./gradlew assembleDebug`.
 
+Если Gradle пишет **CXX1101 / NDK … did not have a source.properties file**,
+папка NDK скачалась битой. Из корня приложения:
+
+```bash
+cd artifacts/warmly-v2
+chmod +x scripts/setup-android.sh
+./scripts/setup-android.sh
+cd android
+./gradlew assembleDebug
+```
+
+Либо вручную: удали `$ANDROID_HOME/ndk/27.1.12297006`, в Android Studio
+поставь **NDK (Side by side) 27.1.12297006** заново, проверь файл
+`source.properties`, затем снова `./gradlew assembleDebug`.
+
 ## Структура
 
 ```text

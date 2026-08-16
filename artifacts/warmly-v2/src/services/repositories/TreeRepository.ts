@@ -40,6 +40,7 @@ export class TreeRepository {
           position,
           scale: meta.scale,
           depth: meta.depth,
+          layer: meta.layer,
           variant: typeof tree.variant === "number" ? tree.variant : undefined,
           layoutVersion: FOREST_LAYOUT_VERSION,
         }),

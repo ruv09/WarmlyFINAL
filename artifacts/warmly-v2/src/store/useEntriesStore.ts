@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { CreateEntryInput, Entry, Tree, UpdateEntryInput } from "../types";
+import { CreateEntryInput, Entry, FOREST_LAYOUT_VERSION, Tree, UpdateEntryInput } from "../types";
 import {
   assignNextSpecies,
   entryRepository,
@@ -50,15 +50,18 @@ export const useEntriesStore = create<EntriesState>((set, get) => ({
     const species = assignNextSpecies(recentSpecies);
     const position = placeNextTree(existingTrees);
     const meta = placementMeta(position);
-    const variant = Math.random() < 0.5 ? 1 : 2;
+    const treeId = generateId();
+    const variant = hashVariant(treeId);
 
     const tree: Tree = {
-      id: generateId(),
+      id: treeId,
       species,
       position,
       scale: meta.scale,
       depth: meta.depth,
+      layer: meta.layer,
       variant,
+      layoutVersion: FOREST_LAYOUT_VERSION,
       createdAt: nowIso,
     };
     await treeRepository.add(tree);
@@ -102,3 +105,12 @@ export const useEntriesStore = create<EntriesState>((set, get) => ({
     await useForestStore.getState().load();
   },
 }));
+
+function hashVariant(id: string): 1 | 2 {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) % 2 === 0 ? 1 : 2;
+}
