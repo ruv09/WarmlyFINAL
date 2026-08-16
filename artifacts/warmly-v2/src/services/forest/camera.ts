@@ -1,64 +1,73 @@
 /**
- * Камера 2.5D-леса. Формулы помечаются worklet, чтобы
- * Reanimated считал проекцию на UI-потоке без лагов.
+ * Виртуальная камера леса: pinch двигает cameraDepth вперёд,
+ * а не масштабирует картинку. Проекция — перспектива от относительного Z.
  */
 
-export const MIN_ZOOM = 0.68;
-export const MAX_ZOOM = 1.9;
-export const MID_PARALLAX = 0.82;
-export const Y_SCREEN_FACTOR = 0.64;
-export const TREE_BASE_SIZE = 216;
-export const CULLING_MARGIN = 280;
+export const FOCAL_LENGTH = 380;
+export const NEAR_PLANE = 48;
+export const PASS_PLANE = 90;
+export const FAR_PLANE = 1450;
+export const TREE_BASE_SIZE = 210;
+export const MAX_LOOK_X = 210;
+export const MAX_LOOK_Y = 42;
+/** Насколько pinch «шагает» вглубь мира. */
+export const WALK_PER_PINCH = 560;
 
-export function clampZoom(zoom: number): number {
+export function clampLookX(x: number): number {
   "worklet";
-  return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom));
+  return Math.max(-MAX_LOOK_X, Math.min(MAX_LOOK_X, x));
 }
 
-/** Чем ближе дерево (depth → 1), тем сильнее оно едет с камерой. */
-export function parallaxForDepth(depth: number): number {
+export function clampLookY(y: number): number {
   "worklet";
-  return 0.26 + depth * 1.2;
+  return Math.max(-MAX_LOOK_Y, Math.min(MAX_LOOK_Y, y));
+}
+
+export function relativeZ(treeZ: number, camZ: number): number {
+  "worklet";
+  return treeZ - camZ;
 }
 
 /**
- * При приближении ближние деревья крупнеют и мягко уходят
- * (scale ↑, opacity ↓) — ощущение «прохода сквозь лес».
+ * Перспектива: ближе к камере — крупнее. Не zoom всей сцены.
  */
-export function nearPass(depth: number, zoom: number): { opacity: number; boost: number } {
+export function perspective(relZ: number): number {
   "worklet";
-  const zoomT = (zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
-  const proximity = depth * zoomT;
-  if (proximity < 0.55) {
-    return { opacity: 1, boost: 1 };
+  const z = Math.max(NEAR_PLANE * 0.35, relZ);
+  return FOCAL_LENGTH / z;
+}
+
+export function passBy(relZ: number): { opacity: number; boost: number } {
+  "worklet";
+  if (relZ >= PASS_PLANE) {
+    const farFade = relZ > FAR_PLANE * 0.72 ? Math.max(0.25, 1 - (relZ - FAR_PLANE * 0.72) / (FAR_PLANE * 0.28)) : 1;
+    return { opacity: farFade, boost: 1 };
   }
-  const t = Math.min(1, (proximity - 0.55) / 0.45);
+  if (relZ <= NEAR_PLANE * 0.45) {
+    return { opacity: 0, boost: 2.1 };
+  }
+  const t = 1 - (relZ - NEAR_PLANE * 0.45) / (PASS_PLANE - NEAR_PLANE * 0.45);
   return {
     opacity: 1 - t,
-    boost: 1 + t * 0.9,
+    boost: 1 + t * 1.15,
   };
 }
 
-export function projectTreeScreen(
+export function projectFromCamera(
   worldX: number,
-  worldY: number,
-  depth: number,
+  worldZ: number,
   camX: number,
   camY: number,
-  zoom: number,
+  camZ: number,
   screenWidth: number,
   groundY: number,
   size: number,
-): { left: number; top: number } {
+): { left: number; top: number; persp: number } {
   "worklet";
-  const p = parallaxForDepth(depth);
-  const left = screenWidth / 2 + (worldX - camX) * p * zoom - size / 2;
-  const top = groundY + (worldY - camY) * Y_SCREEN_FACTOR * p * zoom - size * 0.88;
-  return { left, top };
-}
-
-export function cameraPanBounds(zoom: number, worldMinX: number, worldMaxX: number) {
-  "worklet";
-  const span = Math.max(420, ((worldMaxX - worldMinX) * 0.42) / Math.max(0.75, zoom));
-  return { minX: -span, maxX: span, minY: -90 / zoom, maxY: 70 / zoom };
+  const relZ = relativeZ(worldZ, camZ);
+  const persp = perspective(relZ);
+  const left = screenWidth / 2 + (worldX - camX) * persp - size / 2;
+  const depthLift = (1 - Math.min(1.4, persp)) * 70;
+  const top = groundY + depthLift - camY * persp * 0.25 - size * 0.88;
+  return { left, top, persp };
 }
