@@ -20,7 +20,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   load: async () => {
     set({ isLoading: true });
-    const settings = await settingsRepository.get();
+    let settings = await settingsRepository.get();
+    if (!settings.joinedAt && settings.isOnboarded) {
+      settings = { ...settings, joinedAt: toDateKey() };
+      await settingsRepository.save(settings);
+    }
     set({ settings, isLoading: false, isHydrated: true });
     // Восстанавливаем запланированные уведомления после холодного старта.
     await syncNotifications(settings.notifications).catch(() => undefined);
@@ -61,6 +65,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     await get().updateSettings({
       name: name.trim() || "Друг",
       isOnboarded: true,
+      joinedAt: get().settings.joinedAt || toDateKey(),
     });
   },
 }));

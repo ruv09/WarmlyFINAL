@@ -10,36 +10,46 @@ import Animated, {
 import { Tree } from "../../types";
 import { TreeIllustration } from "../tree";
 import { SPRING_CONFIGS } from "../../theme/tokens/animation";
+import { getSpeciesVisual } from "../../constants/treeSpecies";
+import { nearPass, projectTreeScreen, TREE_BASE_SIZE } from "../../services/forest/camera";
 
-/** Базовый размер иллюстрации на среднем плане. */
-export const TREE_HEIGHT = 236;
-export const TREE_WIDTH = 236;
+export const TREE_HEIGHT = TREE_BASE_SIZE;
+export const TREE_WIDTH = TREE_BASE_SIZE;
 export const TREE_SIZE = TREE_HEIGHT;
 
 interface ForestTreeNodeProps {
   tree: Tree;
-  left: number;
-  top: number;
-  size: number;
-  depthFade: number;
+  screenWidth: number;
+  groundY: number;
+  camX: SharedValue<number>;
+  camY: SharedValue<number>;
+  zoom: SharedValue<number>;
   sway: SharedValue<number>;
   phase: number;
   isNew: boolean;
+  reduceMotion: boolean;
   onPress: (tree: Tree) => void;
 }
 
 export const ForestTreeNode = memo(function ForestTreeNode({
   tree,
-  left,
-  top,
-  size,
-  depthFade,
+  screenWidth,
+  groundY,
+  camX,
+  camY,
+  zoom,
   sway,
   phase,
   isNew,
+  reduceMotion,
   onPress,
 }: ForestTreeNodeProps) {
   const appear = useSharedValue(isNew ? 0 : 1);
+  const heightScale = getSpeciesVisual(tree.species).heightScale;
+  const depth = tree.depth;
+  const worldX = tree.position.x;
+  const worldY = tree.position.y;
+  const treeScale = tree.scale;
 
   useEffect(() => {
     if (!isNew) {
@@ -58,29 +68,45 @@ export const ForestTreeNode = memo(function ForestTreeNode({
   }, [appear, isNew, tree.id]);
 
   const animatedStyle = useAnimatedStyle(() => {
-    const angle = Math.sin(sway.value + phase) * 1.05;
-    const scale = 0.78 + appear.value * 0.22;
+    const pass = nearPass(depth, zoom.value);
+    const depthScale = 0.42 + depth * 0.7;
+    const size = TREE_BASE_SIZE * heightScale * depthScale * treeScale * zoom.value * pass.boost;
+    const { left, top } = projectTreeScreen(
+      worldX,
+      worldY,
+      depth,
+      camX.value,
+      camY.value,
+      zoom.value,
+      screenWidth,
+      groundY,
+      size,
+    );
+    const swayAmp = reduceMotion ? 0 : 0.35 + depth * 0.75;
+    const angle = Math.sin(sway.value + phase) * swayAmp;
+    const appearScale = 0.86 + appear.value * 0.14;
     return {
-      opacity: appear.value,
+      width: size,
+      height: size,
+      left,
+      top,
+      opacity: appear.value * pass.opacity * (0.55 + depth * 0.45),
+      zIndex: Math.round(20 + depth * 80),
       transform: [
         { translateY: size / 2 },
         { rotate: `${angle}deg` },
         { translateY: -size / 2 },
-        { scale },
+        { scale: appearScale },
       ],
     };
   });
 
   return (
-    <Pressable
-      onPress={() => onPress(tree)}
-      hitSlop={10}
-      style={{ position: "absolute", left, top, width: size, height: size }}
-    >
-      <Animated.View style={animatedStyle}>
-        <TreeIllustration tree={tree} size={size} depthFade={depthFade} />
-      </Animated.View>
-    </Pressable>
+    <Animated.View style={[{ position: "absolute" }, animatedStyle]}>
+      <Pressable onPress={() => onPress(tree)} hitSlop={10} style={{ flex: 1 }}>
+        <TreeIllustration tree={tree} fillParent depthFade={1} />
+      </Pressable>
+    </Animated.View>
   );
 });
 

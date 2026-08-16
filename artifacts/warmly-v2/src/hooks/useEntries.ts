@@ -22,11 +22,6 @@ export function useEntries() {
   return { entries, isLoading, todayEntries, createEntry, updateEntry, deleteEntry, refresh: load };
 }
 
-export function useEntriesForDate(date: string) {
-  const entries = useEntriesStore((state) => state.entries);
-  return useMemo(() => entries.filter((entry) => entry.date === date), [entries, date]);
-}
-
 export function useEntry(id: string | undefined) {
   const entries = useEntriesStore((state) => state.entries);
   return useMemo(() => entries.find((entry) => entry.id === id), [entries, id]);

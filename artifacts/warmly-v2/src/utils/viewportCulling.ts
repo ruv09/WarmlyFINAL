@@ -1,14 +1,14 @@
 import { Tree } from "../types";
+import { CULLING_MARGIN, nearPass, projectTreeScreen, TREE_BASE_SIZE } from "../services/forest/camera";
+import { getSpeciesVisual } from "../constants/treeSpecies";
 
-export interface CanvasViewport {
-  /** Текущее смещение канвы (translateX/Y) в экранных единицах. */
-  x: number;
-  y: number;
-  scale: number;
+export interface CameraViewport {
+  camX: number;
+  camY: number;
+  zoom: number;
 }
 
-/** Размер ячейки пространственного индекса в мировых единицах. */
-const CELL_SIZE = 96;
+const CELL_SIZE = 140;
 
 export type TreeSpatialIndex = Map<string, Tree[]>;
 
@@ -16,52 +16,37 @@ function cellKey(cx: number, cy: number): string {
   return `${cx}:${cy}`;
 }
 
-/**
- * Строит пространственный индекс деревьев для быстрой выборки
- * видимой области. Пересобирается только при изменении списка деревьев
- * (создание/удаление записи), а не на каждом кадре панорамирования.
- */
 export function buildTreeSpatialIndex(trees: Tree[]): TreeSpatialIndex {
   const index: TreeSpatialIndex = new Map();
-
   for (const tree of trees) {
     const cx = Math.floor(tree.position.x / CELL_SIZE);
     const cy = Math.floor(tree.position.y / CELL_SIZE);
     const key = cellKey(cx, cy);
     const bucket = index.get(key);
-    if (bucket) {
-      bucket.push(tree);
-    } else {
-      index.set(key, [tree]);
-    }
+    if (bucket) bucket.push(tree);
+    else index.set(key, [tree]);
   }
-
   return index;
 }
 
 /**
- * Возвращает только те деревья, чей мировой прямоугольник пересекается
- * с видимой областью экрана (плюс запас margin). При большом лесе
- * (500–1000+) использует пространственный индекс вместо полного скана.
+ * Видимые деревья в экранных координатах текущей камеры.
+ * Дальние (меньший y) рисуются первыми.
  */
 export function getVisibleTrees(
   trees: Tree[],
-  viewport: CanvasViewport,
+  viewport: CameraViewport,
   screenWidth: number,
   screenHeight: number,
-  margin: number,
+  groundY: number,
   spatialIndex?: TreeSpatialIndex,
 ): Tree[] {
-  const halfWidthWorld = screenWidth / 2 / viewport.scale + margin;
-  const halfHeightWorld = screenHeight / 2 / viewport.scale + margin;
-
-  const centerWorldX = -viewport.x / viewport.scale;
-  const centerWorldY = -viewport.y / viewport.scale;
-
-  const minX = centerWorldX - halfWidthWorld;
-  const maxX = centerWorldX + halfWidthWorld;
-  const minY = centerWorldY - halfHeightWorld;
-  const maxY = centerWorldY + halfHeightWorld;
+  const margin = CULLING_MARGIN;
+  const worldSpan = (screenWidth / 2 + margin) / Math.max(0.2, viewport.zoom * 0.4);
+  const minX = viewport.camX - worldSpan;
+  const maxX = viewport.camX + worldSpan;
+  const minY = viewport.camY - 420;
+  const maxY = viewport.camY + 420;
 
   const candidates =
     spatialIndex && trees.length > 80
@@ -69,12 +54,25 @@ export function getVisibleTrees(
       : trees;
 
   const visible = candidates.filter((tree) => {
-    const { x, y } = tree.position;
-    return x >= minX && x <= maxX && y >= minY && y <= maxY;
+    const pass = nearPass(tree.depth, viewport.zoom);
+    if (pass.opacity < 0.04) return false;
+    const heightScale = getSpeciesVisual(tree.species).heightScale;
+    const size = TREE_BASE_SIZE * heightScale * (0.42 + tree.depth * 0.7) * tree.scale * viewport.zoom * pass.boost;
+    const { left, top } = projectTreeScreen(
+      tree.position.x,
+      tree.position.y,
+      tree.depth,
+      viewport.camX,
+      viewport.camY,
+      viewport.zoom,
+      screenWidth,
+      groundY,
+      size,
+    );
+    return left + size > -margin && left < screenWidth + margin && top + size > -margin && top < screenHeight + margin;
   });
 
-  // Ближе к «камере» (ниже по Y) рисуем поверх — естественная глубина.
-  visible.sort((a, b) => a.position.y - b.position.y);
+  visible.sort((a, b) => a.position.y - b.position.y || a.depth - b.depth);
   return visible;
 }
 
@@ -89,15 +87,12 @@ function querySpatialIndex(
   const maxCX = Math.floor(maxX / CELL_SIZE);
   const minCY = Math.floor(minY / CELL_SIZE);
   const maxCY = Math.floor(maxY / CELL_SIZE);
-
   const result: Tree[] = [];
   for (let cy = minCY; cy <= maxCY; cy++) {
     for (let cx = minCX; cx <= maxCX; cx++) {
       const bucket = index.get(cellKey(cx, cy));
       if (bucket) {
-        for (const tree of bucket) {
-          result.push(tree);
-        }
+        for (const tree of bucket) result.push(tree);
       }
     }
   }

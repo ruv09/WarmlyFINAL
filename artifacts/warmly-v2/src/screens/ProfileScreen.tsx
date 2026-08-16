@@ -1,21 +1,24 @@
-import React, { useState } from "react";
-import { Switch, Text, TextInput, View } from "react-native";
+import React, { useMemo, useState } from "react";
+import { Image, Pressable, Switch, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Screen } from "../components/layout";
 import { Button } from "../components/ui";
+import { AvatarPickerModal } from "../components/profile";
 import { useEntries, useFavorites, useSettings, useStatistics } from "../hooks";
 import { useTheme } from "../theme";
 import { ROUTES } from "../constants/routes";
 import { ThemeMode } from "../types";
 import { getMoodById } from "../constants/moods";
+import { getAvatarPreset } from "../constants/avatars";
 import { exportEntries } from "../services";
-import { treesLabel } from "../utils";
+import { formatHumanDate, getFallbackQuote, treesLabel } from "../utils";
 
-const THEME_OPTIONS: { label: string; value: ThemeMode }[] = [
-  { label: "Светлая", value: "light" },
-  { label: "Тёмная", value: "dark" },
-  { label: "Системная", value: "auto" },
+const THEME_OPTIONS: { label: string; value: ThemeMode; preview: [string, string] }[] = [
+  { label: "Светлая", value: "light", preview: ["#F3EBDC", "#8A9A6E"] },
+  { label: "Тёмная", value: "dark", preview: ["#1A1230", "#E8B975"] },
+  { label: "Системная", value: "auto", preview: ["#2A2048", "#F3EBDC"] },
 ];
 
 function StatRow({ label, value }: { label: string; value: string }) {
@@ -38,6 +41,7 @@ function StatRow({ label, value }: { label: string; value: string }) {
 
 export function ProfileScreen() {
   const theme = useTheme();
+  const isDark = theme.mode === "dark";
   const router = useRouter();
   const { settings, updateSettings } = useSettings();
   const { entries } = useEntries();
@@ -47,10 +51,30 @@ export function ProfileScreen() {
   const [exportError, setExportError] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(settings.name);
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
 
   const mostFrequentMood = stats.mostFrequentMoodId
     ? getMoodById(stats.mostFrequentMoodId)
     : undefined;
+
+  const avatarSource = useMemo(
+    () => getAvatarPreset(settings.avatarId).image,
+    [settings.avatarId],
+  );
+
+  const joinedLabel = useMemo(() => {
+    if (!settings.joinedAt) return "с Warmly";
+    return `с ${formatHumanDate(settings.joinedAt)}`;
+  }, [settings.joinedAt]);
+
+  const thoughtOfDay = settings.supportivePhrasesEnabled
+    ? settings.dailyPhrase || getFallbackQuote()
+    : getFallbackQuote();
+
+  async function handleSelectPreset(id: string) {
+    await updateSettings({ avatarId: id });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+  }
 
   async function handleExport() {
     setIsExporting(true);
@@ -78,6 +102,9 @@ export function ProfileScreen() {
         color: theme.colors.textSecondary,
         marginTop: theme.spacing("lg"),
         marginBottom: theme.spacing("sm"),
+        fontSize: theme.typography.sizes.caption,
+        textTransform: "uppercase",
+        letterSpacing: 0.6,
       }}
     >
       {text}
@@ -86,50 +113,104 @@ export function ProfileScreen() {
 
   return (
     <Screen edges={["top", "left", "right"]}>
-      <Text
-        style={{
-          fontSize: theme.typography.sizes.title,
-          fontWeight: theme.typography.weights.semibold,
-          color: theme.colors.textPrimary,
-        }}
-      >
-        Профиль
-      </Text>
-
-      {sectionLabel("Имя")}
-      {editingName ? (
-        <View style={{ gap: theme.spacing("sm") }}>
-          <TextInput
-            value={nameInput}
-            onChangeText={setNameInput}
-            placeholder="Твоё имя"
-            placeholderTextColor={theme.colors.textSecondary}
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <View style={{ flexDirection: "row", gap: 14, flex: 1, alignItems: "center" }}>
+          <Pressable
+            onPress={() => setAvatarPickerOpen(true)}
             style={{
-              borderWidth: 1,
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              overflow: "hidden",
+              backgroundColor: isDark ? "#3A3258" : "#E8DFD0",
+              borderWidth: 2,
               borderColor: theme.colors.border,
-              borderRadius: theme.radius.md,
-              padding: theme.spacing("md"),
-              color: theme.colors.textPrimary,
-              fontSize: theme.typography.sizes.body,
             }}
-          />
-          <Button label="Сохранить имя" onPress={saveName} />
+            accessibilityLabel="Изменить аватар"
+          >
+            <Image source={avatarSource} style={{ width: 64, height: 64 }} resizeMode="cover" />
+            <View
+              style={{
+                position: "absolute",
+                right: 0,
+                bottom: 0,
+                width: 22,
+                height: 22,
+                borderRadius: 11,
+                backgroundColor: theme.colors.accent,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="pencil" size={12} color={theme.colors.surface} />
+            </View>
+          </Pressable>
+          <View style={{ flex: 1 }}>
+            {editingName ? (
+              <TextInput
+                value={nameInput}
+                onChangeText={setNameInput}
+                placeholder="Твоё имя"
+                placeholderTextColor={theme.colors.textSecondary}
+                style={{
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.radius.md,
+                  padding: theme.spacing("sm"),
+                  color: theme.colors.textPrimary,
+                }}
+              />
+            ) : (
+              <Text
+                style={{
+                  fontSize: theme.typography.sizes.title,
+                  fontWeight: theme.typography.weights.bold,
+                  color: theme.colors.textPrimary,
+                }}
+              >
+                {settings.name || "Друг"}
+              </Text>
+            )}
+            <Text style={{ marginTop: 2, color: theme.colors.textSecondary, fontSize: theme.typography.sizes.caption }}>
+              {joinedLabel}
+            </Text>
+            <Pressable onPress={() => setAvatarPickerOpen(true)} hitSlop={6}>
+              <Text
+                style={{
+                  marginTop: 4,
+                  color: theme.colors.accent,
+                  fontSize: theme.typography.sizes.caption,
+                }}
+              >
+                Сменить аватар
+              </Text>
+            </Pressable>
+          </View>
         </View>
-      ) : (
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <Text style={{ color: theme.colors.textPrimary, fontSize: theme.typography.sizes.subtitle }}>
-            {settings.name || "Друг"}
-          </Text>
-          <Button
-            label="Изменить"
-            variant="secondary"
-            onPress={() => {
+        <Pressable
+          onPress={() => {
+            if (editingName) {
+              saveName();
+            } else {
               setNameInput(settings.name);
               setEditingName(true);
-            }}
-          />
-        </View>
-      )}
+            }
+          }}
+          hitSlop={10}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: theme.colors.surface,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+          }}
+        >
+          <Ionicons name={editingName ? "checkmark" : "pencil"} size={16} color={theme.colors.textPrimary} />
+        </Pressable>
+      </View>
 
       {sectionLabel("Статистика")}
       <View
@@ -137,15 +218,13 @@ export function ProfileScreen() {
           backgroundColor: theme.colors.surface,
           borderWidth: 1,
           borderColor: theme.colors.border,
-          borderRadius: theme.radius.md,
+          borderRadius: theme.radius.lg,
           padding: theme.spacing("md"),
         }}
       >
         <StatRow label="Записей всего" value={String(stats.totalEntries)} />
         <StatRow label="Дней с записями" value={String(stats.totalDays)} />
-        <StatRow label="Записей за 7 дней" value={String(stats.entriesLast7Days)} />
         <StatRow label="Деревьев посажено" value={treesLabel(stats.treesGrown)} />
-        <StatRow label="Избранных фраз" value={String(favorites.length)} />
         {mostFrequentMood && (
           <StatRow
             label="Частое настроение"
@@ -154,49 +233,105 @@ export function ProfileScreen() {
         )}
       </View>
 
-      {sectionLabel("Тема оформления")}
-      <View style={{ flexDirection: "row", gap: theme.spacing("sm"), flexWrap: "wrap" }}>
-        {THEME_OPTIONS.map((option) => (
-          <Button
-            key={option.value}
-            label={option.label}
-            variant={settings.theme === option.value ? "primary" : "secondary"}
-            onPress={() => {
-              updateSettings({ theme: option.value });
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-            }}
-          />
-        ))}
+      {sectionLabel("Тема")}
+      <View style={{ flexDirection: "row", gap: 10 }}>
+        {THEME_OPTIONS.map((option) => {
+          const selected = settings.theme === option.value;
+          return (
+            <Pressable
+              key={option.value}
+              onPress={() => {
+                updateSettings({ theme: option.value });
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+              }}
+              style={{
+                flex: 1,
+                borderRadius: 14,
+                borderWidth: selected ? 2 : 1,
+                borderColor: selected ? theme.colors.accent : theme.colors.border,
+                overflow: "hidden",
+                backgroundColor: theme.colors.surface,
+              }}
+            >
+              <View style={{ height: 44, backgroundColor: option.preview[0] }}>
+                <View
+                  style={{
+                    position: "absolute",
+                    right: 8,
+                    bottom: 8,
+                    width: 16,
+                    height: 16,
+                    borderRadius: 8,
+                    backgroundColor: option.preview[1],
+                  }}
+                />
+              </View>
+              <Text
+                style={{
+                  textAlign: "center",
+                  paddingVertical: 8,
+                  fontSize: theme.typography.sizes.caption,
+                  color: theme.colors.textPrimary,
+                  fontWeight: selected
+                    ? theme.typography.weights.semibold
+                    : theme.typography.weights.regular,
+                }}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       {sectionLabel("Поддерживающие фразы")}
       <View
         style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: theme.spacing("sm"),
+          backgroundColor: theme.colors.surface,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          borderRadius: theme.radius.lg,
+          padding: theme.spacing("md"),
         }}
       >
-        <View style={{ flex: 1, paddingRight: theme.spacing("md") }}>
-          <Text style={{ color: theme.colors.textPrimary }}>Мысль дня</Text>
-          <Text style={{ color: theme.colors.textSecondary, fontSize: theme.typography.sizes.caption }}>
-            Уникальная фраза каждый день
-          </Text>
-        </View>
-        <Switch
-          value={settings.supportivePhrasesEnabled}
-          onValueChange={(supportivePhrasesEnabled) => {
-            updateSettings({ supportivePhrasesEnabled });
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: theme.spacing("sm"),
           }}
+        >
+          <View style={{ flex: 1, paddingRight: theme.spacing("md") }}>
+            <Text style={{ color: theme.colors.textPrimary }}>Мысль дня</Text>
+            <Text style={{ color: theme.colors.textSecondary, fontSize: theme.typography.sizes.caption }}>
+              Уникальная фраза каждый день
+            </Text>
+          </View>
+          <Switch
+            value={settings.supportivePhrasesEnabled}
+            onValueChange={(supportivePhrasesEnabled) => {
+              updateSettings({ supportivePhrasesEnabled });
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+            }}
+          />
+        </View>
+        <Text
+          style={{
+            color: theme.colors.textPrimary,
+            fontStyle: "italic",
+            lineHeight: 22,
+            marginBottom: theme.spacing("sm"),
+          }}
+        >
+          «{thoughtOfDay}»
+        </Text>
+        <Button
+          label="Открыть избранное"
+          variant="secondary"
+          onPress={() => router.push(ROUTES.favorites)}
         />
       </View>
-      <Button
-        label="Открыть избранное"
-        variant="secondary"
-        onPress={() => router.push(ROUTES.favorites)}
-      />
 
       {sectionLabel("Напоминания")}
       <View
@@ -207,7 +342,12 @@ export function ProfileScreen() {
           marginBottom: theme.spacing("sm"),
         }}
       >
-        <Text style={{ color: theme.colors.textPrimary }}>Включить напоминания</Text>
+        <View style={{ flex: 1, paddingRight: theme.spacing("md") }}>
+          <Text style={{ color: theme.colors.textPrimary }}>Напоминания</Text>
+          <Text style={{ color: theme.colors.textSecondary, fontSize: theme.typography.sizes.caption }}>
+            Утром — мысль дня, вечером — запись в лес
+          </Text>
+        </View>
         <Switch
           value={settings.notifications.enabled}
           onValueChange={(enabled) => {
@@ -229,6 +369,17 @@ export function ProfileScreen() {
         onPress={handleExport}
         disabled={isExporting || entries.length === 0}
       />
+      {favorites.length > 0 && (
+        <Text
+          style={{
+            marginTop: theme.spacing("sm"),
+            color: theme.colors.textSecondary,
+            fontSize: theme.typography.sizes.caption,
+          }}
+        >
+          Избранных фраз: {favorites.length}
+        </Text>
+      )}
       {exportError && (
         <Text
           style={{
@@ -240,6 +391,13 @@ export function ProfileScreen() {
           Не получилось поделиться файлом. Попробуйте ещё раз.
         </Text>
       )}
+
+      <AvatarPickerModal
+        visible={avatarPickerOpen}
+        selectedPresetId={settings.avatarId}
+        onClose={() => setAvatarPickerOpen(false)}
+        onSelectPreset={handleSelectPreset}
+      />
     </Screen>
   );
 }

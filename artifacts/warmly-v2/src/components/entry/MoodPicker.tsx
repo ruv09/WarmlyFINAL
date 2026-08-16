@@ -1,6 +1,6 @@
 import React from "react";
 import { Text, View } from "react-native";
-import { MOOD_CATALOG } from "../../constants/moods";
+import { MOOD_PICKER_CATALOG } from "../../constants/moods";
 import { MoodId } from "../../types";
 import { PressableScale } from "../animation";
 import { useTheme } from "../../theme";
@@ -11,39 +11,47 @@ interface MoodPickerProps {
 }
 
 /**
- * Рендерится из MOOD_CATALOG — добавление настроения в каталог
- * не требует правок здесь (см. constants/moods.ts).
+ * Ряд из 5 эмодзи настроения — как на макете дневника.
  */
 export function MoodPicker({ selectedMoodId, onSelect }: MoodPickerProps) {
   const theme = useTheme();
 
   return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.spacing("sm") }}>
-      {MOOD_CATALOG.map((mood) => {
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-between",
+        gap: theme.spacing("xs"),
+      }}
+    >
+      {MOOD_PICKER_CATALOG.map((mood) => {
         const isSelected = mood.id === selectedMoodId;
         return (
           <PressableScale
             key={mood.id}
             onPress={() => onSelect(mood.id)}
             style={{
-              borderWidth: 1,
-              borderRadius: theme.radius.md,
-              borderColor: isSelected ? mood.color : theme.colors.border,
-              backgroundColor: isSelected ? mood.color : theme.colors.surface,
-              paddingVertical: theme.spacing("sm"),
-              paddingHorizontal: theme.spacing("md"),
+              flex: 1,
               alignItems: "center",
-              minWidth: 84,
+              paddingVertical: theme.spacing("sm"),
+              borderRadius: theme.radius.lg,
+              backgroundColor: isSelected ? `${mood.color}33` : theme.colors.surface,
+              borderWidth: 1.5,
+              borderColor: isSelected ? mood.color : theme.colors.border,
             }}
           >
-            <Text style={{ fontSize: 22 }}>{mood.emoji}</Text>
+            <Text style={{ fontSize: 28 }}>{mood.emoji}</Text>
             <Text
               style={{
                 marginTop: 4,
-                fontSize: theme.typography.sizes.caption,
+                fontSize: 10,
                 textAlign: "center",
-                color: isSelected ? theme.colors.surface : theme.colors.textPrimary,
+                color: isSelected ? mood.color : theme.colors.textSecondary,
+                fontWeight: isSelected
+                  ? theme.typography.weights.semibold
+                  : theme.typography.weights.regular,
               }}
+              numberOfLines={1}
               maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
             >
               {mood.label}

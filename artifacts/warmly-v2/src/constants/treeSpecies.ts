@@ -4,180 +4,92 @@ import { TreeSpecies } from "../types";
 export interface SpeciesVisual {
   species: TreeSpecies;
   labelRu: string;
-  /** Базовая высота вида относительно других */
   heightScale: number;
-  /** Варианты иллюстраций: light / dark */
-  variants: Array<{
-    image: ImageSourcePropType;
-    imageDark: ImageSourcePropType;
-  }>;
+  image: ImageSourcePropType;
+  imageDark: ImageSourcePropType;
 }
 
+/**
+ * Мягкий минималистичный 2D / pastel — ассеты из assets/trees/
+ * по гайду Warmly (oak.png, birch.png, cherry.png для сакуры…).
+ */
 export const TREE_SPECIES_CATALOG: SpeciesVisual[] = [
   {
     species: "oak",
     labelRu: "Дуб",
-    heightScale: 1.12,
-    variants: [
-      {
-        image: require("../../assets/forest/trees/oak/oak_01.png"),
-        imageDark: require("../../assets/forest/trees/oak/oak_01_dark.png"),
-      },
-      {
-        image: require("../../assets/forest/trees/oak/oak_02.png"),
-        imageDark: require("../../assets/forest/trees/oak/oak_02_dark.png"),
-      },
-    ],
+    heightScale: 1.1,
+    image: require("../../assets/trees/oak.png"),
+    imageDark: require("../../assets/trees/oak-dark.png"),
   },
   {
     species: "birch",
     labelRu: "Берёза",
-    heightScale: 1.16,
-    variants: [
-      {
-        image: require("../../assets/forest/trees/birch/birch_01.png"),
-        imageDark: require("../../assets/forest/trees/birch/birch_01_dark.png"),
-      },
-      {
-        image: require("../../assets/forest/trees/birch/birch_02.png"),
-        imageDark: require("../../assets/forest/trees/birch/birch_02_dark.png"),
-      },
-    ],
+    heightScale: 1.14,
+    image: require("../../assets/trees/birch.png"),
+    imageDark: require("../../assets/trees/birch-dark.png"),
   },
   {
     species: "pine",
     labelRu: "Сосна",
-    heightScale: 1.22,
-    variants: [
-      {
-        image: require("../../assets/forest/trees/pine/pine_01.png"),
-        imageDark: require("../../assets/forest/trees/pine/pine_01_dark.png"),
-      },
-      {
-        image: require("../../assets/forest/trees/pine/pine_02.png"),
-        imageDark: require("../../assets/forest/trees/pine/pine_02_dark.png"),
-      },
-    ],
+    heightScale: 1.2,
+    image: require("../../assets/trees/pine.png"),
+    imageDark: require("../../assets/trees/pine-dark.png"),
   },
   {
     species: "spruce",
     labelRu: "Ель",
-    heightScale: 1.2,
-    variants: [
-      {
-        image: require("../../assets/forest/trees/spruce/spruce_01.png"),
-        imageDark: require("../../assets/forest/trees/spruce/spruce_01_dark.png"),
-      },
-      {
-        image: require("../../assets/forest/trees/spruce/spruce_02.png"),
-        imageDark: require("../../assets/forest/trees/spruce/spruce_02_dark.png"),
-      },
-    ],
+    heightScale: 1.18,
+    image: require("../../assets/trees/spruce.png"),
+    imageDark: require("../../assets/trees/spruce-dark.png"),
   },
   {
     species: "maple",
     labelRu: "Клён",
-    heightScale: 1.08,
-    variants: [
-      {
-        image: require("../../assets/forest/trees/maple/maple_01.png"),
-        imageDark: require("../../assets/forest/trees/maple/maple_01_dark.png"),
-      },
-      {
-        image: require("../../assets/forest/trees/maple/maple_02.png"),
-        imageDark: require("../../assets/forest/trees/maple/maple_02_dark.png"),
-      },
-    ],
+    heightScale: 1.06,
+    image: require("../../assets/trees/maple.png"),
+    imageDark: require("../../assets/trees/maple-dark.png"),
   },
   {
     species: "linden",
     labelRu: "Липа",
-    heightScale: 1.05,
-    variants: [
-      {
-        image: require("../../assets/forest/trees/linden/linden_01.png"),
-        imageDark: require("../../assets/forest/trees/linden/linden_01_dark.png"),
-      },
-      {
-        image: require("../../assets/forest/trees/linden/linden_02.png"),
-        imageDark: require("../../assets/forest/trees/linden/linden_02_dark.png"),
-      },
-    ],
+    heightScale: 1.04,
+    image: require("../../assets/trees/linden.png"),
+    imageDark: require("../../assets/trees/linden-dark.png"),
   },
   {
     species: "sakura",
     labelRu: "Сакура",
-    heightScale: 1.02,
-    variants: [
-      {
-        image: require("../../assets/forest/trees/sakura/sakura_01.png"),
-        imageDark: require("../../assets/forest/trees/sakura/sakura_01_dark.png"),
-      },
-      {
-        image: require("../../assets/forest/trees/sakura/sakura_02.png"),
-        imageDark: require("../../assets/forest/trees/sakura/sakura_02_dark.png"),
-      },
-    ],
+    heightScale: 1,
+    image: require("../../assets/trees/cherry.png"),
+    imageDark: require("../../assets/trees/cherry-dark.png"),
   },
   {
     species: "apple",
     labelRu: "Яблоня",
-    heightScale: 0.92,
-    variants: [
-      {
-        image: require("../../assets/forest/trees/apple/apple_01.png"),
-        imageDark: require("../../assets/forest/trees/apple/apple_01_dark.png"),
-      },
-      {
-        image: require("../../assets/forest/trees/apple/apple_02.png"),
-        imageDark: require("../../assets/forest/trees/apple/apple_02_dark.png"),
-      },
-    ],
+    heightScale: 0.94,
+    image: require("../../assets/trees/apple.png"),
+    imageDark: require("../../assets/trees/apple-dark.png"),
   },
   {
     species: "bush",
     labelRu: "Куст",
-    heightScale: 0.68,
-    variants: [
-      {
-        image: require("../../assets/forest/trees/bush/bush_01.png"),
-        imageDark: require("../../assets/forest/trees/bush/bush_01_dark.png"),
-      },
-      {
-        image: require("../../assets/forest/trees/bush/bush_02.png"),
-        imageDark: require("../../assets/forest/trees/bush/bush_02_dark.png"),
-      },
-    ],
+    heightScale: 0.66,
+    image: require("../../assets/trees/bush.png"),
+    imageDark: require("../../assets/trees/bush-dark.png"),
   },
   {
     species: "willow",
     labelRu: "Ива",
-    heightScale: 1.1,
-    variants: [
-      {
-        image: require("../../assets/forest/trees/willow/willow_01.png"),
-        imageDark: require("../../assets/forest/trees/willow/willow_01_dark.png"),
-      },
-      {
-        image: require("../../assets/forest/trees/willow/willow_02.png"),
-        imageDark: require("../../assets/forest/trees/willow/willow_02_dark.png"),
-      },
-    ],
+    heightScale: 1.08,
+    image: require("../../assets/trees/willow.png"),
+    imageDark: require("../../assets/trees/willow-dark.png"),
   },
   {
     species: "rowan",
     labelRu: "Рябина",
     heightScale: 0.96,
-    variants: [
-      {
-        image: require("../../assets/forest/trees/rowan/rowan_01.png"),
-        imageDark: require("../../assets/forest/trees/rowan/rowan_01_dark.png"),
-      },
-      {
-        image: require("../../assets/forest/trees/rowan/rowan_02.png"),
-        imageDark: require("../../assets/forest/trees/rowan/rowan_02_dark.png"),
-      },
-    ],
+    image: require("../../assets/trees/rowan.png"),
+    imageDark: require("../../assets/trees/rowan-dark.png"),
   },
 ];
 
@@ -218,10 +130,8 @@ export function getSpeciesVisual(species: string): SpeciesVisual {
 export function getTreeImage(
   species: string,
   dark: boolean,
-  variant = 1,
+  _variant = 1,
 ): ImageSourcePropType {
   const visual = getSpeciesVisual(species);
-  const index = Math.max(0, Math.min(visual.variants.length - 1, (variant || 1) - 1));
-  const asset = visual.variants[index] ?? visual.variants[0];
-  return dark ? asset.imageDark : asset.image;
+  return dark ? visual.imageDark : visual.image;
 }

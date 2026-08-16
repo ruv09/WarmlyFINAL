@@ -1,5 +1,6 @@
 import React from "react";
 import { PressableProps, StyleProp, Text, ViewStyle } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { PressableScale } from "../animation";
 import { useTheme } from "../../theme";
 
@@ -7,17 +8,24 @@ interface ButtonProps extends Omit<PressableProps, "style"> {
   label: string;
   variant?: "primary" | "secondary";
   disabled?: boolean;
+  icon?: keyof typeof Ionicons.glyphMap;
   style?: StyleProp<ViewStyle>;
 }
 
 /**
- * Единственная кнопка в приложении — экраны не пишут свой Pressable
- * со своими цветами/отступами. Тактильная обратная связь на нажатие —
- * через PressableScale (soft spring), см. /ANIMATION.md.
+ * Единственная кнопка в приложении.
  */
-export function Button({ label, variant = "primary", disabled, style, ...rest }: ButtonProps) {
+export function Button({
+  label,
+  variant = "primary",
+  disabled,
+  icon,
+  style,
+  ...rest
+}: ButtonProps) {
   const theme = useTheme();
   const isPrimary = variant === "primary";
+  const labelColor = isPrimary ? theme.colors.surface : theme.colors.accent;
 
   return (
     <PressableScale
@@ -26,10 +34,13 @@ export function Button({ label, variant = "primary", disabled, style, ...rest }:
         {
           borderWidth: 1,
           borderColor: theme.colors.accent,
-          borderRadius: theme.radius.md,
-          paddingVertical: theme.spacing("md") - 2,
+          borderRadius: theme.radius.lg,
+          paddingVertical: theme.spacing("md"),
           paddingHorizontal: theme.spacing("lg"),
           alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "row",
+          gap: 8,
           backgroundColor: isPrimary ? theme.colors.accent : "transparent",
           opacity: disabled ? 0.5 : 1,
         },
@@ -37,11 +48,12 @@ export function Button({ label, variant = "primary", disabled, style, ...rest }:
       ]}
       {...rest}
     >
+      {icon ? <Ionicons name={icon} size={18} color={labelColor} /> : null}
       <Text
         style={{
           fontSize: theme.typography.sizes.body,
           fontWeight: theme.typography.weights.semibold,
-          color: isPrimary ? theme.colors.surface : theme.colors.accent,
+          color: labelColor,
         }}
         maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
       >
