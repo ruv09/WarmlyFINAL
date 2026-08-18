@@ -26,11 +26,7 @@ export interface TreePosition {
 }
 
 /** Поднимать при смене правил размещения, чтобы старый лес не оставался кучей. */
- cursor/tree-style-guide-7701
 export const FOREST_LAYOUT_VERSION = 5;
-
-export const FOREST_LAYOUT_VERSION = 7;
- main
 
 export interface Tree {
   id: string;
@@ -42,7 +38,7 @@ export interface Tree {
   depth: number;
   /** Дискретный слой 2.5D: 0 дальний … 5 очень близкий */
   layer?: number;
-  /** Глубина в мире: камера идёт вперёд по Z (pinch), не по карте. */
+  /** Глубина в мире: камера идёт вперёд по Z (joystick), не по карте. */
   worldZ?: number;
   /** Индекс варианта ассета */
   variant: number;
