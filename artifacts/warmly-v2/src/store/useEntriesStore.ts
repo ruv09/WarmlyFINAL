@@ -50,8 +50,12 @@ export const useEntriesStore = create<EntriesState>((set, get) => ({
     const species = assignNextSpecies(recentSpecies);
     const planted = placeNextTree(existingTrees);
     const meta = placementMeta(planted);
+ cursor/tree-style-guide-7701
+    const variant = hash01(`${nowIso}:${species}`) < 0.5 ? 1 : 2;
+
     const treeId = generateId();
     const variant = hashVariant(treeId);
+ main
 
     const tree: Tree = {
       id: treeId,
@@ -107,6 +111,15 @@ export const useEntriesStore = create<EntriesState>((set, get) => ({
   },
 }));
 
+ cursor/tree-style-guide-7701
+function hash01(seed: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) / 4294967295;
+
 function hashVariant(id: string): 1 | 2 {
   let h = 2166136261;
   for (let i = 0; i < id.length; i++) {
@@ -114,4 +127,5 @@ function hashVariant(id: string): 1 | 2 {
     h = Math.imul(h, 16777619);
   }
   return (h >>> 0) % 2 === 0 ? 1 : 2;
+ main
 }
