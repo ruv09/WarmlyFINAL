@@ -10,36 +10,52 @@ import Animated, {
 import { Tree } from "../../types";
 import { TreeIllustration } from "../tree";
 import { SPRING_CONFIGS } from "../../theme/tokens/animation";
+import { getSpeciesVisual } from "../../constants/treeSpecies";
+import {
+  passBy,
+  perspective,
+  projectFromCamera,
+  relativeZ,
+  TREE_BASE_SIZE,
+} from "../../services/forest/camera";
+import { SceneTree } from "../../utils/viewportCulling";
 
-/** Базовый размер иллюстрации на среднем плане. */
-export const TREE_HEIGHT = 200;
-export const TREE_WIDTH = 200;
+export const TREE_HEIGHT = TREE_BASE_SIZE;
+export const TREE_WIDTH = TREE_BASE_SIZE;
 export const TREE_SIZE = TREE_HEIGHT;
 
 interface ForestTreeNodeProps {
-  tree: Tree;
-  left: number;
-  top: number;
-  size: number;
-  depthFade: number;
+  scene: SceneTree;
+  screenWidth: number;
+  groundY: number;
+  camX: SharedValue<number>;
+  camY: SharedValue<number>;
+  cameraZ: SharedValue<number>;
   sway: SharedValue<number>;
   phase: number;
   isNew: boolean;
+  reduceMotion: boolean;
   onPress: (tree: Tree) => void;
 }
 
 export const ForestTreeNode = memo(function ForestTreeNode({
-  tree,
-  left,
-  top,
-  size,
-  depthFade,
+  scene,
+  screenWidth,
+  groundY,
+  camX,
+  camY,
+  cameraZ,
   sway,
   phase,
   isNew,
+  reduceMotion,
   onPress,
 }: ForestTreeNodeProps) {
   const appear = useSharedValue(isNew ? 0 : 1);
+  const heightScale = getSpeciesVisual(scene.species).heightScale;
+  const worldX = scene.x;
+  const worldZ = scene.z;
+  const treeScale = scene.scale;
 
   useEffect(() => {
     if (!isNew) {
@@ -55,32 +71,69 @@ export const ForestTreeNode = memo(function ForestTreeNode({
         mass: SPRING_CONFIGS.soft.mass,
       }),
     );
-  }, [appear, isNew, tree.id]);
+  }, [appear, isNew, scene.id]);
 
   const animatedStyle = useAnimatedStyle(() => {
-    const angle = Math.sin(sway.value + phase) * 1.05;
-    const scale = 0.78 + appear.value * 0.22;
+    const relZ = relativeZ(worldZ, cameraZ.value);
+    const persp = perspective(relZ);
+    const pass = passBy(relZ);
+    const size = TREE_BASE_SIZE * heightScale * treeScale * persp * pass.boost;
+    const { left, top } = projectFromCamera(
+      worldX,
+      worldZ,
+      camX.value,
+      camY.value,
+      cameraZ.value,
+      screenWidth,
+      groundY,
+      size,
+    );
+    const nearness = Math.max(0, Math.min(1, 1 - relZ / 900));
+    const swayAmp = reduceMotion ? 0 : 0.25 + nearness * 0.85;
+    const angle = Math.sin(sway.value + phase) * swayAmp;
     return {
-      opacity: appear.value,
+      width: size,
+      height: size,
+      left,
+      top,
+      opacity: appear.value * pass.opacity * (0.42 + nearness * 0.58),
+      zIndex: Math.round(10000 - relZ),
       transform: [
         { translateY: size / 2 },
         { rotate: `${angle}deg` },
         { translateY: -size / 2 },
-        { scale },
       ],
     };
   });
 
+  const fakeTree: Tree | null = scene.source ?? null;
+
   return (
-    <Pressable
-      onPress={() => onPress(tree)}
-      hitSlop={10}
-      style={{ position: "absolute", left, top, width: size, height: size }}
-    >
-      <Animated.View style={animatedStyle}>
-        <TreeIllustration tree={tree} size={size} depthFade={depthFade} />
-      </Animated.View>
-    </Pressable>
+    <Animated.View style={[{ position: "absolute" }, animatedStyle]} pointerEvents={scene.interactive ? "auto" : "none"}>
+      <Pressable
+        onPress={() => {
+          if (fakeTree) onPress(fakeTree);
+        }}
+        hitSlop={10}
+        style={{ flex: 1 }}
+      >
+        <TreeIllustration
+          tree={
+            fakeTree ?? {
+              id: scene.id,
+              species: scene.species,
+              position: { x: scene.x, y: 0 },
+              scale: scene.scale,
+              depth: 0.5,
+              variant: scene.variant,
+              createdAt: scene.createdAt,
+            }
+          }
+          fillParent
+          depthFade={1}
+        />
+      </Pressable>
+    </Animated.View>
   );
 });
 

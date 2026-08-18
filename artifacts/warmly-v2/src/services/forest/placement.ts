@@ -1,31 +1,11 @@
 import { Tree, TreePosition } from "../../types";
 
 /**
- * Раскладка «панорама»: деревья сажаются в слоты вдоль широкой сцены.
- * Важно: мировые X ≈ пиксели на экране, а дерево ~220px —
- * поэтому MIN_DISTANCE должен быть больше ширины кроны.
+ * Личные деревья — по сторонам тропы вглубь по Z.
+ * Pinch двигает камеру по Z; pan лишь слегка смотрит в стороны.
  */
-const MIN_DISTANCE = 260;
-const WORLD_MIN_X = -1400;
-const WORLD_MAX_X = 1400;
-const WORLD_MIN_Y = -180;
-const WORLD_MAX_Y = 160;
-
-/** Слоты глубины (экранные полосы), чтобы не сваливаться в одну линию. */
-const DEPTH_BANDS = [
-  { minY: -180, maxY: -80, weight: 0.3 }, // даль
-  { minY: -80, maxY: 40, weight: 0.4 }, // середина
-  { minY: 40, maxY: 160, weight: 0.3 }, // перед
-] as const;
-
-function distance(a: TreePosition, b: TreePosition): number {
-  // По X почти 1:1 с экраном; по Y чуть сильнее, чтобы полосы не слипались.
-  return Math.hypot(a.x - b.x, (a.y - b.y) * 1.6);
-}
-
-function isFarEnough(candidate: TreePosition, existing: TreePosition[]): boolean {
-  return existing.every((point) => distance(point, candidate) >= MIN_DISTANCE);
-}
+const PATH_GAP = 110;
+const SIDE_MAX = 560;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -40,78 +20,51 @@ function hash01(seed: string): number {
   return (h >>> 0) / 4294967295;
 }
 
-/**
- * Детерминированные «карманы» посадки: чередование сторон от центра наружу.
- * Так первые деревья видны на старте, дальше лес уходит в панораму.
- */
-function slotCenterX(index: number): number {
-  if (index === 0) return 0;
-  const ring = Math.ceil(index / 2);
-  const side = index % 2 === 1 ? -1 : 1;
-  return side * ring * 300;
+function nextWorldZ(existing: Pick<Tree, "worldZ">[]): number {
+  const zs = existing.map((t) => t.worldZ ?? 0);
+  const last = zs.length === 0 ? 90 : Math.max(...zs);
+  const index = zs.length;
+  const gap = 150 + hash01(`gap:${index}`) * 140;
+  return last + gap;
 }
 
-function pickBand(index: number): (typeof DEPTH_BANDS)[number] {
-  return DEPTH_BANDS[index % DEPTH_BANDS.length];
+function keepOffPath(x: number, side: number): number {
+  if (Math.abs(x) >= PATH_GAP) return clamp(x, -SIDE_MAX, SIDE_MAX);
+  return side * (PATH_GAP + 24);
 }
 
-function depthFromY(y: number): number {
-  return clamp((y - WORLD_MIN_Y) / (WORLD_MAX_Y - WORLD_MIN_Y), 0, 1);
+export function placeNextTree(existing: Pick<Tree, "position" | "worldZ">[]): TreePosition & { z: number } {
+  const index = existing.length;
+  const z = nextWorldZ(existing);
+  const side = hash01(`side:${index}`) < 0.5 ? -1 : 1;
+  const cluster = index > 0 && hash01(`cl:${index}`) < 0.34;
+  const prev = existing[existing.length - 1];
+  const x = cluster && prev
+    ? keepOffPath(prev.position.x + side * (40 + hash01(`cx:${index}`) * 90), side)
+    : keepOffPath(side * (PATH_GAP + 30 + hash01(`x:${index}`) * 380), side);
+  const y = (hash01(`y:${index}`) - 0.5) * 24;
+  return { x, y, z };
 }
 
-/**
- * Следующее дерево — в свободный слот панорамы, без кучи в центре.
- */
-export function placeNextTree(existing: Pick<Tree, "position">[]): TreePosition {
-  const existingPositions = existing.map((tree) => tree.position);
-  const index = existingPositions.length;
-
-  // Сначала пробуем канонический слот для этого порядкового номера.
-  for (let pass = 0; pass < 24; pass++) {
-    const slotIndex = index + pass;
-    const band = pickBand(slotIndex);
-    const baseX = slotCenterX(slotIndex);
-    const jitter = (hash01(`slot:${slotIndex}:${pass}`) - 0.5) * 90;
-    const yJitter = hash01(`y:${slotIndex}:${pass}`);
-    const candidate: TreePosition = {
-      x: clamp(baseX + jitter, WORLD_MIN_X, WORLD_MAX_X),
-      y: band.minY + yJitter * (band.maxY - band.minY),
-    };
-    if (isFarEnough(candidate, existingPositions)) {
-      return candidate;
-    }
-  }
-
-  // Запас: ищем максимальную дыру по всей ширине.
-  let best: TreePosition = { x: WORLD_MAX_X * 0.6, y: 20 };
-  let bestScore = -Infinity;
-  for (let i = 0; i < 80; i++) {
-    const band = DEPTH_BANDS[i % DEPTH_BANDS.length];
-    const candidate: TreePosition = {
-      x: WORLD_MIN_X + (i / 80) * (WORLD_MAX_X - WORLD_MIN_X) + (hash01(`f${i}`) - 0.5) * 40,
-      y: band.minY + hash01(`fy${i}`) * (band.maxY - band.minY),
-    };
-    const minDist =
-      existingPositions.length === 0
-        ? MIN_DISTANCE
-        : Math.min(...existingPositions.map((p) => distance(p, candidate)));
-    if (minDist > bestScore) {
-      bestScore = minDist;
-      best = candidate;
-    }
-  }
-  return best;
-}
-
-export function placementMeta(position: TreePosition): { depth: number; scale: number } {
-  const depth = depthFromY(position.y);
-  const scale = 0.86 + depth * 0.22 + (hash01(`s:${position.x}:${position.y}`) - 0.5) * 0.06;
-  return { depth, scale: clamp(scale, 0.78, 1.18) };
+export function placementMeta(position: TreePosition & { z?: number }): {
+  depth: number;
+  scale: number;
+  layer: number;
+  worldZ: number;
+} {
+  const worldZ = position.z ?? 120;
+  const scale = 0.82 + hash01(`s:${position.x}:${worldZ}`) * 0.28;
+  return {
+    worldZ,
+    depth: 0.55,
+    layer: 3,
+    scale: clamp(scale, 0.76, 1.18),
+  };
 }
 
 export const FOREST_WORLD = {
-  minX: WORLD_MIN_X,
-  maxX: WORLD_MAX_X,
-  minY: WORLD_MIN_Y,
-  maxY: WORLD_MAX_Y,
+  minX: -SIDE_MAX,
+  maxX: SIDE_MAX,
+  minY: 0,
+  maxY: 0,
 };

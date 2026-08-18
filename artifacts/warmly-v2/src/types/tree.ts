@@ -26,7 +26,7 @@ export interface TreePosition {
 }
 
 /** Поднимать при смене правил размещения, чтобы старый лес не оставался кучей. */
-export const FOREST_LAYOUT_VERSION = 4;
+export const FOREST_LAYOUT_VERSION = 5;
 
 export interface Tree {
   id: string;
@@ -36,6 +36,10 @@ export interface Tree {
   scale: number;
   /** 0 — дальний план, 1 — передний */
   depth: number;
+  /** Дискретный слой 2.5D: 0 дальний … 5 очень близкий */
+  layer?: number;
+  /** Глубина в мире: камера идёт вперёд по Z (pinch), не по карте. */
+  worldZ?: number;
   /** Индекс варианта ассета */
   variant: number;
   /** Версия раскладки леса */
@@ -69,6 +73,14 @@ export function normalizeTree(
     position: raw.position,
     scale,
     depth,
+    layer:
+      typeof raw.layer === "number" && Number.isFinite(raw.layer)
+        ? Math.max(0, Math.min(5, Math.round(raw.layer)))
+        : Math.round(depth * 5),
+    worldZ:
+      typeof raw.worldZ === "number" && Number.isFinite(raw.worldZ)
+        ? Math.max(0, raw.worldZ)
+        : Math.max(80, depth * 900),
     variant,
     layoutVersion: raw.layoutVersion ?? FOREST_LAYOUT_VERSION,
     createdAt: raw.createdAt,

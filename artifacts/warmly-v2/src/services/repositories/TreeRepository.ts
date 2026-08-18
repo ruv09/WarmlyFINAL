@@ -20,7 +20,8 @@ export class TreeRepository {
       (tree) =>
         tree.layoutVersion !== FOREST_LAYOUT_VERSION ||
         typeof tree.depth !== "number" ||
-        typeof tree.scale !== "number",
+        typeof tree.scale !== "number" ||
+        typeof tree.worldZ !== "number",
     );
 
     if (!needsRelayout) {
@@ -32,14 +33,16 @@ export class TreeRepository {
     );
     const placed: Tree[] = [];
     for (const tree of ordered) {
-      const position = placeNextTree(placed);
-      const meta = placementMeta(position);
+      const planted = placeNextTree(placed);
+      const meta = placementMeta(planted);
       placed.push(
         normalizeTree({
           ...tree,
-          position,
+          position: { x: planted.x, y: planted.y },
           scale: meta.scale,
           depth: meta.depth,
+          layer: meta.layer,
+          worldZ: meta.worldZ,
           variant: typeof tree.variant === "number" ? tree.variant : undefined,
           layoutVersion: FOREST_LAYOUT_VERSION,
         }),
