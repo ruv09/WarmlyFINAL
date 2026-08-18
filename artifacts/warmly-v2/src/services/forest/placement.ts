@@ -1,8 +1,13 @@
 import { Tree, TreePosition } from "../../types";
 
 /**
+ cursor/tree-style-guide-7701
  * Личные деревья — по сторонам тропы вглубь по Z.
  * Pinch двигает камеру по Z; pan лишь слегка смотрит в стороны.
+
+ * Личные деревья стоят по сторонам тропы, не в центре кадра.
+ * При движении камеры по Z они уезжают к краям, а не растут как zoom.
+ main
  */
 const PATH_GAP = 110;
 const SIDE_MAX = 560;
@@ -33,6 +38,13 @@ function keepOffPath(x: number, side: number): number {
   return side * (PATH_GAP + 24);
 }
 
+ cursor/tree-style-guide-7701
+
+/**
+ * Следующее дерево пользователя — дальше по Z, со смещением в сторону
+ * и редкими группами. Без Math.random, без сетки.
+ */
+ main
 export function placeNextTree(existing: Pick<Tree, "position" | "worldZ">[]): TreePosition & { z: number } {
   const index = existing.length;
   const z = nextWorldZ(existing);

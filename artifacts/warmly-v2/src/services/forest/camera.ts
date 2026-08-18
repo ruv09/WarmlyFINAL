@@ -1,8 +1,15 @@
 /**
+ cursor/tree-style-guide-7701
  * Виртуальная камера леса (2.5D).
  * Pinch меняет cameraZ. Каждый слой/дерево проецируется отдельно:
  * relativeZ = worldZ - cameraZ, scale = focal / relativeZ.
  * Запрещено: forestContainer.scale = zoom.
+
+ * Parallax-камера как в Moho/AE-референсах:
+ * слои стоят на разных Z, cameraZ двигается вглубь,
+ * экранный масштаб = focal / (layerZ - camZ).
+ * Это не zoom контейнера.
+ main
  */
 
 export const FOCAL_LENGTH = 420;
@@ -13,6 +20,11 @@ export const TREE_BASE_SIZE = 200;
 export const MAX_LOOK_X = 160;
 export const MAX_LOOK_Y = 36;
 export const WALK_PER_PINCH = 640;
+ cursor/tree-style-guide-7701
+
+export const LAYER_CYCLE = 720;
+/** Условная плоскость, к которой привязан focal-point pinch. */
+ main
 export const FOCUS_PLANE = 540;
 
 export const DEPTH_LAYERS = [
@@ -41,9 +53,15 @@ export function clampZ(z: number): number {
   return Math.max(0, z);
 }
 
+ cursor/tree-style-guide-7701
 export function relativeZ(worldZ: number, cameraZ: number): number {
   "worklet";
   return worldZ - cameraZ;
+
+export function relativeZ(worldZ: number, camZ: number): number {
+  "worklet";
+  return worldZ - camZ;
+ main
 }
 
 export function perspective(relZ: number): number {
@@ -53,7 +71,14 @@ export function perspective(relZ: number): number {
   return Math.max(0.2, Math.min(3.15, raw));
 }
 
+ cursor/tree-style-guide-7701
 /** Дерево проходит камеру: растёт, уезжает к краям, мягко гаснет. */
+
+/**
+ * Объект проходит камеру: сначала растёт и уезжает к краям,
+ * затем мягко гаснет. Без резкого visible→invisible.
+ */
+ main
 export function passBy(relZ: number): { opacity: number; boost: number } {
   "worklet";
   if (relZ >= PASS_PLANE) {
@@ -78,13 +103,21 @@ export function projectFromCamera(
   worldZ: number,
   camX: number,
   camY: number,
+ cursor/tree-style-guide-7701
   cameraZ: number,
+
+  camZ: number,
+ main
   screenWidth: number,
   groundY: number,
   size: number,
 ): { left: number; top: number; persp: number } {
   "worklet";
+ cursor/tree-style-guide-7701
   const relZ = relativeZ(worldZ, cameraZ);
+
+  const relZ = relativeZ(worldZ, camZ);
+ main
   const persp = perspective(relZ);
   const left = screenWidth / 2 + (worldX - camX) * persp - size / 2;
   const depthLift = (1 - Math.min(1.35, persp)) * 64;
@@ -92,14 +125,28 @@ export function projectFromCamera(
   return { left, top, persp };
 }
 
+ cursor/tree-style-guide-7701
 export function wrappingLayerZ(homeZ: number, cameraZ: number, cycle: number): number {
   "worklet";
   const phase = ((cameraZ % cycle) + cycle) % cycle;
+
+/**
+ * Z слоя с циклом: когда слой прошёл камеру, впереди появляется
+ * следующий экземпляр того же слоя — непрерывное движение.
+ */
+export function wrappingLayerZ(homeZ: number, camZ: number, cycle: number): number {
+  "worklet";
+  const phase = ((camZ % cycle) + cycle) % cycle;
+ main
   let z = homeZ - phase;
   if (z < NEAR_PLANE) z += cycle;
   return z;
 }
 
+ cursor/tree-style-guide-7701
+
+/** Второй экземпляр слоя: пока ближний проходит камеру, дальний уже стоит впереди. */
+ main
 export function companionLayerZ(z: number, cycle: number): number {
   "worklet";
   return z > cycle * 0.5 ? z - cycle : z + cycle;
@@ -124,6 +171,11 @@ export function projectAtRelativeZ(
     opacity = Math.max(0, (relZ - NEAR_PLANE) / Math.max(1, PASS_PLANE - NEAR_PLANE));
   } else if (relZ > homeZ * 2.8) {
     opacity = Math.max(0, 1 - (relZ - homeZ * 2.8) / Math.max(80, homeZ * 1.4));
+ cursor/tree-style-guide-7701
+
+  } else if (relZ > FAR_PLANE * 0.72) {
+    opacity = Math.max(0, 1 - (relZ - FAR_PLANE * 0.72) / (FAR_PLANE * 0.4));
+ main
   }
   return {
     translateX: -camX * parallax * persp * 0.5,
@@ -133,7 +185,26 @@ export function projectAtRelativeZ(
   };
 }
 
+ cursor/tree-style-guide-7701
 /** Pinch вокруг точки между пальцами, а не строго из центра экрана. */
+
+export function projectLayer(
+  homeZ: number,
+  parallax: number,
+  camX: number,
+  camZ: number,
+  cycle: number,
+  camY = 0,
+): { translateX: number; translateY: number; scale: number; opacity: number } {
+  "worklet";
+  return projectAtRelativeZ(wrappingLayerZ(homeZ, camZ, cycle), homeZ, parallax, camX, camY);
+}
+
+/**
+ * Pinch вокруг точки между пальцами: мир под фокусом остаётся на месте,
+ * камера слегка смотрит в эту сторону, а не масштабирует центр экрана.
+ */
+ main
 export function lookFromFocal(
   savedX: number,
   savedY: number,

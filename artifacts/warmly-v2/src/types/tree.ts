@@ -26,7 +26,11 @@ export interface TreePosition {
 }
 
 /** Поднимать при смене правил размещения, чтобы старый лес не оставался кучей. */
+ cursor/tree-style-guide-7701
 export const FOREST_LAYOUT_VERSION = 5;
+
+export const FOREST_LAYOUT_VERSION = 7;
+ main
 
 export interface Tree {
   id: string;

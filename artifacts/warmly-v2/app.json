@@ -6,16 +6,31 @@
     "version": "2.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/brand/icon.png",
+    "splash": {
+      "image": "./assets/brand/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.warmly.app"
+      "bundleIdentifier": "com.warmly.app",
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.warmly.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
       "permissions": [
         "POST_NOTIFICATIONS"
       ]
+    },
+    "web": {
+      "favicon": "./assets/brand/favicon.png"
     },
     "plugins": [
       "expo-router",

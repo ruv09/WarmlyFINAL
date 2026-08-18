@@ -16,7 +16,11 @@ export type SceneTree = {
 export interface CameraViewport {
   camX: number;
   camY: number;
+ cursor/tree-style-guide-7701
   cameraZ: number;
+
+  camZ: number;
+ main
 }
 
 export function getVisibleSceneTrees(
@@ -25,7 +29,11 @@ export function getVisibleSceneTrees(
   screenWidth: number,
 ): SceneTree[] {
   const visible = trees.filter((tree) => {
+ cursor/tree-style-guide-7701
     const relZ = tree.z - viewport.cameraZ;
+
+    const relZ = tree.z - viewport.camZ;
+ main
     if (relZ < NEAR_PLANE * 0.22 || relZ > FAR_PLANE + 80) return false;
     const persp = perspective(relZ);
     const pass = passBy(relZ);

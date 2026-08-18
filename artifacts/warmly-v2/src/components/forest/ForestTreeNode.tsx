@@ -30,7 +30,11 @@ interface ForestTreeNodeProps {
   groundY: number;
   camX: SharedValue<number>;
   camY: SharedValue<number>;
+ cursor/tree-style-guide-7701
   cameraZ: SharedValue<number>;
+
+  camZ: SharedValue<number>;
+ main
   sway: SharedValue<number>;
   phase: number;
   isNew: boolean;
@@ -44,7 +48,11 @@ export const ForestTreeNode = memo(function ForestTreeNode({
   groundY,
   camX,
   camY,
+ cursor/tree-style-guide-7701
   cameraZ,
+
+  camZ,
+ main
   sway,
   phase,
   isNew,
@@ -74,7 +82,11 @@ export const ForestTreeNode = memo(function ForestTreeNode({
   }, [appear, isNew, scene.id]);
 
   const animatedStyle = useAnimatedStyle(() => {
+ cursor/tree-style-guide-7701
     const relZ = relativeZ(worldZ, cameraZ.value);
+
+    const relZ = relativeZ(worldZ, camZ.value);
+ main
     const persp = perspective(relZ);
     const pass = passBy(relZ);
     const size = TREE_BASE_SIZE * heightScale * treeScale * persp * pass.boost;
@@ -83,7 +95,11 @@ export const ForestTreeNode = memo(function ForestTreeNode({
       worldZ,
       camX.value,
       camY.value,
+ cursor/tree-style-guide-7701
       cameraZ.value,
+
+      camZ.value,
+ main
       screenWidth,
       groundY,
       size,
@@ -102,6 +118,10 @@ export const ForestTreeNode = memo(function ForestTreeNode({
         { translateY: size / 2 },
         { rotate: `${angle}deg` },
         { translateY: -size / 2 },
+ cursor/tree-style-guide-7701
+
+        { scale: 0.88 + appear.value * 0.12 },
+ main
       ],
     };
   });

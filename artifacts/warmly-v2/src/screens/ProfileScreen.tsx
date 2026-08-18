@@ -72,7 +72,7 @@ export function ProfileScreen() {
     : getFallbackQuote();
 
   async function handleSelectPreset(id: string) {
-    await updateSettings({ avatarId: id, customAvatarUri: "" });
+    await updateSettings({ avatarId: id });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
   }
 

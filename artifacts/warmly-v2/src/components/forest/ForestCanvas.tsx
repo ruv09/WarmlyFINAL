@@ -15,6 +15,10 @@ import { runOnJS } from "react-native-worklets";
 import { Tree, normalizeTree } from "../../types";
 import { getVisibleSceneTrees, SceneTree } from "../../utils/viewportCulling";
 import { ForestAtmosphere } from "./ForestAtmosphere";
+ cursor/tree-style-guide-7701
+
+import { ForestAmbient } from "./ForestAmbient";
+ main
 import { ForestTreeNode, swayPhaseForTree } from "./ForestTreeNode";
 import { useTheme } from "../../theme";
 import {
@@ -37,8 +41,13 @@ interface ForestCanvasProps {
 }
 
 /**
+ cursor/tree-style-guide-7701
  * Камера внутри леса: pinch → cameraZ, pan → ограниченный взгляд.
  * Контейнер леса НЕ масштабируется.
+
+ * Камера внутри леса: pinch = шаг вглубь (cameraDepth),
+ * pan = ограниченный взгляд влево/вправо. Не карта.
+ main
  */
 export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   const theme = useTheme();
@@ -47,13 +56,21 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
 
   const camX = useSharedValue(0);
   const camY = useSharedValue(0);
+ cursor/tree-style-guide-7701
   const cameraZ = useSharedValue(0);
+
+  const camZ = useSharedValue(0);
+ main
   const savedCamX = useSharedValue(0);
   const savedCamY = useSharedValue(0);
   const savedCamZ = useSharedValue(0);
   const sway = useSharedValue(0);
 
+ cursor/tree-style-guide-7701
   const [viewport, setViewport] = useState({ camX: 0, camY: 0, cameraZ: 0 });
+
+  const [viewport, setViewport] = useState({ camX: 0, camY: 0, camZ: 0 });
+ main
   const [reduceMotion, setReduceMotion] = useState(false);
   const [showHint, setShowHint] = useState(true);
   const lastReportRef = useRef(0);
@@ -96,11 +113,19 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
     const now = Date.now();
     if (!force && now - lastReportRef.current < VIEWPORT_THROTTLE_MS) return;
     lastReportRef.current = now;
+ cursor/tree-style-guide-7701
     setViewport({ camX: x, camY: y, cameraZ: z });
   }
 
   useAnimatedReaction(
     () => ({ x: camX.value, y: camY.value, z: cameraZ.value }),
+
+    setViewport({ camX: x, camY: y, camZ: z });
+  }
+
+  useAnimatedReaction(
+    () => ({ x: camX.value, y: camY.value, z: camZ.value }),
+ main
     (curr) => {
       runOnJS(reportViewport)(curr.x, curr.y, curr.z, false);
     },
@@ -136,10 +161,17 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
 
   const pinchGesture = Gesture.Pinch()
     .onBegin(() => {
+ cursor/tree-style-guide-7701
       cancelAnimation(cameraZ);
       cancelAnimation(camX);
       cancelAnimation(camY);
       savedCamZ.value = cameraZ.value;
+
+      cancelAnimation(camZ);
+      cancelAnimation(camX);
+      cancelAnimation(camY);
+      savedCamZ.value = camZ.value;
+ main
       savedCamX.value = camX.value;
       savedCamY.value = camY.value;
     })
@@ -155,7 +187,11 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
         screenWidth / 2,
         screenHeight / 2,
       );
+ cursor/tree-style-guide-7701
       cameraZ.value = nextZ;
+
+      camZ.value = nextZ;
+ main
       camX.value = look.x;
       camY.value = look.y;
       runOnJS(setShowHint)(false);
@@ -164,7 +200,11 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   const composedGesture = Gesture.Simultaneous(panGesture, pinchGesture);
 
   const sceneTrees: SceneTree[] = useMemo(() => {
+ cursor/tree-style-guide-7701
     const ambient = treesForCamera(viewport.cameraZ).map((tree) => ({
+
+    const ambient = treesForCamera(viewport.camZ).map((tree) => ({
+ main
       id: tree.id,
       species: tree.species,
       x: tree.x,
@@ -193,7 +233,11 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
     );
 
     return [...filteredAmbient, ...personal];
+ cursor/tree-style-guide-7701
   }, [userTrees, viewport.cameraZ]);
+
+  }, [userTrees, viewport.camZ]);
+ main
 
   const visibleTrees = useMemo(
     () => getVisibleSceneTrees(sceneTrees, viewport, screenWidth),
@@ -220,7 +264,20 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
         groundY={groundY}
         camX={camX}
         camY={camY}
+ cursor/tree-style-guide-7701
         cameraZ={cameraZ}
+
+        camZ={camZ}
+      />
+
+      <ForestAmbient
+        width={screenWidth}
+        height={screenHeight}
+        groundY={groundY}
+        camX={camX}
+        camZ={camZ}
+        reduceMotion={reduceMotion}
+ main
       />
 
       <GestureDetector gesture={composedGesture}>
@@ -240,7 +297,11 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
                 groundY={groundY}
                 camX={camX}
                 camY={camY}
+ cursor/tree-style-guide-7701
                 cameraZ={cameraZ}
+
+                camZ={camZ}
+ main
                 sway={sway}
                 phase={swayPhaseForTree(scene.id)}
                 isNew={isNew}

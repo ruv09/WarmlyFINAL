@@ -38,8 +38,13 @@ export function chunkIndexForZ(z: number): number {
   return Math.floor(Math.max(0, z) / CHUNK_SIZE);
 }
 
+ cursor/tree-style-guide-7701
 export function visibleChunkIndices(cameraZ: number): number[] {
   const i = chunkIndexForZ(cameraZ);
+
+export function visibleChunkIndices(camZ: number): number[] {
+  const i = chunkIndexForZ(camZ);
+ main
   const start = Math.max(0, i - 1);
   const end = i + 4;
   const ids: number[] = [];
@@ -48,9 +53,14 @@ export function visibleChunkIndices(cameraZ: number): number[] {
 }
 
 /**
+ cursor/tree-style-guide-7701
  * Детерминированный участок леса. Один и тот же index всегда даёт
  * те же деревья — шаг назад показывает тот же лес.
  * Деревья стоят по сторонам тропы, чтобы при приближении уезжать в края.
+
+ * Деревья по сторонам тропы: при приближении камеры они
+ * уезжают к краям кадра (dolly), а не растут в центре (zoom).
+ main
  */
 export function generateChunk(index: number): AmbientTree[] {
   const seed = `warmly-chunk:${index}`;
@@ -87,9 +97,15 @@ export function generateChunk(index: number): AmbientTree[] {
   return trees;
 }
 
+ cursor/tree-style-guide-7701
 export function treesForCamera(cameraZ: number): AmbientTree[] {
   const out: AmbientTree[] = [];
   for (const id of visibleChunkIndices(cameraZ)) {
+
+export function treesForCamera(camZ: number): AmbientTree[] {
+  const out: AmbientTree[] = [];
+  for (const id of visibleChunkIndices(camZ)) {
+ main
     out.push(...generateChunk(id));
   }
   return out;
