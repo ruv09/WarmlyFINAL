@@ -11,7 +11,13 @@ import { Tree } from "../../types";
 import { TreeIllustration } from "../tree";
 import { SPRING_CONFIGS } from "../../theme/tokens/animation";
 import { getSpeciesVisual } from "../../constants/treeSpecies";
-import { passBy, perspective, projectFromCamera, TREE_BASE_SIZE } from "../../services/forest/camera";
+import {
+  passBy,
+  perspective,
+  projectFromCamera,
+  relativeZ,
+  TREE_BASE_SIZE,
+} from "../../services/forest/camera";
 import { SceneTree } from "../../utils/viewportCulling";
 
 export const TREE_HEIGHT = TREE_BASE_SIZE;
@@ -68,7 +74,7 @@ export const ForestTreeNode = memo(function ForestTreeNode({
   }, [appear, isNew, scene.id]);
 
   const animatedStyle = useAnimatedStyle(() => {
-    const relZ = worldZ - camZ.value;
+    const relZ = relativeZ(worldZ, camZ.value);
     const persp = perspective(relZ);
     const pass = passBy(relZ);
     const size = TREE_BASE_SIZE * heightScale * treeScale * persp * pass.boost;

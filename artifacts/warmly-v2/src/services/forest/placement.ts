@@ -1,10 +1,11 @@
 import { Tree, TreePosition } from "../../types";
 
 /**
- * Личный лес пользователя — коридор вглубь (Z), узкий по X.
- * Pinch двигает камеру по Z; pan лишь слегка смотрит в стороны.
+ * Личные деревья стоят по сторонам тропы, не в центре кадра.
+ * При движении камеры по Z они уезжают к краям, а не растут как zoom.
  */
-const CORRIDOR_X = 300;
+const PATH_GAP = 110;
+const SIDE_MAX = 560;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -21,15 +22,20 @@ function hash01(seed: string): number {
 
 function nextWorldZ(existing: Pick<Tree, "worldZ">[]): number {
   const zs = existing.map((t) => t.worldZ ?? 0);
-  const last = zs.length === 0 ? 80 : Math.max(...zs);
+  const last = zs.length === 0 ? 90 : Math.max(...zs);
   const index = zs.length;
   const gap = 150 + hash01(`gap:${index}`) * 140;
   return last + gap;
 }
 
+function keepOffPath(x: number, side: number): number {
+  if (Math.abs(x) >= PATH_GAP) return clamp(x, -SIDE_MAX, SIDE_MAX);
+  return side * (PATH_GAP + 24);
+}
+
 /**
- * Следующее дерево пользователя — дальше по тропе, со смещением в сторону
- * и редкими группами. Без Math.random.
+ * Следующее дерево пользователя — дальше по Z, со смещением в сторону
+ * и редкими группами. Без Math.random, без сетки.
  */
 export function placeNextTree(existing: Pick<Tree, "position" | "worldZ">[]): TreePosition & { z: number } {
   const index = existing.length;
@@ -38,8 +44,8 @@ export function placeNextTree(existing: Pick<Tree, "position" | "worldZ">[]): Tr
   const cluster = index > 0 && hash01(`cl:${index}`) < 0.34;
   const prev = existing[existing.length - 1];
   const x = cluster && prev
-    ? clamp(prev.position.x + side * (50 + hash01(`cx:${index}`) * 70), -CORRIDOR_X, CORRIDOR_X)
-    : clamp(side * (40 + hash01(`x:${index}`) * 240), -CORRIDOR_X, CORRIDOR_X);
+    ? keepOffPath(prev.position.x + side * (40 + hash01(`cx:${index}`) * 90), side)
+    : keepOffPath(side * (PATH_GAP + 30 + hash01(`x:${index}`) * 380), side);
   const y = (hash01(`y:${index}`) - 0.5) * 24;
   return { x, y, z };
 }
@@ -61,8 +67,8 @@ export function placementMeta(position: TreePosition & { z?: number }): {
 }
 
 export const FOREST_WORLD = {
-  minX: -CORRIDOR_X,
-  maxX: CORRIDOR_X,
+  minX: -SIDE_MAX,
+  maxX: SIDE_MAX,
   minY: 0,
   maxY: 0,
 };

@@ -1,6 +1,6 @@
 import { TreeSpecies } from "../../types";
 
-export const CHUNK_SIZE = 520;
+export const CHUNK_SIZE = 560;
 
 export type AmbientTree = {
   id: string;
@@ -38,7 +38,6 @@ export function chunkIndexForZ(z: number): number {
   return Math.floor(Math.max(0, z) / CHUNK_SIZE);
 }
 
-/** Ближайшие чанки вокруг камеры — остальное не держим в памяти. */
 export function visibleChunkIndices(camZ: number): number[] {
   const i = chunkIndexForZ(camZ);
   const start = Math.max(0, i - 1);
@@ -49,30 +48,37 @@ export function visibleChunkIndices(camZ: number): number[] {
 }
 
 /**
- * Детерминированная генерация чанка. Один и тот же index
- * всегда даёт те же деревья — можно вернуться назад.
+ * Деревья по сторонам тропы: при приближении камеры они
+ * уезжают к краям кадра (dolly), а не растут в центре (zoom).
  */
 export function generateChunk(index: number): AmbientTree[] {
   const seed = `warmly-chunk:${index}`;
-  const count = 9 + Math.floor(hash01(`${seed}:count`) * 6);
+  const clearing = hash01(`${seed}:clearing`) < 0.14;
+  const count = clearing
+    ? 4 + Math.floor(hash01(`${seed}:count`) * 3)
+    : 7 + Math.floor(hash01(`${seed}:count`) * 8);
   const trees: AmbientTree[] = [];
 
   for (let k = 0; k < count; k++) {
-    const cluster = hash01(`${seed}:cl:${k}`) < 0.32 && k > 0 ? trees[trees.length - 1] : null;
+    const cluster = hash01(`${seed}:cl:${k}`) < 0.28 && k > 0 ? trees[trees.length - 1] : null;
     const species = SPECIES[Math.floor(hash01(`${seed}:sp:${k}`) * SPECIES.length)]!;
     const z = cluster
-      ? cluster.z + 30 + hash01(`${seed}:cz:${k}`) * 50
-      : index * CHUNK_SIZE + 36 + hash01(`${seed}:z:${k}`) * (CHUNK_SIZE - 72);
-    const x = cluster
-      ? cluster.x + (hash01(`${seed}:cx:${k}`) - 0.5) * 140
-      : (hash01(`${seed}:x:${k}`) - 0.5) * 620 + (k % 5 === 0 ? 0 : (k % 2 === 0 ? -40 : 40));
+      ? cluster.z + 24 + hash01(`${seed}:cz:${k}`) * 70
+      : index * CHUNK_SIZE + 40 + hash01(`${seed}:z:${k}`) * (CHUNK_SIZE - 80);
+
+    const side = hash01(`${seed}:side:${k}`) < 0.5 ? -1 : 1;
+    let x = cluster
+      ? cluster.x + (hash01(`${seed}:cx:${k}`) - 0.5) * 160
+      : side * (140 + hash01(`${seed}:x:${k}`) * 720);
+
+    if (Math.abs(x) < 90) x = side * (110 + hash01(`${seed}:gap:${k}`) * 80);
 
     trees.push({
       id: `amb:${index}:${k}`,
       species,
       x,
-      z: Math.max(index * CHUNK_SIZE + 8, Math.min((index + 1) * CHUNK_SIZE - 8, z)),
-      scale: 0.72 + hash01(`${seed}:sc:${k}`) * 0.42,
+      z: Math.max(index * CHUNK_SIZE + 10, Math.min((index + 1) * CHUNK_SIZE - 10, z)),
+      scale: 0.7 + hash01(`${seed}:sc:${k}`) * 0.48,
       variant: hash01(`${seed}:v:${k}`) < 0.5 ? 1 : 2,
     });
   }
@@ -81,9 +87,8 @@ export function generateChunk(index: number): AmbientTree[] {
 }
 
 export function treesForCamera(camZ: number): AmbientTree[] {
-  const chunks = visibleChunkIndices(camZ);
   const out: AmbientTree[] = [];
-  for (const id of chunks) {
+  for (const id of visibleChunkIndices(camZ)) {
     out.push(...generateChunk(id));
   }
   return out;

@@ -24,6 +24,8 @@ import {
   WALK_PER_PINCH,
   clampLookX,
   clampLookY,
+  clampZ,
+  lookFromFocal,
 } from "../../services/forest/camera";
 import { treesForCamera } from "../../services/forest/chunks";
 
@@ -50,7 +52,6 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   const savedCamX = useSharedValue(0);
   const savedCamY = useSharedValue(0);
   const savedCamZ = useSharedValue(0);
-  const pinchFocalX = useSharedValue(0);
   const sway = useSharedValue(0);
 
   const [viewport, setViewport] = useState({ camX: 0, camY: 0, camZ: 0 });
@@ -107,6 +108,7 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   );
 
   const panGesture = Gesture.Pan()
+    .maxPointers(1)
     .averageTouches(true)
     .minDistance(8)
     .onBegin(() => {
@@ -134,18 +136,29 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
     });
 
   const pinchGesture = Gesture.Pinch()
-    .onBegin((event) => {
+    .onBegin(() => {
       cancelAnimation(camZ);
       cancelAnimation(camX);
+      cancelAnimation(camY);
       savedCamZ.value = camZ.value;
       savedCamX.value = camX.value;
-      pinchFocalX.value = event.focalX;
+      savedCamY.value = camY.value;
     })
     .onUpdate((event) => {
-      const walk = (event.scale - 1) * WALK_PER_PINCH;
-      camZ.value = Math.max(0, savedCamZ.value + walk);
-      const look = ((pinchFocalX.value - screenWidth / 2) / (screenWidth / 2)) * 70 * Math.max(-1, Math.min(1, walk / 200));
-      camX.value = clampLookX(savedCamX.value + look);
+      const nextZ = clampZ(savedCamZ.value + (event.scale - 1) * WALK_PER_PINCH);
+      const look = lookFromFocal(
+        savedCamX.value,
+        savedCamY.value,
+        savedCamZ.value,
+        nextZ,
+        event.focalX,
+        event.focalY,
+        screenWidth / 2,
+        screenHeight / 2,
+      );
+      camZ.value = nextZ;
+      camX.value = look.x;
+      camY.value = look.y;
       runOnJS(setShowHint)(false);
     });
 
@@ -216,6 +229,7 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
         height={screenHeight}
         groundY={groundY}
         camX={camX}
+        camZ={camZ}
         reduceMotion={reduceMotion}
       />
 
@@ -272,7 +286,7 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
               textAlign: "center",
             }}
           >
-            Сведи пальцы — шагни вглубь леса
+            Разведи пальцы — шагните вглубь леса
           </Text>
         </View>
       )}
