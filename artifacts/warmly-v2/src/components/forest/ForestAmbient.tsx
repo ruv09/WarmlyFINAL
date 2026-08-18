@@ -17,6 +17,7 @@ interface ForestAmbientProps {
   height: number;
   groundY: number;
   camX: SharedValue<number>;
+  camZ: SharedValue<number>;
   reduceMotion: boolean;
 }
 
@@ -27,6 +28,8 @@ export const ForestAmbient = memo(function ForestAmbient({
   width,
   height,
   groundY,
+  camX,
+  camZ,
   reduceMotion,
 }: ForestAmbientProps) {
   const theme = useTheme();
@@ -74,8 +77,8 @@ export const ForestAmbient = memo(function ForestAmbient({
 
   const birdStyle = useAnimatedStyle(() => ({
     position: "absolute" as const,
-    left: birdX.value,
-    top: birdY.value,
+    left: birdX.value - camX.value * 0.22,
+    top: birdY.value + Math.min(18, camZ.value * 0.01),
     width: 10,
     height: 4,
     borderRadius: 2,
@@ -85,7 +88,7 @@ export const ForestAmbient = memo(function ForestAmbient({
 
   const leafStyle = useAnimatedStyle(() => ({
     position: "absolute" as const,
-    left: leafX.value,
+    left: leafX.value - camX.value * 0.4,
     top: leafY.value,
     width: 7,
     height: 10,

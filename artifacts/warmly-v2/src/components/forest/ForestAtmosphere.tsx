@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { SharedValue, useAnimatedStyle } from "react-native-reanimated";
 import Svg, {
@@ -12,6 +12,12 @@ import Svg, {
   Stop,
 } from "react-native-svg";
 import { useTheme } from "../../theme";
+import {
+  companionLayerZ,
+  DEPTH_LAYERS,
+  projectAtRelativeZ,
+  wrappingLayerZ,
+} from "../../services/forest/camera";
 
 interface ForestAtmosphereProps {
   width: number;
@@ -22,29 +28,25 @@ interface ForestAtmosphereProps {
   camZ: SharedValue<number>;
 }
 
-function useLookStyle(camX: SharedValue<number>, factor: number, extra = 80) {
-  return useAnimatedStyle(() => ({
-    transform: [{ translateX: -camX.value * factor }],
-    width: "100%",
-    height: "100%",
-    position: "absolute" as const,
-    left: -extra,
-    right: -extra,
-  }));
-}
-
-function useWalkStyle(camZ: SharedValue<number>, cycle: number, extra: number) {
+function useLayerStyle(
+  camX: SharedValue<number>,
+  camY: SharedValue<number>,
+  camZ: SharedValue<number>,
+  homeZ: number,
+  parallax: number,
+  cycle: number,
+  extra: number,
+  copy: 0 | 1,
+) {
   return useAnimatedStyle(() => {
-    const phase = ((camZ.value % cycle) + cycle) % cycle;
-    const t = phase / cycle;
+    let z = wrappingLayerZ(homeZ, camZ.value, cycle);
+    if (copy === 1) z = companionLayerZ(z, cycle);
+    const p = projectAtRelativeZ(z, homeZ, parallax, camX.value, camY.value);
     return {
-      transform: [
-        { translateY: t * 36 },
-        { scale: 1 + t * 0.22 },
-      ],
-      opacity: 1 - t * 0.72,
-      width: "100%",
-      height: "100%",
+      transform: [{ translateX: p.translateX }, { translateY: p.translateY }, { scale: p.scale }],
+      opacity: p.opacity,
+      width: "100%" as const,
+      height: "100%" as const,
       position: "absolute" as const,
       left: -extra,
       right: -extra,
@@ -52,29 +54,60 @@ function useWalkStyle(camZ: SharedValue<number>, cycle: number, extra: number) {
   });
 }
 
+function ParallaxBillboard({
+  camX,
+  camY,
+  camZ,
+  layer,
+  extra,
+  dual,
+  children,
+}: {
+  camX: SharedValue<number>;
+  camY: SharedValue<number>;
+  camZ: SharedValue<number>;
+  layer: (typeof DEPTH_LAYERS)[number];
+  extra: number;
+  dual?: boolean;
+  children: ReactNode;
+}) {
+  const primary = useLayerStyle(camX, camY, camZ, layer.z, layer.parallax, layer.cycle, extra, 0);
+  const companion = useLayerStyle(camX, camY, camZ, layer.z, layer.parallax, layer.cycle, extra, 1);
+  return (
+    <>
+      {dual ? (
+        <Animated.View style={companion} pointerEvents="none">
+          {children}
+        </Animated.View>
+      ) : null}
+      <Animated.View style={primary} pointerEvents="none">
+        {children}
+      </Animated.View>
+    </>
+  );
+}
+
 /**
- * Пейзаж по референсам 3/4: туманная глубина, тропа, папоротники, камни.
- * Слои едут с разным параллаксом.
+ * Шесть billboard-слоёв на разных Z. Pinch двигает cameraZ —
+ * слои едут с разным масштабом и параллаксом, без scale всего леса.
  */
 export const ForestAtmosphere = memo(function ForestAtmosphere({
   width,
   height,
   groundY,
   camX,
+  camY,
   camZ,
 }: ForestAtmosphereProps) {
   const theme = useTheme();
   const isDark = theme.mode === "dark";
   const extra = Math.round(width * 0.45);
   const sceneW = width + extra * 2;
-
-  const farStyle = useLookStyle(camX, 0.12, extra);
-  const midStyle = useLookStyle(camX, 0.28, extra);
-  const nearStyle = useLookStyle(camX, 0.55, extra);
-  const fgStyle = useWalkStyle(camZ, 240, extra);
+  const [bg, far, middle, main, near, fg] = DEPTH_LAYERS;
 
   const farFill = isDark ? "#1A1430" : "#C5D0B0";
   const midFill = isDark ? "#161028" : "#A8B98C";
+  const mainFill = isDark ? "#141022" : "#97AB7A";
   const nearFill = isDark ? "#120C20" : "#8FA374";
   const groundFill = isDark ? "#0E0A18" : "#7C9464";
   const moss = isDark ? "#24301C" : "#6E8B52";
@@ -96,17 +129,25 @@ export const ForestAtmosphere = memo(function ForestAtmosphere({
             <Stop offset="0.45" stopColor={isDark ? "#C9A878" : "#E8E0B0"} stopOpacity={isDark ? 0.08 : 0.28} />
             <Stop offset="1" stopColor={isDark ? "#C9A878" : "#E8E0B0"} stopOpacity={0} />
           </RadialGradient>
-          <LinearGradient id="mist" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={isDark ? "#D8D0E8" : "#F7F2E4"} stopOpacity={0} />
-            <Stop offset="0.45" stopColor={isDark ? "#C8C0D8" : "#E8EED8"} stopOpacity={isDark ? 0.08 : 0.22} />
-            <Stop offset="1" stopColor={isDark ? "#C8C0D8" : "#E8EED8"} stopOpacity={0} />
-          </LinearGradient>
         </Defs>
         <Rect x={0} y={0} width={width} height={height} fill="url(#sky)" />
         <Ellipse cx={width * 0.5} cy={height * 0.22} rx={width * 0.46} ry={height * 0.2} fill="url(#glow)" />
       </Svg>
 
-      <Animated.View style={farStyle}>
+      <ParallaxBillboard camX={camX} camY={camY} camZ={camZ} extra={extra} layer={bg}>
+        <Svg width={sceneW} height={height}>
+          <Path
+            d={`M0 ${groundY - 40}
+                C ${sceneW * 0.2} ${groundY - 110} ${sceneW * 0.45} ${groundY - 28} ${sceneW * 0.7} ${groundY - 96}
+                S ${sceneW * 0.9} ${groundY - 24} ${sceneW} ${groundY - 70}
+                V ${height} H0 Z`}
+            fill={isDark ? "#221A38" : "#D2DCC0"}
+            opacity={isDark ? 0.42 : 0.4}
+          />
+        </Svg>
+      </ParallaxBillboard>
+
+      <ParallaxBillboard camX={camX} camY={camY} camZ={camZ} extra={extra} layer={far}>
         <Svg width={sceneW} height={height}>
           <Path
             d={`M0 ${groundY - 70}
@@ -128,9 +169,9 @@ export const ForestAtmosphere = memo(function ForestAtmosphere({
             />
           ))}
         </Svg>
-      </Animated.View>
+      </ParallaxBillboard>
 
-      <Animated.View style={midStyle}>
+      <ParallaxBillboard camX={camX} camY={camY} camZ={camZ} extra={extra} layer={middle}>
         <Svg width={sceneW} height={height}>
           <Path
             d={`M0 ${groundY - 8}
@@ -140,7 +181,14 @@ export const ForestAtmosphere = memo(function ForestAtmosphere({
             fill={midFill}
             opacity={0.88}
           />
-          <Rect x={0} y={groundY - 50} width={sceneW} height={90} fill={isDark ? "#C8C0D8" : "#E8EED8"} opacity={isDark ? 0.06 : 0.18} />
+          <Rect
+            x={0}
+            y={groundY - 50}
+            width={sceneW}
+            height={90}
+            fill={isDark ? "#C8C0D8" : "#E8EED8"}
+            opacity={isDark ? 0.06 : 0.18}
+          />
           {[0.08, 0.18, 0.29, 0.43, 0.57, 0.69, 0.81, 0.93].map((x, i) => (
             <Path
               key={`mid-tr-${i}`}
@@ -164,9 +212,33 @@ export const ForestAtmosphere = memo(function ForestAtmosphere({
               ))
             : null}
         </Svg>
-      </Animated.View>
+      </ParallaxBillboard>
 
-      <Animated.View style={nearStyle}>
+      <ParallaxBillboard camX={camX} camY={camY} camZ={camZ} extra={extra} dual layer={main}>
+        <Svg width={sceneW} height={height}>
+          <Path
+            d={`M0 ${groundY + 10}
+                Q ${sceneW * 0.28} ${groundY - 36} ${sceneW * 0.52} ${groundY + 14}
+                T ${sceneW} ${groundY - 6}
+                V ${height} H0 Z`}
+            fill={mainFill}
+            opacity={0.92}
+          />
+          {[0.07, 0.21, 0.36, 0.64, 0.78, 0.92].map((x, i) => (
+            <Ellipse
+              key={`main-t-${i}`}
+              cx={sceneW * x}
+              cy={groundY - 70 - (i % 2) * 14}
+              rx={22 + (i % 3) * 8}
+              ry={48 + (i % 2) * 12}
+              fill={isDark ? "#1C162C" : "#8EA872"}
+              opacity={0.62}
+            />
+          ))}
+        </Svg>
+      </ParallaxBillboard>
+
+      <ParallaxBillboard camX={camX} camY={camY} camZ={camZ} extra={extra} dual layer={near}>
         <Svg width={sceneW} height={height}>
           <Path
             d={`M0 ${groundY + 36}
@@ -183,9 +255,9 @@ export const ForestAtmosphere = memo(function ForestAtmosphere({
           />
           {steppingStones(sceneW, groundY, stone)}
         </Svg>
-      </Animated.View>
+      </ParallaxBillboard>
 
-      <Animated.View style={fgStyle}>
+      <ParallaxBillboard camX={camX} camY={camY} camZ={camZ} extra={extra} dual layer={fg}>
         <Svg width={sceneW} height={height}>
           <Path
             d={`M0 ${height * 0.18}
@@ -207,7 +279,7 @@ export const ForestAtmosphere = memo(function ForestAtmosphere({
           <Ellipse cx={sceneW * 0.78} cy={groundY + 128} rx={42} ry={20} fill={stone} opacity={0.8} />
           {ferns(sceneW, height, isDark ? "#3A4A30" : "#5E7A44")}
         </Svg>
-      </Animated.View>
+      </ParallaxBillboard>
     </View>
   );
 });
