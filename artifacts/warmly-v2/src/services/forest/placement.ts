@@ -1,12 +1,5 @@
 import { Tree, TreePosition } from "../../types";
 
-/**
- * Личные деревья — по сторонам тропы вглубь по Z.
- * Pinch двигает камеру по Z; pan лишь слегка смотрит в стороны.
- */
-const PATH_GAP = 110;
-const SIDE_MAX = 560;
-
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -20,51 +13,26 @@ function hash01(seed: string): number {
   return (h >>> 0) / 4294967295;
 }
 
-function nextWorldZ(existing: Pick<Tree, "worldZ">[]): number {
-  const zs = existing.map((t) => t.worldZ ?? 0);
-  const last = zs.length === 0 ? 90 : Math.max(...zs);
-  const index = zs.length;
-  const gap = 150 + hash01(`gap:${index}`) * 140;
-  return last + gap;
-}
-
-function keepOffPath(x: number, side: number): number {
-  if (Math.abs(x) >= PATH_GAP) return clamp(x, -SIDE_MAX, SIDE_MAX);
-  return side * (PATH_GAP + 24);
-}
-
-export function placeNextTree(existing: Pick<Tree, "position" | "worldZ">[]): TreePosition & { z: number } {
+/**
+ * Каталог не карта: координаты больше не задают мир.
+ * Оставляем стабильный scale для вариации размера в каталоге.
+ */
+export function placeNextTree(existing: Pick<Tree, "position">[]): TreePosition {
   const index = existing.length;
-  const z = nextWorldZ(existing);
-  const side = hash01(`side:${index}`) < 0.5 ? -1 : 1;
-  const cluster = index > 0 && hash01(`cl:${index}`) < 0.34;
-  const prev = existing[existing.length - 1];
-  const x = cluster && prev
-    ? keepOffPath(prev.position.x + side * (40 + hash01(`cx:${index}`) * 90), side)
-    : keepOffPath(side * (PATH_GAP + 30 + hash01(`x:${index}`) * 380), side);
+  const x = (hash01(`x:${index}`) - 0.5) * 80;
   const y = (hash01(`y:${index}`) - 0.5) * 24;
-  return { x, y, z };
+  return { x, y };
 }
 
-export function placementMeta(position: TreePosition & { z?: number }): {
+export function placementMeta(position: TreePosition): {
   depth: number;
   scale: number;
   layer: number;
-  worldZ: number;
 } {
-  const worldZ = position.z ?? 120;
-  const scale = 0.82 + hash01(`s:${position.x}:${worldZ}`) * 0.28;
+  const scale = 0.82 + hash01(`s:${position.x}:${position.y}`) * 0.28;
   return {
-    worldZ,
     depth: 0.55,
     layer: 3,
     scale: clamp(scale, 0.76, 1.18),
   };
 }
-
-export const FOREST_WORLD = {
-  minX: -SIDE_MAX,
-  maxX: SIDE_MAX,
-  minY: 0,
-  maxY: 0,
-};

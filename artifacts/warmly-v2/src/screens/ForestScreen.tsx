@@ -1,176 +1,73 @@
-import React, { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ForestCanvas, TreeInfoCard } from "../components/forest";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { BackHandler, StyleSheet, View } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { ForestCatalog, TreeGroveScene } from "../components/forest";
 import { useEntries, useForest } from "../hooks";
 import { useTheme } from "../theme";
-import { Tree } from "../types";
-import { pluralRu } from "../utils";
+import { CatalogItem } from "../services/forest/catalog";
 
 /**
- * Экран «Лес» — UI как на концептах 2 / 4 / 5.
+ * Лес — вертикальный каталог деревьев пользователя, сгруппированный по месяцам.
+ * Тап открывает статичную сцену дерева; каталог остаётся смонтированным, чтобы сохранить скролл.
  */
 export function ForestScreen() {
   const theme = useTheme();
-  const isDark = theme.mode === "dark";
-  const { trees, total, isLoading } = useForest();
-  const { entries } = useEntries();
-  const [selectedTree, setSelectedTree] = useState<Tree | null>(null);
+  const insets = useSafeAreaInsets();
+  const { trees, isLoading: treesLoading } = useForest();
+  const { entries, isLoading: entriesLoading } = useEntries();
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
 
-  const selectedEntry = selectedTree
-    ? entries.find((entry) => entry.treeId === selectedTree.id)
-    : undefined;
+  const selectedItem = useMemo(() => {
+    if (!selectedEntryId) return null;
+    const entry = entries.find((item) => item.id === selectedEntryId);
+    if (!entry) return null;
+    const tree = trees.find((item) => item.id === entry.treeId);
+    if (!tree) return null;
+    return { tree, entry } satisfies CatalogItem;
+  }, [entries, selectedEntryId, trees]);
 
-  const plantedLabel = pluralRu(total, "дерево посажено", "дерева посажено", "деревьев посажено");
+  useEffect(() => {
+    if (selectedEntryId && !selectedItem) setSelectedEntryId(null);
+  }, [selectedEntryId, selectedItem]);
+
+  useEffect(() => {
+    if (!selectedItem) return;
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      setSelectedEntryId(null);
+      return true;
+    });
+    return () => sub.remove();
+  }, [selectedItem]);
+
+  const onSelectItem = useCallback((item: CatalogItem) => {
+    setSelectedEntryId(item.entry.id);
+  }, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <ForestCanvas trees={isLoading ? [] : trees} onSelectTree={setSelectedTree} />
-
-      <SafeAreaView edges={["top", "left", "right"]} style={styles.chrome} pointerEvents="box-none">
-        <View style={styles.headerRow}>
-          <View style={styles.headerBlock} pointerEvents="none">
-            <Text
-              style={{
-                fontSize: 26,
-                lineHeight: 30,
-                fontWeight: theme.typography.weights.bold,
-                color: theme.colors.textPrimary,
-              }}
-            >
-              Мой лес
-            </Text>
-            <Text
-              style={{
-                marginTop: 2,
-                fontSize: theme.typography.sizes.caption,
-                color: theme.colors.textSecondary,
-              }}
-            >
-              твоё пространство заботы
-            </Text>
-            <Text
-              style={{
-                marginTop: theme.spacing("sm"),
-                fontSize: 28,
-                lineHeight: 32,
-                fontWeight: theme.typography.weights.bold,
-                color: theme.colors.textPrimary,
-              }}
-            >
-              {total}
-            </Text>
-            <Text
-              style={{
-                marginTop: 2,
-                fontSize: theme.typography.sizes.caption,
-                color: theme.colors.textSecondary,
-              }}
-            >
-              {plantedLabel}
-            </Text>
-          </View>
-
-          <View style={styles.headerActions}>
-            <View
-              style={[
-                styles.iconBtn,
-                {
-                  backgroundColor: isDark ? "#2A2340BB" : "#FFF9F0CC",
-                  borderColor: isDark ? "#FFFFFF14" : "#0000000A",
-                },
-              ]}
-            >
-              <Ionicons
-                name="heart-outline"
-                size={18}
-                color={isDark ? theme.colors.accentWarm : theme.colors.accent}
-              />
-            </View>
-            <Pressable
-              onPress={() => router.push("/(tabs)/profile")}
-              hitSlop={12}
-              style={[
-                styles.iconBtn,
-                {
-                  backgroundColor: isDark ? "#2A2340BB" : "#FFF9F0CC",
-                  borderColor: isDark ? "#FFFFFF14" : "#0000000A",
-                },
-              ]}
-              accessibilityLabel="Меню"
-            >
-              <Ionicons name="menu" size={20} color={theme.colors.textPrimary} />
-            </Pressable>
-          </View>
-        </View>
+    <View style={[styles.fill, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView
+        edges={["top", "left", "right"]}
+        style={styles.fill}
+        importantForAccessibility={selectedItem ? "no-hide-descendants" : "auto"}
+      >
+        <ForestCatalog
+          entries={entries}
+          trees={trees}
+          onSelectItem={onSelectItem}
+          bottomInset={insets.bottom}
+          isLoading={treesLoading || entriesLoading}
+        />
       </SafeAreaView>
 
-      {!isLoading && trees.length === 0 && (
-        <View style={styles.empty} pointerEvents="none">
-          <Text
-            style={{
-              color: theme.colors.textSecondary,
-              textAlign: "center",
-              fontSize: theme.typography.sizes.caption,
-              lineHeight: 18,
-              backgroundColor: theme.colors.overlay,
-              paddingHorizontal: theme.spacing("md"),
-              paddingVertical: theme.spacing("sm"),
-              borderRadius: theme.radius.md,
-              overflow: "hidden",
-            }}
-          >
-            Лес уже здесь. Первая запись станет твоим деревом.
-          </Text>
+      {selectedItem ? (
+        <View style={StyleSheet.absoluteFill} pointerEvents="auto">
+          <TreeGroveScene item={selectedItem} onClose={() => setSelectedEntryId(null)} />
         </View>
-      )}
-
-      <TreeInfoCard
-        visible={selectedTree !== null}
-        tree={selectedTree}
-        entry={selectedEntry}
-        onClose={() => setSelectedTree(null)}
-      />
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  chrome: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-  },
-  headerBlock: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  headerActions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  empty: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 32,
-  },
+  fill: { flex: 1 },
 });

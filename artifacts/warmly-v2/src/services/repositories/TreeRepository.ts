@@ -20,8 +20,7 @@ export class TreeRepository {
       (tree) =>
         tree.layoutVersion !== FOREST_LAYOUT_VERSION ||
         typeof tree.depth !== "number" ||
-        typeof tree.scale !== "number" ||
-        typeof tree.worldZ !== "number",
+        typeof tree.scale !== "number",
     );
 
     if (!needsRelayout) {
@@ -42,7 +41,6 @@ export class TreeRepository {
           scale: meta.scale,
           depth: meta.depth,
           layer: meta.layer,
-          worldZ: meta.worldZ,
           variant: typeof tree.variant === "number" ? tree.variant : undefined,
           layoutVersion: FOREST_LAYOUT_VERSION,
         }),
