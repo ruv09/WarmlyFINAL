@@ -22,9 +22,8 @@ interface EntriesState {
 
 /**
  * Единственное место, где живёт правило "новая запись -> новое дерево".
- * Настроение (input.moodId) больше не определяет вид дерева — вид
- * выбирает assignNextSpecies, а место в лесу — placeNextTree.
- * После записи/удаления лес перезагружается в useForestStore.
+ * Настроение не определяет вид: assignNextSpecies выбирает вид,
+ * placeNextTree задаёт вариацию размера. Каталог группирует деревья по месяцу записи.
  */
 export const useEntriesStore = create<EntriesState>((set, get) => ({
   entries: [],
@@ -59,7 +58,6 @@ export const useEntriesStore = create<EntriesState>((set, get) => ({
       scale: meta.scale,
       depth: meta.depth,
       layer: meta.layer,
-      worldZ: meta.worldZ,
       variant,
       layoutVersion: FOREST_LAYOUT_VERSION,
       createdAt: nowIso,
