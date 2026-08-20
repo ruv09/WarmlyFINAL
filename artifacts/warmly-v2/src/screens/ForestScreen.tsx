@@ -84,7 +84,7 @@ export function ForestScreen() {
               ]}
             >
               <Ionicons
-                name="leaf-outline"
+                name="heart-outline"
                 size={18}
                 color={isDark ? theme.colors.accentWarm : theme.colors.accent}
               />

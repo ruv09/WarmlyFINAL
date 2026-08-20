@@ -46,7 +46,7 @@ export function ForestCanvas({ trees, onSelectTree }: ForestCanvasProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const groundY = screenHeight * 0.62;
+  const groundY = screenHeight * 0.58;
 
   const camX = useSharedValue(0);
   const camY = useSharedValue(0);
