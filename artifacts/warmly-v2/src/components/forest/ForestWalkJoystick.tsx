@@ -61,10 +61,10 @@ export const ForestWalkJoystick = memo(function ForestWalkJoystick({
   }));
 
   const bottom = TAB_BAR_CLEARANCE + Math.max(insets.bottom, 8) + 10;
-  const trackFill = isDark ? "#2A2048CC" : "#FFF9F0D6";
-  const trackBorder = isDark ? "#FFFFFF18" : "#0000000F";
-  const knobFill = isDark ? theme.colors.accentWarm : theme.colors.accent;
-  const chevron = isDark ? "#E8B975AA" : "#8A9A6EAA";
+  const trackFill = isDark ? "#2A2048E0" : "#FFF6EDE8";
+  const trackBorder = isDark ? "#FFFFFF1A" : "#E8D5C8";
+  const knobFill = isDark ? "#E8B4A8" : "#F0B4AA";
+  const chevron = isDark ? "#E8B4A8CC" : "#C9956AAA";
 
   return (
     <View
@@ -90,7 +90,7 @@ export const ForestWalkJoystick = memo(function ForestWalkJoystick({
             <Animated.View
               style={[
                 styles.knob,
-                { backgroundColor: knobFill, shadowColor: isDark ? "#E8B975" : "#3A342C" },
+                { backgroundColor: knobFill, shadowColor: isDark ? "#E8B4A8" : "#C9956A" },
                 knobStyle,
               ]}
             />

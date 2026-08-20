@@ -1,16 +1,7 @@
 import React, { memo, ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { SharedValue, useAnimatedStyle } from "react-native-reanimated";
-import Svg, {
-  Circle,
-  Defs,
-  Ellipse,
-  LinearGradient,
-  Path,
-  RadialGradient,
-  Rect,
-  Stop,
-} from "react-native-svg";
+import Svg, { Defs, Ellipse, LinearGradient, Path, RadialGradient, Rect, Stop } from "react-native-svg";
 import { useTheme } from "../../theme";
 import {
   companionLayerZ,
@@ -87,9 +78,55 @@ function ParallaxBillboard({
   );
 }
 
+function RoundTree({
+  cx,
+  base,
+  size,
+  crown,
+  trunk,
+  pine,
+}: {
+  cx: number;
+  base: number;
+  size: number;
+  crown: string;
+  trunk: string;
+  pine?: boolean;
+}) {
+  const h = size;
+  const w = pine ? size * 0.42 : size * 0.48;
+  return (
+    <>
+      <Path
+        d={`M${cx - 3} ${base} Q ${cx} ${base + 6} ${cx + 3} ${base} L ${cx + 2} ${base - h * 0.22} L ${cx - 2} ${base - h * 0.22} Z`}
+        fill={trunk}
+        opacity={0.85}
+      />
+      {pine ? (
+        <>
+          <Ellipse cx={cx} cy={base - h * 0.38} rx={w * 0.95} ry={h * 0.22} fill={crown} />
+          <Ellipse cx={cx} cy={base - h * 0.55} rx={w * 0.72} ry={h * 0.18} fill={crown} />
+          <Ellipse cx={cx} cy={base - h * 0.72} rx={w * 0.48} ry={h * 0.16} fill={crown} />
+        </>
+      ) : (
+        <>
+          <Ellipse cx={cx - w * 0.18} cy={base - h * 0.48} rx={w * 0.55} ry={h * 0.32} fill={crown} />
+          <Ellipse cx={cx + w * 0.22} cy={base - h * 0.5} rx={w * 0.5} ry={h * 0.3} fill={crown} />
+          <Ellipse cx={cx} cy={base - h * 0.62} rx={w * 0.58} ry={h * 0.34} fill={crown} />
+        </>
+      )}
+    </>
+  );
+}
+
+function Stone({ cx, cy, rx, ry, fill }: { cx: number; cy: number; rx: number; ry: number; fill: string }) {
+  return <Ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={fill} opacity={0.78} />;
+}
+
 /**
- * Шесть слоёв глубины Warmly. Joystick двигает cameraZ —
- * каждый слой едет со своим parallax, без scale всего леса.
+ * Пастельный лес по макету Warmly Forest:
+ * небо → горы → холмы → тропа → ближние стволы.
+ * Слои едут от cameraZ, без scale всего экрана.
  */
 export const ForestAtmosphere = memo(function ForestAtmosphere({
   width,
@@ -101,64 +138,64 @@ export const ForestAtmosphere = memo(function ForestAtmosphere({
 }: ForestAtmosphereProps) {
   const theme = useTheme();
   const isDark = theme.mode === "dark";
-  const extra = Math.round(width * 0.45);
+  const extra = Math.round(width * 0.48);
   const sceneW = width + extra * 2;
   const [bg, far, middle, main, near, fg] = DEPTH_LAYERS;
+  const cx = sceneW / 2;
 
-  const farFill = isDark ? "#241C3A" : "#D8CDB4";
-  const midFill = isDark ? "#1C1630" : "#C8D2AE";
-  const mainFill = isDark ? "#181428" : "#BCCAA0";
-  const nearFill = isDark ? "#141022" : "#B6C498";
-  const groundFill = isDark ? "#100A1C" : "#A8B888";
-  const moss = isDark ? "#24301C" : "#8FA374";
-  const stone = isDark ? "#3A3548" : "#C4B49A";
-  const trunk = isDark ? "#2A2238" : "#7A6248";
+  const mountain = isDark ? "#3A3558" : "#C9D0E4";
+  const mountainFar = isDark ? "#2E2A48" : "#D8DCEC";
+  const hillFar = isDark ? "#2A3340" : "#C5D6B4";
+  const hillMid = isDark ? "#243428" : "#AFC99A";
+  const hillMain = isDark ? "#1E2C22" : "#97B882";
+  const grass = isDark ? "#18241C" : "#8EAF74";
+  const path = isDark ? "#3A3228" : "#E6D3B0";
+  const pathEdge = isDark ? "#2A241C" : "#D4C09A";
+  const crownFar = isDark ? "#2C3A32" : "#B7CDA4";
+  const crownMid = isDark ? "#314636" : "#8FB57A";
+  const crownMain = isDark ? "#3A5640" : "#7AA566";
+  const crownNear = isDark ? "#44644A" : "#6B9658";
+  const trunk = isDark ? "#3A322C" : "#C4A07A";
+  const trunkDeep = isDark ? "#2A221C" : "#A88868";
+  const stone = isDark ? "#4A4558" : "#D2C4B0";
+  const moss = isDark ? "#2A3A28" : "#7A9A62";
+  const foliage = isDark ? "#3A523C" : "#6F9A5C";
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <Svg width={width} height={height} style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={isDark ? "#2E2450" : "#FAF4EA"} />
-            <Stop offset="0.35" stopColor={isDark ? "#22183C" : "#F0E6D4"} />
-            <Stop offset="0.7" stopColor={isDark ? "#18102C" : "#E4D6BE"} />
-            <Stop offset="1" stopColor={isDark ? "#100A1E" : "#D2C4A8"} />
+            <Stop offset="0" stopColor={isDark ? "#2A2450" : "#F7EFE4"} />
+            <Stop offset="0.28" stopColor={isDark ? "#221C40" : "#F3E4D4"} />
+            <Stop offset="0.62" stopColor={isDark ? "#1A1634" : "#E8E6D4"} />
+            <Stop offset="1" stopColor={isDark ? "#141028" : "#D5E0C6"} />
           </LinearGradient>
-          <RadialGradient id="sun" cx="82%" cy="16%" rx="32%" ry="22%">
-            <Stop offset="0" stopColor="#FFE6B0" stopOpacity={0.5} />
-            <Stop offset="0.55" stopColor="#F0D090" stopOpacity={0.16} />
-            <Stop offset="1" stopColor="#F0D090" stopOpacity={0} />
-          </RadialGradient>
-          <RadialGradient id="moon" cx="78%" cy="14%" rx="24%" ry="16%">
-            <Stop offset="0" stopColor="#F0E6D0" stopOpacity={0.38} />
-            <Stop offset="0.55" stopColor="#C8B8E0" stopOpacity={0.12} />
-            <Stop offset="1" stopColor="#C8B8E0" stopOpacity={0} />
+          <RadialGradient id="glow" cx="72%" cy="18%" rx="38%" ry="24%">
+            <Stop offset="0" stopColor={isDark ? "#E8C990" : "#FFE8C8"} stopOpacity={isDark ? 0.22 : 0.7} />
+            <Stop offset="1" stopColor={isDark ? "#E8C990" : "#FFE8C8"} stopOpacity={0} />
           </RadialGradient>
         </Defs>
         <Rect x={0} y={0} width={width} height={height} fill="url(#sky)" />
-        {!isDark && (
-          <>
-            <Ellipse cx={width * 0.82} cy={height * 0.14} rx={width * 0.28} ry={height * 0.16} fill="url(#sun)" />
-            <Circle cx={width * 0.84} cy={height * 0.12} r={15} fill="#FFE8B8" opacity={0.4} />
-          </>
-        )}
-        {isDark && (
-          <>
-            <Ellipse cx={width * 0.78} cy={height * 0.12} rx={width * 0.22} ry={height * 0.13} fill="url(#moon)" />
-            <Circle cx={width * 0.8} cy={height * 0.11} r={10} fill="#EDE4D4" opacity={0.78} />
-          </>
-        )}
+        <Ellipse cx={width * 0.74} cy={height * 0.16} rx={width * 0.34} ry={height * 0.14} fill="url(#glow)" />
       </Svg>
 
       <ParallaxBillboard camX={camX} camY={camY} cameraZ={cameraZ} extra={extra} layer={bg}>
         <Svg width={sceneW} height={height}>
           <Path
-            d={`M0 ${groundY - 24}
-                C ${sceneW * 0.2} ${groundY - 96} ${sceneW * 0.48} ${groundY - 8} ${sceneW * 0.72} ${groundY - 80}
-                S ${sceneW * 0.9} ${groundY - 12} ${sceneW} ${groundY - 48}
+            d={`M0 ${groundY - 28}
+                C ${sceneW * 0.16} ${groundY - 118} ${sceneW * 0.34} ${groundY - 40} ${sceneW * 0.5} ${groundY - 96}
+                S ${sceneW * 0.78} ${groundY - 24} ${sceneW} ${groundY - 72}
                 V ${height} H0 Z`}
-            fill={isDark ? "#2A2244" : "#E4D8C0"}
-            opacity={isDark ? 0.5 : 0.55}
+            fill={mountainFar}
+          />
+          <Path
+            d={`M0 ${groundY + 8}
+                C ${sceneW * 0.22} ${groundY - 64} ${sceneW * 0.42} ${groundY + 20} ${sceneW * 0.62} ${groundY - 48}
+                S ${sceneW * 0.88} ${groundY + 16} ${sceneW} ${groundY - 20}
+                V ${height} H0 Z`}
+            fill={mountain}
+            opacity={0.92}
           />
         </Svg>
       </ParallaxBillboard>
@@ -166,22 +203,21 @@ export const ForestAtmosphere = memo(function ForestAtmosphere({
       <ParallaxBillboard camX={camX} camY={camY} cameraZ={cameraZ} extra={extra} layer={far}>
         <Svg width={sceneW} height={height}>
           <Path
-            d={`M0 ${groundY + 18}
-                Q ${sceneW * 0.22} ${groundY - 36} ${sceneW * 0.48} ${groundY + 8}
-                T ${sceneW} ${groundY - 4}
+            d={`M0 ${groundY + 24}
+                Q ${sceneW * 0.25} ${groundY - 28} ${sceneW * 0.5} ${groundY + 18}
+                T ${sceneW} ${groundY + 6}
                 V ${height} H0 Z`}
-            fill={farFill}
-            opacity={0.88}
+            fill={hillFar}
           />
-          {[0.12, 0.24, 0.38, 0.52, 0.66, 0.8, 0.92].map((x, i) => (
-            <Ellipse
-              key={`far-t-${i}`}
+          {[0.1, 0.2, 0.3, 0.42, 0.58, 0.7, 0.82, 0.92].map((x, i) => (
+            <RoundTree
+              key={`far-${i}`}
               cx={sceneW * x}
-              cy={groundY - 70 - (i % 3) * 16}
-              rx={26 + (i % 4) * 8}
-              ry={48 + (i % 3) * 12}
-              fill={isDark ? "#201834" : "#C8BCA4"}
-              opacity={0.5}
+              base={groundY + 8}
+              size={42 + (i % 3) * 10}
+              crown={crownFar}
+              trunk={trunk}
+              pine={i % 2 === 0}
             />
           ))}
         </Svg>
@@ -190,21 +226,21 @@ export const ForestAtmosphere = memo(function ForestAtmosphere({
       <ParallaxBillboard camX={camX} camY={camY} cameraZ={cameraZ} extra={extra} layer={middle}>
         <Svg width={sceneW} height={height}>
           <Path
-            d={`M0 ${groundY + 52}
-                Q ${sceneW * 0.3} ${groundY + 8} ${sceneW * 0.58} ${groundY + 42}
-                T ${sceneW} ${groundY + 28}
+            d={`M0 ${groundY + 48}
+                Q ${sceneW * 0.3} ${groundY + 8} ${sceneW * 0.55} ${groundY + 40}
+                T ${sceneW} ${groundY + 22}
                 V ${height} H0 Z`}
-            fill={midFill}
-            opacity={0.94}
+            fill={hillMid}
           />
-          {[0.1, 0.22, 0.36, 0.5, 0.64, 0.78, 0.91].map((x, i) => (
-            <Path
-              key={`mid-tr-${i}`}
-              d={`M${sceneW * x} ${groundY + 16}
-                  C ${sceneW * x - 7} ${groundY - 36} ${sceneW * x - 5} ${groundY - 86} ${sceneW * x} ${groundY - 108 - (i % 3) * 14}
-                  C ${sceneW * x + 6} ${groundY - 86} ${sceneW * x + 8} ${groundY - 36} ${sceneW * x + 3} ${groundY + 16} Z`}
-              fill={trunk}
-              opacity={0.32 + (i % 3) * 0.08}
+          {[0.08, 0.18, 0.28, 0.72, 0.84, 0.94].map((x, i) => (
+            <RoundTree
+              key={`mid-${i}`}
+              cx={sceneW * x}
+              base={groundY + 36}
+              size={70 + (i % 3) * 14}
+              crown={crownMid}
+              trunk={trunk}
+              pine={i % 3 !== 1}
             />
           ))}
         </Svg>
@@ -214,21 +250,29 @@ export const ForestAtmosphere = memo(function ForestAtmosphere({
         <Svg width={sceneW} height={height}>
           <Path
             d={`M0 ${groundY + 70}
-                Q ${sceneW * 0.28} ${groundY + 28} ${sceneW * 0.55} ${groundY + 64}
+                Q ${sceneW * 0.28} ${groundY + 32} ${sceneW * 0.5} ${groundY + 62}
                 T ${sceneW} ${groundY + 44}
                 V ${height} H0 Z`}
-            fill={mainFill}
-            opacity={0.96}
+            fill={hillMain}
           />
-          {[0.08, 0.2, 0.34, 0.66, 0.8, 0.93].map((x, i) => (
-            <Ellipse
-              key={`main-t-${i}`}
+          <Path
+            d={`M${cx - 46} ${groundY + 58}
+                Q ${cx} ${groundY + 78} ${cx + 46} ${groundY + 58}
+                Q ${cx + 70} ${groundY + 118} ${cx + 52} ${height}
+                H ${cx - 52}
+                Q ${cx - 70} ${groundY + 118} ${cx - 46} ${groundY + 58} Z`}
+            fill={path}
+            opacity={0.55}
+          />
+          {[0.07, 0.17, 0.26, 0.74, 0.84, 0.94].map((x, i) => (
+            <RoundTree
+              key={`main-${i}`}
               cx={sceneW * x}
-              cy={groundY - 42 - (i % 2) * 12}
-              rx={20 + (i % 3) * 7}
-              ry={44 + (i % 2) * 10}
-              fill={isDark ? "#1C162C" : "#A8B888"}
-              opacity={0.58}
+              base={groundY + 58}
+              size={96 + (i % 2) * 18}
+              crown={crownMain}
+              trunk={trunkDeep}
+              pine={i % 2 === 0}
             />
           ))}
         </Svg>
@@ -237,42 +281,70 @@ export const ForestAtmosphere = memo(function ForestAtmosphere({
       <ParallaxBillboard camX={camX} camY={camY} cameraZ={cameraZ} extra={extra} dual layer={near}>
         <Svg width={sceneW} height={height}>
           <Path
-            d={`M0 ${groundY + 95}
-                Q ${sceneW * 0.35} ${groundY + 58} ${sceneW * 0.7} ${groundY + 82}
+            d={`M0 ${groundY + 96}
+                Q ${sceneW * 0.32} ${groundY + 64} ${sceneW * 0.5} ${groundY + 92}
                 T ${sceneW} ${groundY + 72}
                 V ${height} H0 Z`}
-            fill={nearFill}
-            opacity={0.98}
+            fill={grass}
           />
           <Path
-            d={`M0 ${groundY + 128}
-                Q ${sceneW * 0.4} ${groundY + 98} ${sceneW} ${groundY + 118}
-                V ${height} H0 Z`}
-            fill={groundFill}
+            d={`M${cx - 38} ${groundY + 78}
+                Q ${cx + 8} ${groundY + 108} ${cx + 42} ${groundY + 86}
+                Q ${cx + 58} ${groundY + 150} ${cx + 36} ${height}
+                H ${cx - 34}
+                Q ${cx - 56} ${groundY + 150} ${cx - 38} ${groundY + 78} Z`}
+            fill={path}
           />
+          <Path
+            d={`M${cx - 22} ${groundY + 88}
+                Q ${cx} ${groundY + 112} ${cx + 24} ${groundY + 94}
+                L ${cx + 18} ${height} H ${cx - 16} Z`}
+            fill={pathEdge}
+            opacity={0.45}
+          />
+          {[0.06, 0.16, 0.84, 0.94].map((x, i) => (
+            <RoundTree
+              key={`near-${i}`}
+              cx={sceneW * x}
+              base={groundY + 92}
+              size={120 + (i % 2) * 20}
+              crown={crownNear}
+              trunk={trunkDeep}
+              pine={i !== 1}
+            />
+          ))}
+          <Ellipse cx={sceneW * 0.22} cy={groundY + 108} rx={28} ry={16} fill={foliage} opacity={0.8} />
+          <Ellipse cx={sceneW * 0.78} cy={groundY + 114} rx={32} ry={17} fill={foliage} opacity={0.8} />
+          <Stone cx={sceneW * 0.3} cy={groundY + 122} rx={16} ry={8} fill={stone} />
+          <Stone cx={sceneW * 0.68} cy={groundY + 128} rx={20} ry={9} fill={stone} />
+          <Stone cx={cx + 18} cy={groundY + 136} rx={12} ry={6} fill={stone} />
         </Svg>
       </ParallaxBillboard>
 
       <ParallaxBillboard camX={camX} camY={camY} cameraZ={cameraZ} extra={extra} dual layer={fg}>
         <Svg width={sceneW} height={height}>
           <Path
-            d={`M0 ${height * 0.2}
-                C ${sceneW * 0.08} ${height * 0.1} ${sceneW * 0.04} ${groundY - 30} 16 ${height}
+            d={`M0 ${height * 0.12}
+                C ${sceneW * 0.12} ${height * 0.02} ${sceneW * 0.08} ${groundY - 20} ${sceneW * 0.05} ${height}
                 H0 Z`}
-            fill={trunk}
-            opacity={0.5}
+            fill={trunkDeep}
+            opacity={0.92}
           />
+          <Ellipse cx={sceneW * 0.08} cy={height * 0.18} rx={90} ry={70} fill={foliage} />
+          <Ellipse cx={sceneW * 0.02} cy={height * 0.28} rx={70} ry={54} fill={crownNear} />
           <Path
-            d={`M${sceneW} ${height * 0.16}
-                C ${sceneW - sceneW * 0.1} ${height * 0.08} ${sceneW - 10} ${groundY - 18} ${sceneW - 14} ${height}
+            d={`M${sceneW} ${height * 0.1}
+                C ${sceneW - sceneW * 0.12} ${height * 0.0} ${sceneW - sceneW * 0.06} ${groundY} ${sceneW - sceneW * 0.04} ${height}
                 H${sceneW} Z`}
-            fill={trunk}
-            opacity={0.46}
+            fill={trunkDeep}
+            opacity={0.9}
           />
-          <Ellipse cx={sceneW * 0.12} cy={height - 26} rx={88} ry={34} fill={moss} opacity={0.55} />
-          <Ellipse cx={sceneW * 0.88} cy={height - 20} rx={104} ry={38} fill={moss} opacity={0.5} />
-          <Ellipse cx={sceneW * 0.18} cy={groundY + 118} rx={30} ry={16} fill={stone} opacity={0.7} />
-          <Ellipse cx={sceneW * 0.82} cy={groundY + 126} rx={38} ry={18} fill={stone} opacity={0.65} />
+          <Ellipse cx={sceneW * 0.93} cy={height * 0.16} rx={100} ry={76} fill={foliage} />
+          <Ellipse cx={sceneW * 0.98} cy={height * 0.3} rx={72} ry={50} fill={crownNear} />
+          <Ellipse cx={sceneW * 0.12} cy={height - 22} rx={92} ry={28} fill={moss} opacity={0.7} />
+          <Ellipse cx={sceneW * 0.88} cy={height - 18} rx={110} ry={32} fill={moss} opacity={0.65} />
+          <Stone cx={sceneW * 0.2} cy={height - 36} rx={28} ry={12} fill={stone} />
+          <Stone cx={sceneW * 0.8} cy={height - 30} rx={34} ry={14} fill={stone} />
         </Svg>
       </ParallaxBillboard>
     </View>
