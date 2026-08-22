@@ -30,7 +30,8 @@ export function formatMonthHeading(monthKey: string): string {
   const date = parseDateKey(`${monthKey}-01`);
   return date
     .toLocaleDateString("ru-RU", { month: "long", year: "numeric" })
-    .replace(/^./, (ch) => ch.toUpperCase());
+    .replace(/^./, (ch) => ch.toUpperCase())
+    .toUpperCase();
 }
 
 /**
@@ -88,15 +89,15 @@ function groveSlot(index: number, cols: number): { col: number; row: number; col
  */
 export function layoutMonthGrove(items: CatalogItem[], width: number): { spots: GroveSpot[]; height: number } {
   const cols = width < 360 ? 2 : width < 720 ? 3 : 4;
-  const pad = 10;
+  const pad = 8;
   const cellW = (width - pad * 2) / cols;
-  const rowH = Math.round(cellW * 1.18);
+  const rowH = Math.round(cellW * 1.32);
   const spots: GroveSpot[] = items.map((item, index) => {
     const hx = hash01(`${item.tree.id}:x`);
     const hy = hash01(`${item.tree.id}:y`);
     const hs = hash01(`${item.tree.id}:s`);
     const { col, row, colsInRow } = groveSlot(index, cols);
-    const size = Math.max(72, Math.round(cellW * (0.58 + hs * 0.2) * item.tree.scale));
+    const size = Math.max(88, Math.round(cellW * (0.7 + hs * 0.24) * item.tree.scale));
     const rowWidth = colsInRow * cellW;
     const rowLeft = (width - rowWidth) / 2;
     const maxJitter = Math.max(0, (cellW - size) / 2 - 6);
