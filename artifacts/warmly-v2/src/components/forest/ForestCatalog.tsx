@@ -1,17 +1,22 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   FlatList,
+  LayoutChangeEvent,
   ListRenderItem,
   Pressable,
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { TreeIllustration } from "../tree/TreeIllustration";
 import { useTheme } from "../../theme";
-import { CatalogItem, MonthSection, groupForestByMonth } from "../../services/forest/catalog";
+import {
+  CatalogItem,
+  MonthSection,
+  groupForestByMonth,
+  layoutMonthGrove,
+} from "../../services/forest/catalog";
 import { Entry, Tree } from "../../types";
 import { treesLabel } from "../../utils";
 
@@ -27,7 +32,6 @@ type Props = {
 
 export function ForestCatalog({ entries, trees, onSelectItem, bottomInset, isLoading }: Props) {
   const theme = useTheme();
-  const isDark = theme.mode === "dark";
   const sections = useMemo(() => groupForestByMonth(entries, trees), [entries, trees]);
 
   const renderMonth = useCallback<ListRenderItem<MonthSection>>(
@@ -86,17 +90,6 @@ export function ForestCatalog({ entries, trees, onSelectItem, bottomInset, isLoa
           paddingBottom: TAB_BAR_CLEARANCE + bottomInset + 28,
         }}
         ListHeaderComponent={<CatalogHeader />}
-        ItemSeparatorComponent={() => (
-          <View
-            style={{
-              alignSelf: "center",
-              width: "36%",
-              height: StyleSheet.hairlineWidth,
-              backgroundColor: isDark ? "#3A3258" : "#E4D8C4",
-              marginVertical: 8,
-            }}
-          />
-        )}
       />
     </View>
   );
@@ -154,52 +147,70 @@ function MonthGrove({
   onSelectItem: (item: CatalogItem) => void;
 }) {
   const theme = useTheme();
-  const { width } = useWindowDimensions();
-  const cols = width < 360 ? 3 : width < 720 ? 3 : 4;
-  const treeSize = width < 360 ? 78 : width < 720 ? 92 : 110;
+  const [width, setWidth] = useState(0);
+  const layout = useMemo(
+    () => (width > 0 ? layoutMonthGrove(section.items, width) : { spots: [], height: 0 }),
+    [section.items, width],
+  );
+
+  function onLayout(event: LayoutChangeEvent) {
+    const next = Math.round(event.nativeEvent.layout.width);
+    if (next > 0 && next !== width) setWidth(next);
+  }
 
   return (
-    <View style={styles.monthBlock}>
-      <Text
-        style={{
-          fontSize: theme.typography.sizes.title,
-          lineHeight: 26,
-          fontWeight: theme.typography.weights.bold,
-          color: theme.colors.textPrimary,
-          textAlign: "center",
-        }}
-        maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-      >
-        {section.title}
-      </Text>
-      <Text
-        style={{
-          marginTop: 4,
-          marginBottom: 14,
-          fontSize: theme.typography.sizes.body,
-          color: theme.colors.textSecondary,
-          textAlign: "center",
-        }}
-        maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-      >
-        {treesLabel(section.count)}
-      </Text>
-      <View style={styles.grid}>
-        {section.items.map((item) => (
-          <Pressable
-            key={item.entry.id}
-            accessibilityRole="button"
-            accessibilityLabel={`Дерево записи ${item.entry.date}`}
-            onPress={() => onSelectItem(item)}
-            style={{
-              width: `${100 / cols}%`,
-              alignItems: "center",
-              paddingVertical: 6,
-            }}
-          >
-            <TreeIllustration tree={item.tree} size={treeSize} />
-          </Pressable>
-        ))}
+    <View style={styles.monthBlock} onLayout={onLayout}>
+      <View style={styles.monthHead}>
+        <Text
+          style={{
+            flex: 1,
+            fontSize: theme.typography.sizes.title,
+            lineHeight: 26,
+            letterSpacing: 1.2,
+            fontWeight: theme.typography.weights.bold,
+            color: theme.colors.textPrimary,
+          }}
+          maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
+        >
+          {section.title}
+        </Text>
+        <Text
+          style={{
+            fontSize: theme.typography.sizes.body,
+            color: theme.colors.textSecondary,
+          }}
+          maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
+        >
+          {treesLabel(section.count)}
+        </Text>
+      </View>
+      <View style={{ height: layout.height, width: "100%", overflow: "visible" }}>
+        {layout.spots.map((spot) => {
+          const hit = Math.max(56, spot.size + 16);
+          const extra = (hit - spot.size) / 2;
+          return (
+            <Pressable
+              key={spot.item.entry.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Дерево записи ${spot.item.entry.date}`}
+              onPress={() => onSelectItem(spot.item)}
+              hitSlop={8}
+              style={{
+                position: "absolute",
+                left: spot.left - extra,
+                top: spot.top - extra,
+                width: hit,
+                height: hit,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <View style={{ width: spot.size, height: spot.size }}>
+                <TreeIllustration tree={spot.item.tree} fillParent />
+              </View>
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );
@@ -227,12 +238,14 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   monthBlock: {
-    paddingTop: 8,
-    paddingBottom: 16,
+    paddingTop: 10,
+    paddingBottom: 22,
   },
-  grid: {
+  monthHead: {
     flexDirection: "row",
-    flexWrap: "wrap",
+    alignItems: "baseline",
+    marginBottom: 12,
+    gap: 12,
   },
   emptyCopy: {
     flex: 1,
