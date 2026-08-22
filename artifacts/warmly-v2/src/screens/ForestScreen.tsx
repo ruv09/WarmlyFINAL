@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { BackHandler, StyleSheet, View } from "react-native";
+import { useNavigation } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ForestCatalog, TreeGroveScene } from "../components/forest";
 import { useEntries, useForest } from "../hooks";
@@ -12,6 +13,8 @@ import { CatalogItem } from "../services/forest/catalog";
  */
 export function ForestScreen() {
   const theme = useTheme();
+  const isDark = theme.mode === "dark";
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { trees, isLoading: treesLoading } = useForest();
   const { entries, isLoading: entriesLoading } = useEntries();
@@ -38,6 +41,27 @@ export function ForestScreen() {
     });
     return () => sub.remove();
   }, [selectedItem]);
+
+  useEffect(() => {
+    navigation.setOptions({
+      tabBarStyle: selectedItem
+        ? { display: "none" }
+        : {
+            backgroundColor: isDark ? "#21183AF5" : "#FFF9F0F5",
+            borderTopWidth: 0,
+            borderTopLeftRadius: 18,
+            borderTopRightRadius: 18,
+            height: 66,
+            paddingTop: 6,
+            paddingBottom: 6,
+            position: "absolute",
+            shadowColor: "#000",
+            shadowOpacity: isDark ? 0.3 : 0.07,
+            shadowRadius: 14,
+            shadowOffset: { width: 0, height: -4 },
+          },
+    });
+  }, [isDark, navigation, selectedItem]);
 
   const onSelectItem = useCallback((item: CatalogItem) => {
     setSelectedEntryId(item.entry.id);

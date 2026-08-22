@@ -1,17 +1,17 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   FlatList,
-  LayoutChangeEvent,
   ListRenderItem,
   Pressable,
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
-import { ForestAtmosphere } from "./ForestAtmosphere";
+import { Ionicons } from "@expo/vector-icons";
 import { TreeIllustration } from "../tree/TreeIllustration";
 import { useTheme } from "../../theme";
-import { CatalogItem, MonthSection, groupForestByMonth, layoutMonthGrove } from "../../services/forest/catalog";
+import { CatalogItem, MonthSection, groupForestByMonth } from "../../services/forest/catalog";
 import { Entry, Tree } from "../../types";
 import { treesLabel } from "../../utils";
 
@@ -27,23 +27,18 @@ type Props = {
 
 export function ForestCatalog({ entries, trees, onSelectItem, bottomInset, isLoading }: Props) {
   const theme = useTheme();
+  const isDark = theme.mode === "dark";
   const sections = useMemo(() => groupForestByMonth(entries, trees), [entries, trees]);
 
   const renderMonth = useCallback<ListRenderItem<MonthSection>>(
-    ({ item, index }) => (
-      <MonthGrove
-        section={item}
-        showDivider={index < sections.length - 1}
-        onSelectItem={onSelectItem}
-      />
-    ),
-    [onSelectItem, sections.length],
+    ({ item }) => <MonthGrove section={item} onSelectItem={onSelectItem} />,
+    [onSelectItem],
   );
 
   if (sections.length === 0) {
     return (
-      <View style={styles.flex}>
-        <ForestAtmosphere />
+      <View style={[styles.flex, { backgroundColor: theme.colors.background }]}>
+        <CatalogHeader />
         {!isLoading ? (
           <View style={styles.emptyCopy}>
             <Text
@@ -76,15 +71,7 @@ export function ForestCatalog({ entries, trees, onSelectItem, bottomInset, isLoa
   }
 
   return (
-    <View style={styles.flex}>
-      <ForestAtmosphere />
-      <View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          { backgroundColor: theme.mode === "dark" ? "#1A123048" : "#F3EBDC55" },
-        ]}
-      />
+    <View style={[styles.flex, { backgroundColor: theme.colors.background }]}>
       <FlatList
         data={sections}
         keyExtractor={(section) => section.key}
@@ -98,56 +85,85 @@ export function ForestCatalog({ entries, trees, onSelectItem, bottomInset, isLoa
           paddingHorizontal: theme.spacing("lg"),
           paddingBottom: TAB_BAR_CLEARANCE + bottomInset + 28,
         }}
-        ListHeaderComponent={
-          <View style={styles.screenTitle}>
-            <Text
-              style={{
-                fontSize: theme.typography.sizes.largeTitle,
-                lineHeight: 32,
-                letterSpacing: 1.6,
-                fontWeight: theme.typography.weights.bold,
-                color: theme.colors.textPrimary,
-                textAlign: "center",
-              }}
-              maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-            >
-              МОЙ ЛЕС
-            </Text>
-          </View>
-        }
+        ListHeaderComponent={<CatalogHeader />}
+        ItemSeparatorComponent={() => (
+          <View
+            style={{
+              alignSelf: "center",
+              width: "36%",
+              height: StyleSheet.hairlineWidth,
+              backgroundColor: isDark ? "#3A3258" : "#E4D8C4",
+              marginVertical: 8,
+            }}
+          />
+        )}
       />
+    </View>
+  );
+}
+
+function CatalogHeader() {
+  const theme = useTheme();
+  const isDark = theme.mode === "dark";
+
+  return (
+    <View style={styles.headerRow}>
+      <View style={styles.headerCopy}>
+        <Text
+          style={{
+            fontSize: theme.typography.sizes.largeTitle,
+            lineHeight: 32,
+            fontWeight: theme.typography.weights.bold,
+            color: theme.colors.textPrimary,
+          }}
+          maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
+        >
+          Мой лес
+        </Text>
+        <Text
+          style={{
+            marginTop: 4,
+            fontSize: theme.typography.sizes.body,
+            color: theme.colors.textSecondary,
+          }}
+          maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
+        >
+          твоя коллекция моментов
+        </Text>
+      </View>
+      <View
+        style={[
+          styles.leafBtn,
+          {
+            backgroundColor: isDark ? "#2A2340CC" : "#FFF9F0CC",
+            borderColor: theme.colors.border,
+          },
+        ]}
+      >
+        <Ionicons name="leaf" size={18} color={isDark ? theme.colors.accentWarm : theme.colors.accent} />
+      </View>
     </View>
   );
 }
 
 function MonthGrove({
   section,
-  showDivider,
   onSelectItem,
 }: {
   section: MonthSection;
-  showDivider: boolean;
   onSelectItem: (item: CatalogItem) => void;
 }) {
   const theme = useTheme();
-  const [width, setWidth] = useState(0);
-  const layout = useMemo(
-    () => (width > 0 ? layoutMonthGrove(section.items, width) : { spots: [], height: 0 }),
-    [section.items, width],
-  );
-
-  function onLayout(event: LayoutChangeEvent) {
-    const next = Math.round(event.nativeEvent.layout.width);
-    if (next > 0 && next !== width) setWidth(next);
-  }
+  const { width } = useWindowDimensions();
+  const cols = width < 360 ? 3 : width < 720 ? 3 : 4;
+  const treeSize = width < 360 ? 78 : width < 720 ? 92 : 110;
 
   return (
-    <View style={styles.monthBlock} onLayout={onLayout}>
+    <View style={styles.monthBlock}>
       <Text
         style={{
           fontSize: theme.typography.sizes.title,
           lineHeight: 26,
-          letterSpacing: 1.4,
           fontWeight: theme.typography.weights.bold,
           color: theme.colors.textPrimary,
           textAlign: "center",
@@ -158,8 +174,8 @@ function MonthGrove({
       </Text>
       <Text
         style={{
-          marginTop: 6,
-          marginBottom: 8,
+          marginTop: 4,
+          marginBottom: 14,
           fontSize: theme.typography.sizes.body,
           color: theme.colors.textSecondary,
           textAlign: "center",
@@ -168,49 +184,55 @@ function MonthGrove({
       >
         {treesLabel(section.count)}
       </Text>
-      <View style={{ height: layout.height, width: "100%", overflow: "hidden" }}>
-        {layout.spots.map((spot) => (
+      <View style={styles.grid}>
+        {section.items.map((item) => (
           <Pressable
-            key={spot.item.entry.id}
+            key={item.entry.id}
             accessibilityRole="button"
-            accessibilityLabel={`Дерево записи ${spot.item.entry.date}`}
-            onPress={() => onSelectItem(spot.item)}
+            accessibilityLabel={`Дерево записи ${item.entry.date}`}
+            onPress={() => onSelectItem(item)}
             style={{
-              position: "absolute",
-              left: spot.left,
-              top: spot.top,
-              width: spot.size,
-              height: spot.size,
+              width: `${100 / cols}%`,
+              alignItems: "center",
+              paddingVertical: 6,
             }}
           >
-            <TreeIllustration tree={spot.item.tree} fillParent />
+            <TreeIllustration tree={item.tree} size={treeSize} />
           </Pressable>
         ))}
       </View>
-      {showDivider ? (
-        <View
-          style={{
-            alignSelf: "center",
-            width: "42%",
-            height: StyleSheet.hairlineWidth,
-            backgroundColor: theme.colors.border,
-            marginTop: 18,
-          }}
-        />
-      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1, overflow: "hidden" },
-  screenTitle: {
-    paddingTop: 4,
-    paddingBottom: 20,
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    paddingTop: 6,
+    paddingBottom: 22,
+  },
+  headerCopy: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  leafBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
   },
   monthBlock: {
-    paddingTop: 10,
-    paddingBottom: 8,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   emptyCopy: {
     flex: 1,
