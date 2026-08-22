@@ -17,8 +17,26 @@ import { getMoodById } from "../../constants/moods";
 import { parseDateKey } from "../../utils/date";
 import { useTheme } from "../../theme";
 
-const SCENE_LIGHT = require("../../../assets/forest/scene-light.jpg");
-const SCENE_DARK = require("../../../assets/forest/scene-dark.jpg");
+const GROVES_LIGHT = [
+  require("../../../assets/forest/grove-1.jpg"),
+  require("../../../assets/forest/grove-2.jpg"),
+  require("../../../assets/forest/grove-3.jpg"),
+] as const;
+
+const GROVES_DARK = [
+  require("../../../assets/forest/grove-4.jpg"),
+  require("../../../assets/forest/grove-5.jpg"),
+] as const;
+
+function pickGrove(treeId: string, dark: boolean) {
+  const set = dark ? GROVES_DARK : GROVES_LIGHT;
+  let h = 2166136261;
+  for (let i = 0; i < treeId.length; i++) {
+    h ^= treeId.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return set[(h >>> 0) % set.length];
+}
 
 type Props = {
   item: CatalogItem;
@@ -54,7 +72,7 @@ export function TreeGroveScene({ item, onClose }: Props) {
   return (
     <View style={styles.fill} accessibilityViewIsModal>
       <Image
-        source={isDark ? SCENE_DARK : SCENE_LIGHT}
+        source={pickGrove(item.tree.id, isDark)}
         style={StyleSheet.absoluteFill}
         resizeMode="cover"
         accessibilityIgnoresInvertColors
