@@ -1,14 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { ForestAtmosphere } from "./ForestAtmosphere";
 import { ScaleView } from "../animation";
 import { TreeIllustration } from "../tree/TreeIllustration";
 import { CatalogItem } from "../../services/forest/catalog";
 import { getMoodById } from "../../constants/moods";
 import { parseDateKey } from "../../utils/date";
 import { useTheme } from "../../theme";
+
+const SCENE_LIGHT = require("../../../assets/forest/scene-light.jpg");
+const SCENE_DARK = require("../../../assets/forest/scene-dark.jpg");
 
 type Props = {
   item: CatalogItem;
@@ -43,7 +53,12 @@ export function TreeGroveScene({ item, onClose }: Props) {
 
   return (
     <View style={styles.fill} accessibilityViewIsModal>
-      <ForestAtmosphere />
+      <Image
+        source={isDark ? SCENE_DARK : SCENE_LIGHT}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+        accessibilityIgnoresInvertColors
+      />
 
       <SafeAreaView edges={["top", "left", "right"]} style={styles.fill} pointerEvents="box-none">
         <ScaleView visible={shown} from={0.96} duration="base" style={styles.stage} pointerEvents="box-none">
