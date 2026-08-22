@@ -1,14 +1,42 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { ForestAtmosphere } from "./ForestAtmosphere";
 import { ScaleView } from "../animation";
 import { TreeIllustration } from "../tree/TreeIllustration";
 import { CatalogItem } from "../../services/forest/catalog";
 import { getMoodById } from "../../constants/moods";
 import { parseDateKey } from "../../utils/date";
 import { useTheme } from "../../theme";
+
+const GROVES_LIGHT = [
+  require("../../../assets/forest/grove-1.jpg"),
+  require("../../../assets/forest/grove-2.jpg"),
+  require("../../../assets/forest/grove-3.jpg"),
+] as const;
+
+const GROVES_DARK = [
+  require("../../../assets/forest/grove-4.jpg"),
+  require("../../../assets/forest/grove-5.jpg"),
+] as const;
+
+function pickGrove(treeId: string, dark: boolean) {
+  const set = dark ? GROVES_DARK : GROVES_LIGHT;
+  let h = 2166136261;
+  for (let i = 0; i < treeId.length; i++) {
+    h ^= treeId.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return set[(h >>> 0) % set.length];
+}
 
 type Props = {
   item: CatalogItem;
@@ -43,7 +71,12 @@ export function TreeGroveScene({ item, onClose }: Props) {
 
   return (
     <View style={styles.fill} accessibilityViewIsModal>
-      <ForestAtmosphere />
+      <Image
+        source={pickGrove(item.tree.id, isDark)}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+        accessibilityIgnoresInvertColors
+      />
 
       <SafeAreaView edges={["top", "left", "right"]} style={styles.fill} pointerEvents="box-none">
         <ScaleView visible={shown} from={0.96} duration="base" style={styles.stage} pointerEvents="box-none">
