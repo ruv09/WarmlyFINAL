@@ -30,8 +30,7 @@ export function formatMonthHeading(monthKey: string): string {
   const date = parseDateKey(`${monthKey}-01`);
   return date
     .toLocaleDateString("ru-RU", { month: "long", year: "numeric" })
-    .replace(/^./, (ch) => ch.toUpperCase())
-    .toUpperCase();
+    .replace(/^./, (ch) => ch.toUpperCase());
 }
 
 /**
