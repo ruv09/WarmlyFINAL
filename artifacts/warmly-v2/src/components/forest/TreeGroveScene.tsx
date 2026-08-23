@@ -13,12 +13,10 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { ScaleView } from "../animation";
 import { TreeIllustration } from "../tree/TreeIllustration";
 import { CatalogItem } from "../../services/forest/catalog";
+import { getGroveScene } from "../../constants/groveScenes";
 import { getMoodById } from "../../constants/moods";
 import { parseDateKey } from "../../utils/date";
 import { useTheme } from "../../theme";
-
-const SCENE_LIGHT = require("../../../assets/forest/scene-light.jpg");
-const SCENE_DARK = require("../../../assets/forest/scene-dark.jpg");
 
 type Props = {
   item: CatalogItem;
@@ -34,8 +32,8 @@ function formatPlaqueDate(dateKey: string): string {
 }
 
 /**
- * Статичная сцена дерева: лес, выбранное дерево, деревянная табличка.
- * Кнопка назад — правый нижний угол, поверх сцены (не под ScaleView).
+ * Статичная сцена: поляна выбранного вида + то же дерево, что в каталоге.
+ * Камера отведена — дерево сидит в середине луга, табличка впереди на тропинке.
  */
 export function TreeGroveScene({ item, onClose }: Props) {
   const theme = useTheme();
@@ -43,9 +41,8 @@ export function TreeGroveScene({ item, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
   const [shown, setShown] = useState(false);
-  // Дерево и табличка сидят на тропинке в нижней трети кадра —
-  // между фонарями, не на небе и не поверх домика слева.
-  const treeSize = Math.round(Math.min(width * 0.5, height * 0.28, 236));
+  const treeSize = Math.round(Math.min(width * 0.44, height * 0.34, 248));
+  const treeTop = Math.round(height * 0.2);
   const plaqueMaxH = Math.round(height * 0.28);
   const plaqueWidth = Math.min(width - 56, 340);
   const stageBottom = Math.max(insets.bottom, 10) + 82;
@@ -58,93 +55,109 @@ export function TreeGroveScene({ item, onClose }: Props) {
   return (
     <View style={styles.fill} accessibilityViewIsModal>
       <Image
-        source={isDark ? SCENE_DARK : SCENE_LIGHT}
+        source={getGroveScene(item.tree.species, isDark)}
         style={StyleSheet.absoluteFill}
         resizeMode="cover"
         accessibilityIgnoresInvertColors
       />
 
       <SafeAreaView edges={["top", "left", "right"]} style={styles.fill} pointerEvents="box-none">
-        <ScaleView
-          visible={shown}
-          from={0.96}
-          duration="base"
-          style={[styles.stage, { paddingBottom: stageBottom }]}
-          pointerEvents="box-none"
-        >
-          <View style={styles.treeWrap} pointerEvents="none">
-            <TreeIllustration tree={item.tree} size={treeSize} />
-          </View>
-
+        <ScaleView visible={shown} from={0.96} duration="base" style={styles.stage} pointerEvents="box-none">
           <View
+            pointerEvents="none"
             style={[
-              styles.plaque,
+              styles.treeSlot,
               {
-                backgroundColor: isDark ? "#3A3228F2" : "#E4C89AF2",
-                borderColor: isDark ? "#6A5340" : "#B08958",
-                maxHeight: plaqueMaxH,
-                width: plaqueWidth,
+                top: treeTop,
+                width: treeSize,
+                height: treeSize,
+                left: (width - treeSize) / 2,
               },
             ]}
           >
-            <View style={styles.plaqueInner}>
-              <Text
-                style={{
-                  fontSize: theme.typography.sizes.caption,
-                  color: isDark ? "#D4C4A8" : "#6A5340",
-                  textTransform: "capitalize",
-                }}
-                maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-              >
-                {formatPlaqueDate(item.entry.date)}
-              </Text>
-              {mood ? (
-                <View style={styles.moodRow}>
-                  <View style={[styles.moodDot, { backgroundColor: mood.color }]} />
-                  <Text
-                    style={{
-                      fontSize: theme.typography.sizes.caption,
-                      color: isDark ? "#F2EBE3" : "#3A342C",
-                      fontWeight: theme.typography.weights.medium,
-                    }}
-                    maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-                  >
-                    {mood.label}
-                  </Text>
-                </View>
-              ) : null}
-              <ScrollView
-                style={{ maxHeight: plaqueMaxH - 72 }}
-                contentContainerStyle={{ paddingTop: 12 }}
-                nestedScrollEnabled
-                showsVerticalScrollIndicator={false}
-              >
-                {item.entry.note.length > 0 ? (
-                  <Text
-                    style={{
-                      fontSize: theme.typography.sizes.body,
-                      color: isDark ? "#F2EBE3" : "#3A342C",
-                      lineHeight: theme.typography.sizes.body * 1.5,
-                    }}
-                    maxFontSizeMultiplier={theme.typography.scaleLimits.content}
-                  >
-                    {item.entry.note}
-                  </Text>
+            <View
+              style={[
+                styles.groundShadow,
+                {
+                  width: treeSize * 0.52,
+                  backgroundColor: isDark ? "rgba(8, 10, 22, 0.35)" : "rgba(58, 42, 24, 0.16)",
+                },
+              ]}
+            />
+            <TreeIllustration tree={item.tree} size={treeSize} />
+          </View>
+
+          <View style={[styles.plaqueDock, { paddingBottom: stageBottom }]} pointerEvents="box-none">
+            <View
+              style={[
+                styles.plaque,
+                {
+                  backgroundColor: isDark ? "#3A3228F2" : "#E4C89AF2",
+                  borderColor: isDark ? "#6A5340" : "#B08958",
+                  maxHeight: plaqueMaxH,
+                  width: plaqueWidth,
+                },
+              ]}
+            >
+              <View style={styles.plaqueInner}>
+                <Text
+                  style={{
+                    fontSize: theme.typography.sizes.caption,
+                    color: isDark ? "#D4C4A8" : "#6A5340",
+                    textTransform: "capitalize",
+                  }}
+                  maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
+                >
+                  {formatPlaqueDate(item.entry.date)}
+                </Text>
+                {mood ? (
+                  <View style={styles.moodRow}>
+                    <View style={[styles.moodDot, { backgroundColor: mood.color }]} />
+                    <Text
+                      style={{
+                        fontSize: theme.typography.sizes.caption,
+                        color: isDark ? "#F2EBE3" : "#3A342C",
+                        fontWeight: theme.typography.weights.medium,
+                      }}
+                      maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
+                    >
+                      {mood.label}
+                    </Text>
+                  </View>
                 ) : null}
-                {item.entry.smallWin ? (
-                  <Text
-                    style={{
-                      marginTop: 10,
-                      color: theme.colors.accentWarm,
-                      fontStyle: "italic",
-                      fontSize: theme.typography.sizes.caption,
-                    }}
-                    maxFontSizeMultiplier={theme.typography.scaleLimits.content}
-                  >
-                    ✦ {item.entry.smallWin}
-                  </Text>
-                ) : null}
-              </ScrollView>
+                <ScrollView
+                  style={{ maxHeight: plaqueMaxH - 72 }}
+                  contentContainerStyle={{ paddingTop: 12 }}
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator={false}
+                >
+                  {item.entry.note.length > 0 ? (
+                    <Text
+                      style={{
+                        fontSize: theme.typography.sizes.body,
+                        color: isDark ? "#F2EBE3" : "#3A342C",
+                        lineHeight: theme.typography.sizes.body * 1.5,
+                      }}
+                      maxFontSizeMultiplier={theme.typography.scaleLimits.content}
+                    >
+                      {item.entry.note}
+                    </Text>
+                  ) : null}
+                  {item.entry.smallWin ? (
+                    <Text
+                      style={{
+                        marginTop: 10,
+                        color: theme.colors.accentWarm,
+                        fontStyle: "italic",
+                        fontSize: theme.typography.sizes.caption,
+                      }}
+                      maxFontSizeMultiplier={theme.typography.scaleLimits.content}
+                    >
+                      ✦ {item.entry.smallWin}
+                    </Text>
+                  ) : null}
+                </ScrollView>
+              </View>
             </View>
           </View>
         </ScaleView>
@@ -175,13 +188,23 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   stage: {
     flex: 1,
+  },
+  treeSlot: {
+    position: "absolute",
     alignItems: "center",
     justifyContent: "flex-end",
-    paddingHorizontal: 24,
   },
-  treeWrap: {
+  groundShadow: {
+    position: "absolute",
+    bottom: 10,
+    height: 14,
+    borderRadius: 8,
+  },
+  plaqueDock: {
+    flex: 1,
+    justifyContent: "flex-end",
     alignItems: "center",
-    marginBottom: -6,
+    paddingHorizontal: 24,
   },
   plaque: {
     borderRadius: 10,
