@@ -3,7 +3,7 @@ import { TreeSpecies } from "../types";
 import { resolveSpecies } from "./treeSpecies";
 
 /**
- * Широкие поляны в той же пастели, что и assets/trees/*.
+ * Широкие поляны в той же живописной акварели, что и assets/trees/*.
  * Герой — спрайт выбранного вида; фон только дальние холмы того же семейства.
  */
 const OAK = {
