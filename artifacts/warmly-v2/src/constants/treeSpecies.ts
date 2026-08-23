@@ -10,8 +10,8 @@ export interface SpeciesVisual {
 }
 
 /**
- * Мягкий минималистичный 2D / pastel — ассеты из assets/trees/
- * по гайду Warmly (oak.png, birch.png, cherry.png для сакуры…).
+ * Живописные акварельные спрайты из assets/trees/
+ * (oak.png, birch.png, cherry.png для сакуры…).
  */
 export const TREE_SPECIES_CATALOG: SpeciesVisual[] = [
   {
