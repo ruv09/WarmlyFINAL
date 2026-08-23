@@ -13,6 +13,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { ScaleView } from "../animation";
 import { TreeIllustration } from "../tree/TreeIllustration";
 import { CatalogItem } from "../../services/forest/catalog";
+import { fitStaticBackground } from "../../services/forest/backgroundFit";
 import { getGroveScene } from "../../constants/groveScenes";
 import { getMoodById } from "../../constants/moods";
 import { parseDateKey } from "../../utils/date";
@@ -32,8 +33,8 @@ function formatPlaqueDate(dateKey: string): string {
 }
 
 /**
- * Статичная сцена: поляна выбранного вида + то же дерево, что в каталоге.
- * Камера отведена — дерево сидит в середине луга, табличка впереди на тропинке.
+ * Статичная сцена: исходный PNG поляны + дерево + табличка.
+ * Фон масштабируется сам по себе (contain), без cover и без камеры леса.
  */
 export function TreeGroveScene({ item, onClose }: Props) {
   const theme = useTheme();
@@ -41,6 +42,14 @@ export function TreeGroveScene({ item, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
   const [shown, setShown] = useState(false);
+  const sceneSource = getGroveScene(item.tree.species, isDark);
+  const resolved = Image.resolveAssetSource(sceneSource);
+  const sceneFrame = fitStaticBackground(
+    resolved?.width ?? 946,
+    resolved?.height ?? 2048,
+    width,
+    height,
+  );
   const treeSize = Math.round(Math.min(width * 0.44, height * 0.34, 248));
   const treeTop = Math.round(height * 0.2);
   const plaqueMaxH = Math.round(height * 0.28);
@@ -53,11 +62,14 @@ export function TreeGroveScene({ item, onClose }: Props) {
   }, []);
 
   return (
-    <View style={styles.fill} accessibilityViewIsModal>
+    <View
+      style={[styles.fill, { backgroundColor: isDark ? "#161428" : "#C9D8E6" }]}
+      accessibilityViewIsModal
+    >
       <Image
-        source={getGroveScene(item.tree.species, isDark)}
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
+        source={sceneSource}
+        style={[styles.sceneImage, sceneFrame]}
+        resizeMode="contain"
         accessibilityIgnoresInvertColors
       />
 
@@ -186,6 +198,9 @@ export function TreeGroveScene({ item, onClose }: Props) {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  sceneImage: {
+    position: "absolute",
+  },
   stage: {
     flex: 1,
   },
