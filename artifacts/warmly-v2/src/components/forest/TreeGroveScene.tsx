@@ -17,26 +17,8 @@ import { getMoodById } from "../../constants/moods";
 import { parseDateKey } from "../../utils/date";
 import { useTheme } from "../../theme";
 
-const GROVES_LIGHT = [
-  require("../../../assets/forest/grove-1.jpg"),
-  require("../../../assets/forest/grove-2.jpg"),
-  require("../../../assets/forest/grove-3.jpg"),
-] as const;
-
-const GROVES_DARK = [
-  require("../../../assets/forest/grove-4.jpg"),
-  require("../../../assets/forest/grove-5.jpg"),
-] as const;
-
-function pickGrove(treeId: string, dark: boolean) {
-  const set = dark ? GROVES_DARK : GROVES_LIGHT;
-  let h = 2166136261;
-  for (let i = 0; i < treeId.length; i++) {
-    h ^= treeId.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return set[(h >>> 0) % set.length];
-}
+const SCENE_LIGHT = require("../../../assets/forest/scene-light.jpg");
+const SCENE_DARK = require("../../../assets/forest/scene-dark.jpg");
 
 type Props = {
   item: CatalogItem;
@@ -61,8 +43,12 @@ export function TreeGroveScene({ item, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
   const [shown, setShown] = useState(false);
-  const treeSize = Math.round(Math.min(width * 0.62, height * 0.36, 280));
-  const plaqueMaxH = Math.round(height * 0.32);
+  // Дерево и табличка сидят на тропинке в нижней трети кадра —
+  // между фонарями, не на небе и не поверх домика слева.
+  const treeSize = Math.round(Math.min(width * 0.5, height * 0.28, 236));
+  const plaqueMaxH = Math.round(height * 0.28);
+  const plaqueWidth = Math.min(width - 56, 340);
+  const stageBottom = Math.max(insets.bottom, 10) + 82;
   const mood = getMoodById(item.entry.moodId);
 
   useEffect(() => {
@@ -72,14 +58,20 @@ export function TreeGroveScene({ item, onClose }: Props) {
   return (
     <View style={styles.fill} accessibilityViewIsModal>
       <Image
-        source={pickGrove(item.tree.id, isDark)}
+        source={isDark ? SCENE_DARK : SCENE_LIGHT}
         style={StyleSheet.absoluteFill}
         resizeMode="cover"
         accessibilityIgnoresInvertColors
       />
 
       <SafeAreaView edges={["top", "left", "right"]} style={styles.fill} pointerEvents="box-none">
-        <ScaleView visible={shown} from={0.96} duration="base" style={styles.stage} pointerEvents="box-none">
+        <ScaleView
+          visible={shown}
+          from={0.96}
+          duration="base"
+          style={[styles.stage, { paddingBottom: stageBottom }]}
+          pointerEvents="box-none"
+        >
           <View style={styles.treeWrap} pointerEvents="none">
             <TreeIllustration tree={item.tree} size={treeSize} />
           </View>
@@ -91,7 +83,7 @@ export function TreeGroveScene({ item, onClose }: Props) {
                 backgroundColor: isDark ? "#3A3228F2" : "#E4C89AF2",
                 borderColor: isDark ? "#6A5340" : "#B08958",
                 maxHeight: plaqueMaxH,
-                width: Math.min(width - 48, 360),
+                width: plaqueWidth,
               },
             ]}
           >
@@ -184,18 +176,22 @@ const styles = StyleSheet.create({
   stage: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-end",
     paddingHorizontal: 24,
-    paddingBottom: 88,
   },
   treeWrap: {
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: -6,
   },
   plaque: {
     borderRadius: 10,
     borderWidth: 2,
     padding: 4,
+    shadowColor: "#3A2A18",
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
   },
   plaqueInner: {
     borderRadius: 6,
