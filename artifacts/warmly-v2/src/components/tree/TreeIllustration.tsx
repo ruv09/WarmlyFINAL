@@ -14,8 +14,8 @@ interface TreeIllustrationProps {
 }
 
 /**
- * Живописный спрайт из assets/trees/*.
- * Каталог — painted/ с островком; сцена поляны — rooted/.
+ * Акварельный спрайт из assets/trees/day|night.
+ * Одна кисть с полянами; без собственной лужайки.
  */
 export const TreeIllustration = memo(function TreeIllustration({
   tree,

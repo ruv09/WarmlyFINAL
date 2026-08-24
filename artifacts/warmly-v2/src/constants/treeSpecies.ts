@@ -7,114 +7,126 @@ export interface SpeciesVisual {
   heightScale: number;
   image: ImageSourcePropType;
   imageDark: ImageSourcePropType;
-  /** Ствол без круглой лужайки — только для сцены поляны. */
+  /** Ствол без лужайки — сцена поляны и каталог одной кисти. */
   imagePlanted: ImageSourcePropType;
   imagePlantedDark: ImageSourcePropType;
 }
 
+function layers(
+  day: ImageSourcePropType,
+  night: ImageSourcePropType,
+): Pick<SpeciesVisual, "image" | "imageDark" | "imagePlanted" | "imagePlantedDark"> {
+  return {
+    image: day,
+    imageDark: night,
+    imagePlanted: day,
+    imagePlantedDark: night,
+  };
+}
+
 /**
- * Живописные акварельные спрайты из assets/trees/painted/
- * (каталог) и rooted/ (сцена дерева в поляне).
+ * Вырезанные акварельные деревья: assets/trees/day|night.
+ * Поляны без героя: assets/forest/meadows.
  */
 export const TREE_SPECIES_CATALOG: SpeciesVisual[] = [
   {
     species: "oak",
     labelRu: "Дуб",
-    heightScale: 1.1,
-    image: require("../../assets/trees/painted/oak.png"),
-    imageDark: require("../../assets/trees/painted/oak-dark.png"),
-    imagePlanted: require("../../assets/trees/rooted/oak.png"),
-    imagePlantedDark: require("../../assets/trees/rooted/oak-dark.png"),
+    heightScale: 1.08,
+    ...layers(
+      require("../../assets/trees/day/oak.png"),
+      require("../../assets/trees/night/oak.png"),
+    ),
   },
   {
     species: "birch",
     labelRu: "Берёза",
-    heightScale: 1.14,
-    image: require("../../assets/trees/painted/birch.png"),
-    imageDark: require("../../assets/trees/painted/birch-dark.png"),
-    imagePlanted: require("../../assets/trees/rooted/birch.png"),
-    imagePlantedDark: require("../../assets/trees/rooted/birch-dark.png"),
+    heightScale: 1.12,
+    ...layers(
+      require("../../assets/trees/day/birch.png"),
+      require("../../assets/trees/night/birch.png"),
+    ),
   },
   {
     species: "pine",
     labelRu: "Сосна",
-    heightScale: 1.2,
-    image: require("../../assets/trees/painted/pine.png"),
-    imageDark: require("../../assets/trees/painted/pine-dark.png"),
-    imagePlanted: require("../../assets/trees/rooted/pine.png"),
-    imagePlantedDark: require("../../assets/trees/rooted/pine-dark.png"),
+    heightScale: 1.18,
+    ...layers(
+      require("../../assets/trees/day/pine.png"),
+      require("../../assets/trees/night/pine.png"),
+    ),
   },
   {
     species: "spruce",
     labelRu: "Ель",
-    heightScale: 1.18,
-    image: require("../../assets/trees/painted/spruce.png"),
-    imageDark: require("../../assets/trees/painted/spruce-dark.png"),
-    imagePlanted: require("../../assets/trees/rooted/spruce.png"),
-    imagePlantedDark: require("../../assets/trees/rooted/spruce-dark.png"),
+    heightScale: 1.16,
+    ...layers(
+      require("../../assets/trees/day/spruce.png"),
+      require("../../assets/trees/night/spruce.png"),
+    ),
   },
   {
     species: "maple",
     labelRu: "Клён",
-    heightScale: 1.06,
-    image: require("../../assets/trees/painted/maple.png"),
-    imageDark: require("../../assets/trees/painted/maple-dark.png"),
-    imagePlanted: require("../../assets/trees/rooted/maple.png"),
-    imagePlantedDark: require("../../assets/trees/rooted/maple-dark.png"),
+    heightScale: 1.04,
+    ...layers(
+      require("../../assets/trees/day/maple.png"),
+      require("../../assets/trees/night/maple.png"),
+    ),
   },
   {
     species: "linden",
     labelRu: "Липа",
-    heightScale: 1.04,
-    image: require("../../assets/trees/painted/linden.png"),
-    imageDark: require("../../assets/trees/painted/linden-dark.png"),
-    imagePlanted: require("../../assets/trees/rooted/linden.png"),
-    imagePlantedDark: require("../../assets/trees/rooted/linden-dark.png"),
+    heightScale: 1.02,
+    ...layers(
+      require("../../assets/trees/day/linden.png"),
+      require("../../assets/trees/night/linden.png"),
+    ),
   },
   {
     species: "sakura",
     labelRu: "Сакура",
     heightScale: 1,
-    image: require("../../assets/trees/painted/cherry.png"),
-    imageDark: require("../../assets/trees/painted/cherry-dark.png"),
-    imagePlanted: require("../../assets/trees/rooted/cherry.png"),
-    imagePlantedDark: require("../../assets/trees/rooted/cherry-dark.png"),
+    ...layers(
+      require("../../assets/trees/day/sakura.png"),
+      require("../../assets/trees/night/sakura.png"),
+    ),
   },
   {
     species: "apple",
     labelRu: "Яблоня",
-    heightScale: 0.94,
-    image: require("../../assets/trees/painted/apple.png"),
-    imageDark: require("../../assets/trees/painted/apple-dark.png"),
-    imagePlanted: require("../../assets/trees/rooted/apple.png"),
-    imagePlantedDark: require("../../assets/trees/rooted/apple-dark.png"),
+    heightScale: 0.96,
+    ...layers(
+      require("../../assets/trees/day/apple.png"),
+      require("../../assets/trees/night/apple.png"),
+    ),
   },
   {
     species: "bush",
     labelRu: "Куст",
-    heightScale: 0.66,
-    image: require("../../assets/trees/painted/bush.png"),
-    imageDark: require("../../assets/trees/painted/bush-dark.png"),
-    imagePlanted: require("../../assets/trees/rooted/bush.png"),
-    imagePlantedDark: require("../../assets/trees/rooted/bush-dark.png"),
+    heightScale: 0.7,
+    ...layers(
+      require("../../assets/trees/day/bush.png"),
+      require("../../assets/trees/night/bush.png"),
+    ),
   },
   {
     species: "willow",
     labelRu: "Ива",
-    heightScale: 1.08,
-    image: require("../../assets/trees/painted/willow.png"),
-    imageDark: require("../../assets/trees/painted/willow-dark.png"),
-    imagePlanted: require("../../assets/trees/rooted/willow.png"),
-    imagePlantedDark: require("../../assets/trees/rooted/willow-dark.png"),
+    heightScale: 1.06,
+    ...layers(
+      require("../../assets/trees/day/willow.png"),
+      require("../../assets/trees/night/willow.png"),
+    ),
   },
   {
     species: "rowan",
     labelRu: "Рябина",
-    heightScale: 0.96,
-    image: require("../../assets/trees/painted/rowan.png"),
-    imageDark: require("../../assets/trees/painted/rowan-dark.png"),
-    imagePlanted: require("../../assets/trees/rooted/rowan.png"),
-    imagePlantedDark: require("../../assets/trees/rooted/rowan-dark.png"),
+    heightScale: 0.98,
+    ...layers(
+      require("../../assets/trees/day/rowan.png"),
+      require("../../assets/trees/night/rowan.png"),
+    ),
   },
 ];
 

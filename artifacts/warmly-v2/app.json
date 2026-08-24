@@ -3,7 +3,7 @@
     "name": "Warmly",
     "slug": "warmly",
     "scheme": "warmly",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/brand/icon.png",
@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "com.warmly.app",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"

@@ -5,7 +5,6 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { ScaleView, WindSwayView } from "../animation";
 import { TreeIllustration } from "../tree/TreeIllustration";
 import { WoodenPlaque } from "./WoodenPlaque";
-import { GroveFairyLights } from "./GroveFairyLights";
 import { CatalogItem } from "../../services/forest/catalog";
 import { fitStaticBackground } from "../../services/forest/backgroundFit";
 import { GROVE_SCENE_PIXELS, getGroveScene } from "../../constants/groveScenes";
@@ -33,7 +32,7 @@ export function TreeGroveScene({ item, onClose }: Props) {
     width,
     height,
   );
-  const treeSize = Math.round(Math.min(width * 0.5, height * 0.38, 268));
+  const treeSize = Math.round(Math.min(width * 0.56, height * 0.42, 300));
   const plaqueMaxH = Math.round(height * 0.28);
   const plaqueWidth = Math.min(width - 48, 360);
   const stageBottom = Math.max(insets.bottom, 10) + 82;
@@ -110,7 +109,6 @@ export function TreeGroveScene({ item, onClose }: Props) {
             ]}
           >
             <TreeIllustration tree={item.tree} size={treeSize} planted />
-            {isDark ? <GroveFairyLights size={treeSize} /> : null}
           </WindSwayView>
 
           <View style={styles.plaqueDock}>
