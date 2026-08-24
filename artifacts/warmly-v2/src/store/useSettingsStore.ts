@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { Settings } from "../types";
 import { settingsRepository, syncNotifications, DEFAULT_SETTINGS } from "../services";
-import { buildUniqueAiPhrase, toDateKey } from "../utils";
+import { DAILY_PHRASES, buildUniqueAiPhrase, toDateKey } from "../utils";
 
 interface SettingsState {
   settings: Settings;
@@ -48,7 +48,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     if (!prev.supportivePhrasesEnabled) return;
 
     const today = toDateKey();
-    if (prev.dailyPhraseDate === today && prev.dailyPhrase) return;
+    const phraseStillValid =
+      prev.dailyPhraseDate === today &&
+      Boolean(prev.dailyPhrase) &&
+      DAILY_PHRASES.includes(prev.dailyPhrase);
+    if (phraseStillValid) return;
 
     const phrase = buildUniqueAiPhrase(prev.recentPhrases);
     const next: Settings = {

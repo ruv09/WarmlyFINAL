@@ -4,7 +4,13 @@ import { STORAGE_KEYS } from "../../constants/storageKeys";
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: "auto",
-  notifications: { enabled: false, morningTime: "09:00", eveningTime: "21:00" },
+  notifications: {
+    enabled: false,
+    morningEnabled: true,
+    eveningEnabled: true,
+    morningTime: "09:00",
+    eveningTime: "21:00",
+  },
   name: "",
   isOnboarded: false,
   joinedAt: "",

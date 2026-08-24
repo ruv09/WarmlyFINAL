@@ -2,6 +2,8 @@ export type ThemeMode = "light" | "dark" | "auto";
 
 export interface NotificationSettings {
   enabled: boolean;
+  morningEnabled: boolean;
+  eveningEnabled: boolean;
   morningTime: string; // HH:mm
   eveningTime: string; // HH:mm
 }

@@ -2,6 +2,9 @@ import { ImageSourcePropType } from "react-native";
 import { TreeSpecies } from "../types";
 import { resolveSpecies } from "./treeSpecies";
 
+/** Реальный размер JPG поляны. Не брать 946×2048 — это ломает contain. */
+export const GROVE_SCENE_PIXELS = { width: 1024, height: 1536 } as const;
+
 /**
  * Широкие поляны в той же живописной акварели, что и assets/trees/*.
  * Герой — спрайт выбранного вида; фон только дальние холмы того же семейства.

@@ -16,9 +16,9 @@ import { exportEntries } from "../services";
 import { formatHumanDate, getFallbackQuote, treesLabel } from "../utils";
 
 const THEME_OPTIONS: { label: string; value: ThemeMode; preview: [string, string] }[] = [
-  { label: "Светлая", value: "light", preview: ["#F3EBDC", "#8A9A6E"] },
-  { label: "Тёмная", value: "dark", preview: ["#1A1230", "#E8B975"] },
-  { label: "Системная", value: "auto", preview: ["#2A2048", "#F3EBDC"] },
+  { label: "Светлая", value: "light", preview: ["#EBE6D4", "#7D9570"] },
+  { label: "Тёмная", value: "dark", preview: ["#161428", "#E0B56A"] },
+  { label: "Системная", value: "auto", preview: ["#222036", "#EBE6D4"] },
 ];
 
 function StatRow({ label, value }: { label: string; value: string }) {
@@ -122,7 +122,7 @@ export function ProfileScreen() {
               height: 64,
               borderRadius: 32,
               overflow: "hidden",
-              backgroundColor: isDark ? "#3A3258" : "#E8DFD0",
+              backgroundColor: theme.colors.border,
               borderWidth: 2,
               borderColor: theme.colors.border,
             }}
@@ -345,7 +345,7 @@ export function ProfileScreen() {
         <View style={{ flex: 1, paddingRight: theme.spacing("md") }}>
           <Text style={{ color: theme.colors.textPrimary }}>Напоминания</Text>
           <Text style={{ color: theme.colors.textSecondary, fontSize: theme.typography.sizes.caption }}>
-            Утром — мысль дня, вечером — запись в лес
+            Утром — мысль дня, вечером — запись, если её ещё нет. Не больше двух раз в день.
           </Text>
         </View>
         <Switch

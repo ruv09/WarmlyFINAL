@@ -24,7 +24,7 @@ export default function TabsLayout() {
           fontWeight: theme.typography.weights.medium,
         },
         tabBarStyle: {
-          backgroundColor: isDark ? "#21183AF5" : "#FFF9F0F5",
+          backgroundColor: theme.colors.tabBar,
           borderTopWidth: 0,
           borderTopLeftRadius: 18,
           borderTopRightRadius: 18,

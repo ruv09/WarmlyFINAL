@@ -72,8 +72,8 @@ export function HomeScreen() {
         style={[
           styles.phraseHero,
           {
-            backgroundColor: isDark ? "#2A2048" : "#FFF9F0",
-            borderColor: isDark ? "#3A3258" : "#E4D8C4",
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
             marginTop: theme.spacing("lg"),
             marginBottom: theme.spacing("lg"),
           },

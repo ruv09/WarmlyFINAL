@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Text, TextInput } from "react-native";
+import { Switch, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { KeyboardScreen } from "../components/layout";
@@ -10,13 +10,16 @@ import { useTheme } from "../theme";
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 /**
- * Простой текстовый ввод времени в формате HH:mm.
+ * Время и раздельные тумблеры утро/вечер.
+ * Оба сразу — это потолок, не обязанность.
  */
 export function NotificationsScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { settings, updateSettings } = useSettings();
 
+  const [morningEnabled, setMorningEnabled] = useState(settings.notifications.morningEnabled !== false);
+  const [eveningEnabled, setEveningEnabled] = useState(settings.notifications.eveningEnabled !== false);
   const [morningTime, setMorningTime] = useState(settings.notifications.morningTime);
   const [eveningTime, setEveningTime] = useState(settings.notifications.eveningTime);
 
@@ -25,7 +28,13 @@ export function NotificationsScreen() {
   async function handleSave() {
     if (!isValid) return;
     await updateSettings({
-      notifications: { ...settings.notifications, morningTime, eveningTime },
+      notifications: {
+        ...settings.notifications,
+        morningEnabled,
+        eveningEnabled,
+        morningTime,
+        eveningTime,
+      },
     });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     router.back();
@@ -40,38 +49,48 @@ export function NotificationsScreen() {
     fontSize: theme.typography.sizes.body,
   };
 
-  const label = (text: string) => (
-    <Text
+  const row = (label: string, value: boolean, onValueChange: (next: boolean) => void) => (
+    <View
       style={{
-        color: theme.colors.textSecondary,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
         marginTop: theme.spacing("lg"),
         marginBottom: theme.spacing("sm"),
       }}
     >
-      {text}
-    </Text>
+      <Text style={{ color: theme.colors.textPrimary, flex: 1, paddingRight: 12 }}>{label}</Text>
+      <Switch value={value} onValueChange={onValueChange} />
+    </View>
   );
 
   return (
     <KeyboardScreen>
-      {label("Утреннее напоминание (ЧЧ:ММ)")}
+      <Text style={{ color: theme.colors.textSecondary, lineHeight: 22 }}>
+        Самое большее два тихих напоминания в день, без звука. Вечернее не придёт, если день уже
+        записан.
+      </Text>
+
+      {row("Утром", morningEnabled, setMorningEnabled)}
       <TextInput
         value={morningTime}
         onChangeText={setMorningTime}
         placeholder="09:00"
         placeholderTextColor={theme.colors.textSecondary}
         keyboardType="numbers-and-punctuation"
-        style={inputStyle}
+        editable={morningEnabled}
+        style={[inputStyle, { opacity: morningEnabled ? 1 : 0.45 }]}
       />
 
-      {label("Вечернее напоминание (ЧЧ:ММ)")}
+      {row("Вечером", eveningEnabled, setEveningEnabled)}
       <TextInput
         value={eveningTime}
         onChangeText={setEveningTime}
         placeholder="21:00"
         placeholderTextColor={theme.colors.textSecondary}
         keyboardType="numbers-and-punctuation"
-        style={inputStyle}
+        editable={eveningEnabled}
+        style={[inputStyle, { opacity: eveningEnabled ? 1 : 0.45 }]}
       />
 
       <Text style={{ height: theme.spacing("xl") }} />
