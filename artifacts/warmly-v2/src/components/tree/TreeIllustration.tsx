@@ -12,7 +12,7 @@ interface TreeIllustrationProps {
 }
 
 /**
- * Живописный спрайт из assets/trees/*.png
+ * Живописный спрайт из assets/trees/painted/*.png
  * (не геометрия View/SVG).
  */
 export const TreeIllustration = memo(function TreeIllustration({

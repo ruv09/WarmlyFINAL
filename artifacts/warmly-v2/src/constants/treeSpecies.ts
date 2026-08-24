@@ -10,86 +10,85 @@ export interface SpeciesVisual {
 }
 
 /**
- * Живописные акварельные спрайты из assets/trees/
- * (oak.png, birch.png, cherry.png для сакуры…).
+ * Живописные акварельные спрайты из assets/trees/painted/
  */
 export const TREE_SPECIES_CATALOG: SpeciesVisual[] = [
   {
     species: "oak",
     labelRu: "Дуб",
     heightScale: 1.1,
-    image: require("../../assets/trees/oak.png"),
-    imageDark: require("../../assets/trees/oak-dark.png"),
+    image: require("../../assets/trees/painted/oak.png"),
+    imageDark: require("../../assets/trees/painted/oak-dark.png"),
   },
   {
     species: "birch",
     labelRu: "Берёза",
     heightScale: 1.14,
-    image: require("../../assets/trees/birch.png"),
-    imageDark: require("../../assets/trees/birch-dark.png"),
+    image: require("../../assets/trees/painted/birch.png"),
+    imageDark: require("../../assets/trees/painted/birch-dark.png"),
   },
   {
     species: "pine",
     labelRu: "Сосна",
     heightScale: 1.2,
-    image: require("../../assets/trees/pine.png"),
-    imageDark: require("../../assets/trees/pine-dark.png"),
+    image: require("../../assets/trees/painted/pine.png"),
+    imageDark: require("../../assets/trees/painted/pine-dark.png"),
   },
   {
     species: "spruce",
     labelRu: "Ель",
     heightScale: 1.18,
-    image: require("../../assets/trees/spruce.png"),
-    imageDark: require("../../assets/trees/spruce-dark.png"),
+    image: require("../../assets/trees/painted/spruce.png"),
+    imageDark: require("../../assets/trees/painted/spruce-dark.png"),
   },
   {
     species: "maple",
     labelRu: "Клён",
     heightScale: 1.06,
-    image: require("../../assets/trees/maple.png"),
-    imageDark: require("../../assets/trees/maple-dark.png"),
+    image: require("../../assets/trees/painted/maple.png"),
+    imageDark: require("../../assets/trees/painted/maple-dark.png"),
   },
   {
     species: "linden",
     labelRu: "Липа",
     heightScale: 1.04,
-    image: require("../../assets/trees/linden.png"),
-    imageDark: require("../../assets/trees/linden-dark.png"),
+    image: require("../../assets/trees/painted/linden.png"),
+    imageDark: require("../../assets/trees/painted/linden-dark.png"),
   },
   {
     species: "sakura",
     labelRu: "Сакура",
     heightScale: 1,
-    image: require("../../assets/trees/cherry.png"),
-    imageDark: require("../../assets/trees/cherry-dark.png"),
+    image: require("../../assets/trees/painted/cherry.png"),
+    imageDark: require("../../assets/trees/painted/cherry-dark.png"),
   },
   {
     species: "apple",
     labelRu: "Яблоня",
     heightScale: 0.94,
-    image: require("../../assets/trees/apple.png"),
-    imageDark: require("../../assets/trees/apple-dark.png"),
+    image: require("../../assets/trees/painted/apple.png"),
+    imageDark: require("../../assets/trees/painted/apple-dark.png"),
   },
   {
     species: "bush",
     labelRu: "Куст",
     heightScale: 0.66,
-    image: require("../../assets/trees/bush.png"),
-    imageDark: require("../../assets/trees/bush-dark.png"),
+    image: require("../../assets/trees/painted/bush.png"),
+    imageDark: require("../../assets/trees/painted/bush-dark.png"),
   },
   {
     species: "willow",
     labelRu: "Ива",
     heightScale: 1.08,
-    image: require("../../assets/trees/willow.png"),
-    imageDark: require("../../assets/trees/willow-dark.png"),
+    image: require("../../assets/trees/painted/willow.png"),
+    imageDark: require("../../assets/trees/painted/willow-dark.png"),
   },
   {
     species: "rowan",
     labelRu: "Рябина",
     heightScale: 0.96,
-    image: require("../../assets/trees/rowan.png"),
-    imageDark: require("../../assets/trees/rowan-dark.png"),
+    image: require("../../assets/trees/painted/rowan.png"),
+    imageDark: require("../../assets/trees/painted/rowan-dark.png"),
   },
 ];
 

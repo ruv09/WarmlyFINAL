@@ -29,6 +29,9 @@ export function WoodenPlaque({ item, maxHeight, width }: Props) {
   const mood = getMoodById(item.entry.moodId);
   const ink = isDark ? "#F3E6D2" : "#3A2A18";
   const muted = isDark ? "#D4C4A8" : "#6A4A2C";
+  const planks = isDark
+    ? ["#4A3728", "#3F2F22", "#53402E", "#3A2B1F", "#4C3826"]
+    : ["#E2C08A", "#D4B07A", "#E8C994", "#CFA66E", "#DDB888"];
 
   return (
     <View
@@ -41,6 +44,20 @@ export function WoodenPlaque({ item, maxHeight, width }: Props) {
         },
       ]}
     >
+      <View style={styles.plankStack} pointerEvents="none">
+        {planks.map((color, index) => (
+          <View
+            key={color + String(index)}
+            style={[
+              styles.plank,
+              {
+                backgroundColor: color,
+                borderBottomColor: isDark ? "#24180F" : "#A07848",
+              },
+            ]}
+          />
+        ))}
+      </View>
       <ImageBackground
         source={isDark ? WOOD_DARK : WOOD_LIGHT}
         style={styles.wood}
@@ -120,6 +137,13 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
+  },
+  plankStack: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  plank: {
+    flex: 1,
+    borderBottomWidth: 1,
   },
   wood: {
     minHeight: 128,

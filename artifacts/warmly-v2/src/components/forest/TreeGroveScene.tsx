@@ -7,7 +7,7 @@ import { TreeIllustration } from "../tree/TreeIllustration";
 import { WoodenPlaque } from "./WoodenPlaque";
 import { CatalogItem } from "../../services/forest/catalog";
 import { fitStaticBackground } from "../../services/forest/backgroundFit";
-import { getGroveScene } from "../../constants/groveScenes";
+import { GROVE_SCENE_PIXELS, getGroveScene } from "../../constants/groveScenes";
 import { useTheme } from "../../theme";
 
 type Props = {
@@ -26,10 +26,9 @@ export function TreeGroveScene({ item, onClose }: Props) {
   const { height, width } = useWindowDimensions();
   const [shown, setShown] = useState(false);
   const sceneSource = getGroveScene(item.tree.species, isDark);
-  const resolved = Image.resolveAssetSource(sceneSource);
   const sceneFrame = fitStaticBackground(
-    resolved?.width ?? 946,
-    resolved?.height ?? 2048,
+    GROVE_SCENE_PIXELS.width,
+    GROVE_SCENE_PIXELS.height,
     width,
     height,
   );
@@ -37,6 +36,9 @@ export function TreeGroveScene({ item, onClose }: Props) {
   const plaqueMaxH = Math.round(height * 0.28);
   const plaqueWidth = Math.min(width - 48, 360);
   const stageBottom = Math.max(insets.bottom, 10) + 82;
+  // Корни на нарисованной земле (~78% высоты PNG), не в небе.
+  const treeTop = Math.round(sceneFrame.top + sceneFrame.height * 0.78 - treeSize);
+  const treeLeft = Math.round(sceneFrame.left + (sceneFrame.width - treeSize) / 2);
 
   useEffect(() => {
     setShown(true);
@@ -62,7 +64,19 @@ export function TreeGroveScene({ item, onClose }: Props) {
           style={[styles.stage, { paddingBottom: stageBottom }]}
           pointerEvents="box-none"
         >
-          <View pointerEvents="none" style={[styles.treeSlot, { width: treeSize, height: treeSize }]}>
+          <View
+            pointerEvents="none"
+            style={[
+              styles.treeSlot,
+              {
+                position: "absolute",
+                top: treeTop,
+                left: treeLeft,
+                width: treeSize,
+                height: treeSize,
+              },
+            ]}
+          >
             <View
               style={[
                 styles.groundShadow,
@@ -75,7 +89,9 @@ export function TreeGroveScene({ item, onClose }: Props) {
             <TreeIllustration tree={item.tree} size={treeSize} />
           </View>
 
-          <WoodenPlaque item={item} maxHeight={plaqueMaxH} width={plaqueWidth} />
+          <View style={styles.plaqueDock}>
+            <WoodenPlaque item={item} maxHeight={plaqueMaxH} width={plaqueWidth} />
+          </View>
         </ScaleView>
       </SafeAreaView>
 
@@ -114,7 +130,10 @@ const styles = StyleSheet.create({
   treeSlot: {
     alignItems: "center",
     justifyContent: "flex-end",
-    marginBottom: -10,
+  },
+  plaqueDock: {
+    width: "100%",
+    alignItems: "center",
   },
   groundShadow: {
     position: "absolute",
