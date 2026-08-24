@@ -9,17 +9,20 @@ interface TreeIllustrationProps {
   size?: number;
   depthFade?: number;
   fillParent?: boolean;
+  /** Ствол без собственной лужайки — сажаем в нарисованную землю сцены. */
+  planted?: boolean;
 }
 
 /**
- * Живописный спрайт из assets/trees/painted/*.png
- * (не геометрия View/SVG).
+ * Живописный спрайт из assets/trees/*.
+ * Каталог — painted/ с островком; сцена поляны — rooted/.
  */
 export const TreeIllustration = memo(function TreeIllustration({
   tree,
   size = 160,
   depthFade = 1,
   fillParent = false,
+  planted = false,
 }: TreeIllustrationProps) {
   const theme = useTheme();
   const isDark = theme.mode === "dark";
@@ -35,7 +38,7 @@ export const TreeIllustration = memo(function TreeIllustration({
       ]}
     >
       <Image
-        source={getTreeImage(tree.species, isDark, tree.variant)}
+        source={getTreeImage(tree.species, isDark, planted)}
         style={fillParent ? styles.fillImage : { width: side, height: side }}
         resizeMode="contain"
         accessibilityLabel={visual.labelRu}

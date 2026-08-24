@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { ScaleView } from "../animation";
+import { ScaleView, WindSwayView } from "../animation";
 import { TreeIllustration } from "../tree/TreeIllustration";
 import { WoodenPlaque } from "./WoodenPlaque";
+import { GroveFairyLights } from "./GroveFairyLights";
 import { CatalogItem } from "../../services/forest/catalog";
 import { fitStaticBackground } from "../../services/forest/backgroundFit";
 import { GROVE_SCENE_PIXELS, getGroveScene } from "../../constants/groveScenes";
@@ -16,8 +17,8 @@ type Props = {
 };
 
 /**
- * Статичная сцена: исходный PNG поляны + дерево + табличка.
- * Фон масштабируется сам по себе (contain), без cover и без камеры леса.
+ * Статичная сцена: картина поляны + дерево, посаженное в её землю.
+ * Без камеры, жестов и джойстика. Назад — справа снизу.
  */
 export function TreeGroveScene({ item, onClose }: Props) {
   const theme = useTheme();
@@ -32,13 +33,14 @@ export function TreeGroveScene({ item, onClose }: Props) {
     width,
     height,
   );
-  const treeSize = Math.round(Math.min(width * 0.44, height * 0.34, 248));
+  const treeSize = Math.round(Math.min(width * 0.5, height * 0.38, 268));
   const plaqueMaxH = Math.round(height * 0.28);
   const plaqueWidth = Math.min(width - 48, 360);
   const stageBottom = Math.max(insets.bottom, 10) + 82;
   // Корни на нарисованной земле (~78% высоты PNG), не в небе.
   const treeTop = Math.round(sceneFrame.top + sceneFrame.height * 0.78 - treeSize);
   const treeLeft = Math.round(sceneFrame.left + (sceneFrame.width - treeSize) / 2);
+  const swaySeed = item.tree.id.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
 
   useEffect(() => {
     setShown(true);
@@ -46,7 +48,7 @@ export function TreeGroveScene({ item, onClose }: Props) {
 
   return (
     <View
-      style={[styles.fill, { backgroundColor: isDark ? "#161428" : "#C9D8E6" }]}
+      style={[styles.fill, { backgroundColor: theme.colors.groveSky }]}
       accessibilityViewIsModal
     >
       <Image
@@ -54,6 +56,15 @@ export function TreeGroveScene({ item, onClose }: Props) {
         style={[styles.sceneImage, sceneFrame]}
         resizeMode="contain"
         accessibilityIgnoresInvertColors
+      />
+      <View
+        pointerEvents="none"
+        style={[
+          styles.sceneGrade,
+          {
+            backgroundColor: isDark ? "rgba(16, 14, 32, 0.1)" : "rgba(236, 226, 200, 0.08)",
+          },
+        ]}
       />
 
       <SafeAreaView edges={["top", "left", "right"]} style={styles.fill} pointerEvents="box-none">
@@ -67,9 +78,8 @@ export function TreeGroveScene({ item, onClose }: Props) {
           <View
             pointerEvents="none"
             style={[
-              styles.treeSlot,
+              styles.rootTuck,
               {
-                position: "absolute",
                 top: treeTop,
                 left: treeLeft,
                 width: treeSize,
@@ -78,16 +88,30 @@ export function TreeGroveScene({ item, onClose }: Props) {
             ]}
           >
             <View
-              style={[
-                styles.groundShadow,
-                {
-                  width: treeSize * 0.52,
-                  backgroundColor: isDark ? "rgba(8, 10, 22, 0.35)" : "rgba(58, 42, 24, 0.16)",
-                },
-              ]}
+              style={{
+                width: treeSize * 0.2,
+                height: 8,
+                borderRadius: 4,
+                marginBottom: 2,
+                backgroundColor: isDark ? "rgba(24, 36, 24, 0.4)" : "rgba(108, 128, 72, 0.28)",
+              }}
             />
-            <TreeIllustration tree={item.tree} size={treeSize} />
           </View>
+          <WindSwayView
+            seed={swaySeed}
+            style={[
+              styles.treeSlot,
+              {
+                top: treeTop,
+                left: treeLeft,
+                width: treeSize,
+                height: treeSize,
+              },
+            ]}
+          >
+            <TreeIllustration tree={item.tree} size={treeSize} planted />
+            {isDark ? <GroveFairyLights size={treeSize} /> : null}
+          </WindSwayView>
 
           <View style={styles.plaqueDock}>
             <WoodenPlaque item={item} maxHeight={plaqueMaxH} width={plaqueWidth} />
@@ -105,7 +129,7 @@ export function TreeGroveScene({ item, onClose }: Props) {
           {
             right: 20,
             bottom: Math.max(insets.bottom, 10) + 18,
-            backgroundColor: isDark ? "#2A2340F2" : "#FFF9F0F2",
+            backgroundColor: theme.colors.overlay,
             borderColor: isDark ? "#FFFFFF22" : "#C4A07A66",
           },
         ]}
@@ -121,6 +145,9 @@ const styles = StyleSheet.create({
   sceneImage: {
     position: "absolute",
   },
+  sceneGrade: {
+    ...StyleSheet.absoluteFillObject,
+  },
   stage: {
     flex: 1,
     justifyContent: "flex-end",
@@ -128,18 +155,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   treeSlot: {
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  rootTuck: {
+    position: "absolute",
     alignItems: "center",
     justifyContent: "flex-end",
   },
   plaqueDock: {
     width: "100%",
     alignItems: "center",
-  },
-  groundShadow: {
-    position: "absolute",
-    bottom: 10,
-    height: 14,
-    borderRadius: 8,
   },
   backBtn: {
     position: "absolute",

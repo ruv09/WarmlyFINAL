@@ -123,6 +123,14 @@ export function WoodenPlaque({ item, maxHeight, width }: Props) {
           </ScrollView>
         </View>
       </ImageBackground>
+      <View
+        pointerEvents="none"
+        style={[styles.peg, { left: 14, backgroundColor: isDark ? "#2A1C10" : "#8A6238" }]}
+      />
+      <View
+        pointerEvents="none"
+        style={[styles.peg, { right: 14, backgroundColor: isDark ? "#2A1C10" : "#8A6238" }]}
+      />
     </View>
   );
 }
@@ -158,6 +166,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 16,
+  },
+  peg: {
+    position: "absolute",
+    top: 11,
+    zIndex: 2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    opacity: 0.9,
   },
   header: {
     flexDirection: "row",

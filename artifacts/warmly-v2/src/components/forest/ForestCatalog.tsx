@@ -32,6 +32,7 @@ type Props = {
 
 export function ForestCatalog({ entries, trees, onSelectItem, bottomInset, isLoading }: Props) {
   const theme = useTheme();
+  const isDark = theme.mode === "dark";
   const sections = useMemo(() => groupForestByMonth(entries, trees), [entries, trees]);
 
   const renderMonth = useCallback<ListRenderItem<MonthSection>>(
@@ -76,6 +77,13 @@ export function ForestCatalog({ entries, trees, onSelectItem, bottomInset, isLoa
 
   return (
     <View style={[styles.flex, { backgroundColor: theme.colors.background }]}>
+      <View
+        pointerEvents="none"
+        style={[
+          styles.skyWash,
+          { backgroundColor: isDark ? "#1C1A32" : theme.colors.groveSky },
+        ]}
+      />
       <FlatList
         data={sections}
         keyExtractor={(section) => section.key}
@@ -128,7 +136,7 @@ function CatalogHeader() {
         style={[
           styles.leafBtn,
           {
-            backgroundColor: isDark ? "#2A2340CC" : "#FFF9F0CC",
+            backgroundColor: theme.colors.surface,
             borderColor: theme.colors.border,
           },
         ]}
@@ -218,6 +226,14 @@ function MonthGrove({
 
 const styles = StyleSheet.create({
   flex: { flex: 1, overflow: "hidden" },
+  skyWash: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 240,
+    opacity: 0.42,
+  },
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
