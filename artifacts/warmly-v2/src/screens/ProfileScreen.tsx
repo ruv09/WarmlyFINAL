@@ -345,7 +345,7 @@ export function ProfileScreen() {
         <View style={{ flex: 1, paddingRight: theme.spacing("md") }}>
           <Text style={{ color: theme.colors.textPrimary }}>Напоминания</Text>
           <Text style={{ color: theme.colors.textSecondary, fontSize: theme.typography.sizes.caption }}>
-            Утром — мысль дня, вечером — запись в лес
+            Утром — мысль дня, вечером — запись, если её ещё нет. Не больше двух раз в день.
           </Text>
         </View>
         <Switch

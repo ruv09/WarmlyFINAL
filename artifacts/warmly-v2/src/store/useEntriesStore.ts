@@ -5,11 +5,13 @@ import {
   entryRepository,
   placeNextTree,
   placementMeta,
+  syncNotifications,
   treeRepository,
 } from "../services";
 import { requireMoodById } from "../constants/moods";
 import { generateId, toDateKey, toTimeString } from "../utils";
 import { useForestStore } from "./useForestStore";
+import { useSettingsStore } from "./useSettingsStore";
 
 interface EntriesState {
   entries: Entry[];
@@ -79,6 +81,9 @@ export const useEntriesStore = create<EntriesState>((set, get) => ({
     await entryRepository.add(entry);
     await get().load();
     await useForestStore.getState().load();
+    await syncNotifications(useSettingsStore.getState().settings.notifications).catch(
+      () => undefined,
+    );
     return entry;
   },
 
