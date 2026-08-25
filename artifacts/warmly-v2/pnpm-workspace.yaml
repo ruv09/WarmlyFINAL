@@ -1,0 +1,4 @@
+# Own workspace so EAS installs here after the parent yaml is detached.
+packages:
+  - "."
+nodeLinker: hoisted
