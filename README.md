@@ -42,6 +42,8 @@ pnpm start
    eas build -p android --profile preview
    ```
 3. Скачай готовый `.apk` по ссылке из терминала.
+   На EAS установка сама отвязывается от корневого pnpm workspace
+   (`eas-build-pre-install`), иначе облако не находит `expo-router`.
 
 Профиль `preview` в `eas.json` собирает именно **APK** (удобно ставить на телефон без Play Store).
 
