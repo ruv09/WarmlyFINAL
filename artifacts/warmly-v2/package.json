@@ -13,7 +13,8 @@
     "prebuild:android": "expo prebuild --platform android --clean",
     "setup:android": "bash scripts/setup-android.sh",
     "build:apk": "eas build -p android --profile preview",
-    "build:apk:local": "expo prebuild --platform android && bash scripts/setup-android.sh && cd android && ./gradlew assembleDebug"
+    "build:apk:local": "expo prebuild --platform android && bash scripts/setup-android.sh && cd android && ./gradlew assembleDebug",
+    "eas-build-pre-install": "bash scripts/eas-pre-install.sh"
   },
   "dependencies": {
     "@expo/metro-runtime": "^6.1.2",
