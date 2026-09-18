@@ -4,27 +4,18 @@ import { StyleSheet, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 
 /**
- * Decorative ground strip that sits at the bottom of the forest scene.
- * Will be replaced with a proper SVG illustration in a later sprint.
+ * A plain catalogue backdrop that keeps the forest menu visually uniform.
  */
 export function ForestBackground() {
   const colors = useColors();
 
-  return (
-    <View
-      style={[styles.ground, { backgroundColor: colors.mint }]}
-    />
-  );
+  return <View style={[styles.root, { backgroundColor: colors.background }]} />;
 }
 
 const styles = StyleSheet.create({
-  ground: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+  root: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 32,
+    overflow: "hidden",
   },
 });

@@ -1,5 +1,5 @@
 import React from "react";
-import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ForestHeader } from "@/components/forest/ForestHeader";
@@ -32,12 +32,9 @@ export default function ForestScreen() {
       >
         <ForestHeader totalTrees={trees.length} />
 
-        {/* Debug counter — will be removed in a later sprint */}
-        <Text style={[styles.debug, { color: colors.mutedForeground }]}>
-          Деревьев: {trees.length}
-        </Text>
-
-        <ForestScene trees={trees} />
+        <View style={styles.sceneCard}>
+          <ForestScene trees={trees} />
+        </View>
       </ScrollView>
     </View>
   );
@@ -50,9 +47,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     gap: 20,
   },
-  debug: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    marginTop: -12,
+  sceneCard: {
+    borderRadius: 32,
+    overflow: "hidden",
   },
 });

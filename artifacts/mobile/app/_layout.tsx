@@ -8,8 +8,10 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { router, Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import * as NavigationBar from "expo-navigation-bar";
 import React, { useEffect } from "react";
-import { Platform } from "react-native";
+import { AppState, Keyboard, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -23,6 +25,15 @@ import { scheduleDailyNotifications } from "@/services/notifications";
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+
+async function hideAndroidSystemBars() {
+  try {
+    await NavigationBar.setBehaviorAsync("overlay-swipe");
+    await NavigationBar.setVisibilityAsync("hidden");
+  } catch {
+    // The API is Android-only and can be unavailable in Expo Go or on older devices.
+  }
+}
 
 function RootLayoutNav() {
   const { state, isLoaded } = useApp();
@@ -65,20 +76,29 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (Platform.OS !== "android") return;
-    (async () => {
-      try {
-        const NavigationBar = await import("expo-navigation-bar");
-        await NavigationBar.setVisibilityAsync("hidden");
-        await NavigationBar.setBehaviorAsync("overlay-swipe");
-      } catch {
-      }
-    })();
+    void hideAndroidSystemBars();
+
+    const appStateSubscription = AppState.addEventListener(
+      "change",
+      (state) => {
+        if (state === "active") void hideAndroidSystemBars();
+      },
+    );
+    const keyboardSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      void hideAndroidSystemBars();
+    });
+
+    return () => {
+      appStateSubscription.remove();
+      keyboardSubscription.remove();
+    };
   }, []);
 
   if (!fontsLoaded && !fontError) return null;
 
   return (
     <SafeAreaProvider>
+      <StatusBar hidden animated={false} />
       <ThemeProvider>
         <ErrorBoundary>
           <QueryClientProvider client={queryClient}>

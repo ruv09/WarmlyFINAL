@@ -22,6 +22,9 @@
       "permissions": ["POST_NOTIFICATIONS"],
       "softwareKeyboardLayoutMode": "adjustResize"
     },
+    "androidStatusBar": {
+      "hidden": true
+    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
