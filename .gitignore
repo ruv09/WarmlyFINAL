@@ -47,3 +47,7 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Temporary files uploaded to the Replit workspace; application assets live in
+# artifacts/mobile/assets and are tracked explicitly.
+/attached_assets/
