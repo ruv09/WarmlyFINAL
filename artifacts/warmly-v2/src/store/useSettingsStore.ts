@@ -1,6 +1,10 @@
 import { create } from "zustand";
 import { Settings } from "../types";
-import { settingsRepository, syncNotifications, DEFAULT_SETTINGS } from "../services";
+import {
+  settingsRepository,
+  syncNotifications,
+  DEFAULT_SETTINGS,
+} from "../services";
 import { DAILY_PHRASES, buildUniqueAiPhrase, toDateKey } from "../utils";
 
 interface SettingsState {
@@ -20,22 +24,34 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   load: async () => {
     set({ isLoading: true });
-    let settings = await settingsRepository.get();
-    if (!settings.joinedAt && settings.isOnboarded) {
-      settings = { ...settings, joinedAt: toDateKey() };
-      await settingsRepository.save(settings);
+    try {
+      let settings = await settingsRepository.get();
+      if (!settings.joinedAt && settings.isOnboarded) {
+        settings = { ...settings, joinedAt: toDateKey() };
+        await settingsRepository.save(settings);
+      }
+      set({ settings, isLoading: false, isHydrated: true });
+
+      // Восстанавливаем запланированные уведомления после холодного старта.
+      // Сбой в уведомлениях не должен мешать открыть журнал.
+      await syncNotifications(settings.notifications).catch(() => undefined);
+      await get().ensureDailyPhrase();
+    } catch {
+      // AsyncStorage может быть временно недоступен или повреждён. В таком
+      // случае всё равно открываем приложение с безопасными настройками,
+      // вместо бесконечного стартового индикатора.
+      set({ settings: DEFAULT_SETTINGS, isLoading: false, isHydrated: true });
     }
-    set({ settings, isLoading: false, isHydrated: true });
-    // Восстанавливаем запланированные уведомления после холодного старта.
-    await syncNotifications(settings.notifications).catch(() => undefined);
-    await get().ensureDailyPhrase();
   },
 
   updateSettings: async (partial) => {
     const next: Settings = { ...get().settings, ...partial };
     set({ settings: next });
     await settingsRepository.save(next);
-    if (partial.notifications || partial.supportivePhrasesEnabled !== undefined) {
+    if (
+      partial.notifications ||
+      partial.supportivePhrasesEnabled !== undefined
+    ) {
       await syncNotifications(next.notifications);
     }
     if (partial.supportivePhrasesEnabled === true) {
