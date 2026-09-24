@@ -18,9 +18,15 @@
       "bundleIdentifier": "com.warmly.app",
       "buildNumber": "1"
     },
+    "androidStatusBar": {
+      "hidden": true,
+      "translucent": true,
+      "backgroundColor": "#00000000"
+    },
     "android": {
       "package": "com.warmly.app",
       "versionCode": 4,
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"

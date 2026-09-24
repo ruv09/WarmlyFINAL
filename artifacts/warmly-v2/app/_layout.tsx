@@ -1,12 +1,38 @@
 import React, { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, AppState, Keyboard, Platform, View } from "react-native";
 import { Stack, router, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { SystemBars } from "react-native-edge-to-edge";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
 import { useSettingsStore } from "../src/store";
 import { useTheme } from "../src/theme";
+
+/**
+ * Expo SDK 54 рисует Android edge-to-edge. expo-status-bar / expo-navigation-bar
+ * на этом режиме используют устаревшие API, поэтому системные панели
+ * скрываем через SystemBars из react-native-edge-to-edge (уже в дереве Expo).
+ */
+function useAndroidImmersive() {
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+
+    const hide = () => {
+      SystemBars.setHidden({ statusBar: true, navigationBar: true });
+    };
+
+    hide();
+    const app = AppState.addEventListener("change", (state) => {
+      if (state === "active") hide();
+    });
+    const keyboard = Keyboard.addListener("keyboardDidHide", hide);
+    return () => {
+      app.remove();
+      keyboard.remove();
+    };
+  }, []);
+}
 
 /**
  * GestureHandlerRootView должен быть самым внешним элементом дерева —
@@ -22,6 +48,8 @@ function Bootstrap() {
   const isOnboarded = useSettingsStore((s) => s.settings.isOnboarded);
   const load = useSettingsStore((s) => s.load);
   const segments = useSegments();
+  useAndroidImmersive();
+  const barStyle = theme.mode === "dark" ? "light" : "dark";
 
   useEffect(() => {
     load().catch(() => undefined);
@@ -54,7 +82,11 @@ function Bootstrap() {
 
   return (
     <>
-      <StatusBar style={theme.mode === "dark" ? "light" : "dark"} />
+      {Platform.OS === "android" ? (
+        <SystemBars style={barStyle} hidden={{ statusBar: true, navigationBar: true }} />
+      ) : (
+        <StatusBar style={barStyle} />
+      )}
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="welcome" />
         <Stack.Screen name="(tabs)" />
@@ -70,8 +102,9 @@ function Bootstrap() {
 }
 
 export default function RootLayout() {
+  const theme = useTheme();
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <SafeAreaProvider>
         <ErrorBoundary>
           <Bootstrap />
