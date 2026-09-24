@@ -45,6 +45,14 @@
         {
           "color": "#7D9570"
         }
+      ],
+      [
+        "expo-navigation-bar",
+        {
+          "visibility": "hidden",
+          "behavior": "overlay-swipe",
+          "position": "absolute"
+        }
       ]
     ],
     "extra": {

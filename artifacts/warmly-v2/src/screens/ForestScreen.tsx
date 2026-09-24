@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { BackHandler, Platform, StyleSheet, View } from "react-native";
+import { BackHandler, StyleSheet, View } from "react-native";
 import { useNavigation } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ForestCatalog, TreeGroveScene } from "../components/forest";
@@ -60,7 +60,6 @@ export function ForestScreen() {
             shadowRadius: 14,
             shadowOffset: { width: 0, height: -4 },
           },
-      safeAreaInsets: Platform.OS === "android" ? { bottom: 0 } : undefined,
     });
   }, [isDark, navigation, selectedItem, theme.colors.tabBar]);
 

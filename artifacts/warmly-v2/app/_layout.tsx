@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { ActivityIndicator, AppState, Keyboard, Platform, View } from "react-native";
 import { Stack, router, useSegments } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { SystemBars } from "react-native-edge-to-edge";
+import * as NavigationBar from "expo-navigation-bar";
+import { StatusBar, setStatusBarHidden } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
@@ -10,26 +10,34 @@ import { useSettingsStore } from "../src/store";
 import { useTheme } from "../src/theme";
 
 /**
- * Expo SDK 54 рисует Android edge-to-edge. expo-status-bar / expo-navigation-bar
- * на этом режиме используют устаревшие API, поэтому системные панели
- * скрываем через SystemBars из react-native-edge-to-edge (уже в дереве Expo).
+ * Настоящий fullscreen на Android: скрываем системный Status Bar и Navigation Bar.
+ * Нижняя навигация приложения (Дневник / Лес / Календарь / Профиль) остаётся.
  */
 function useAndroidImmersive() {
   useEffect(() => {
     if (Platform.OS !== "android") return;
 
     const hide = () => {
-      SystemBars.setHidden({ statusBar: true, navigationBar: true });
+      setStatusBarHidden(true, "none");
+      void NavigationBar.setVisibilityAsync("hidden");
     };
 
     hide();
+    let hideTimer: ReturnType<typeof setTimeout> | undefined;
     const app = AppState.addEventListener("change", (state) => {
       if (state === "active") hide();
     });
     const keyboard = Keyboard.addListener("keyboardDidHide", hide);
+    const visibility = NavigationBar.addVisibilityListener(({ visibility: next }) => {
+      if (next !== "visible") return;
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(hide, 1600);
+    });
     return () => {
+      clearTimeout(hideTimer);
       app.remove();
       keyboard.remove();
+      visibility.remove();
     };
   }, []);
 }
@@ -82,11 +90,7 @@ function Bootstrap() {
 
   return (
     <>
-      {Platform.OS === "android" ? (
-        <SystemBars style={barStyle} hidden={{ statusBar: true, navigationBar: true }} />
-      ) : (
-        <StatusBar style={barStyle} />
-      )}
+      <StatusBar hidden={Platform.OS === "android"} style={barStyle} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="welcome" />
         <Stack.Screen name="(tabs)" />
