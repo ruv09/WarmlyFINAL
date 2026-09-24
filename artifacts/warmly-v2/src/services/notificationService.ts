@@ -3,11 +3,15 @@ import { Platform } from "react-native";
 import { NotificationSettings } from "../types";
 import { EntryRepository } from "./repositories";
 import { storageClient } from "./storage/AsyncStorageClient";
-import { toDateKey } from "../utils";
+import { buildUniqueAiPhrase, toDateKey } from "../utils";
 
 /**
- * Тихие напоминания: максимум два в сутки, без звука и бейджа.
+ * Тихие локальные напоминания: максимум два в сутки, без звука и бейджа.
  * Вечернее не ставится, если за сегодня уже есть запись.
+ *
+ * Это не push и не сеть: уведомления живут в AlarmManager и должны
+ * приходить при закрытом приложении и без интернета. На Android 12+
+ * для точного времени нужен SCHEDULE_EXACT_ALARM.
  */
 
 Notifications.setNotificationHandler({
@@ -21,21 +25,19 @@ Notifications.setNotificationHandler({
 });
 
 const CHANNEL_ID = "warmly-reminders";
-const HORIZON_DAYS = 7;
+const HORIZON_DAYS = 14;
 const MIN_GAP_MINUTES = 4 * 60;
-
-const MORNING_BODY = "Доброе утро. Мысль дня на главной — без спешки.";
-const EVENING_BODY = "Вечер. Можно записать день, а можно просто отдохнуть.";
 
 async function ensureAndroidChannel(): Promise<void> {
   if (Platform.OS !== "android") return;
   await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
     name: "Напоминания Warmly",
     description: "Не больше двух тихих напоминаний в день",
-    importance: Notifications.AndroidImportance.DEFAULT,
+    importance: Notifications.AndroidImportance.HIGH,
     sound: null,
     showBadge: false,
     enableVibrate: false,
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
   });
 }
 
@@ -70,6 +72,12 @@ function atTimeOnDay(day: Date, time: string): Date {
   return next;
 }
 
+function nextBody(used: string[]): string {
+  const phrase = buildUniqueAiPhrase(used);
+  used.push(phrase);
+  return phrase;
+}
+
 async function scheduleOnce(id: string, when: Date, body: string): Promise<void> {
   await Notifications.scheduleNotificationAsync({
     identifier: id,
@@ -81,19 +89,25 @@ async function scheduleOnce(id: string, when: Date, body: string): Promise<void>
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: when,
+      ...(Platform.OS === "android" ? { channelId: CHANNEL_ID } : {}),
     },
   });
 }
 
 export async function syncNotifications(settings: NotificationSettings): Promise<void> {
   await ensureAndroidChannel();
-  await Notifications.cancelAllScheduledNotificationsAsync().catch(() => undefined);
 
-  if (!settings.enabled) return;
+  if (!settings.enabled) {
+    await Notifications.cancelAllScheduledNotificationsAsync().catch(() => undefined);
+    return;
+  }
 
   const morningOn = settings.morningEnabled !== false;
   const eveningOn = settings.eveningEnabled !== false;
-  if (!morningOn && !eveningOn) return;
+  if (!morningOn && !eveningOn) {
+    await Notifications.cancelAllScheduledNotificationsAsync().catch(() => undefined);
+    return;
+  }
 
   const granted = await requestNotificationPermissions();
   if (!granted) return;
@@ -113,6 +127,9 @@ export async function syncNotifications(settings: NotificationSettings): Promise
     }
   }
 
+  await Notifications.cancelAllScheduledNotificationsAsync().catch(() => undefined);
+
+  const used: string[] = [];
   const now = new Date();
   for (let offset = 0; offset < HORIZON_DAYS; offset += 1) {
     const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
@@ -121,7 +138,7 @@ export async function syncNotifications(settings: NotificationSettings): Promise
     if (scheduleMorning) {
       const when = atTimeOnDay(day, settings.morningTime);
       if (when > now) {
-        await scheduleOnce(`warmly-m-${key}`, when, MORNING_BODY);
+        await scheduleOnce(`warmly-m-${key}`, when, nextBody(used)).catch(() => undefined);
       }
     }
 
@@ -129,7 +146,7 @@ export async function syncNotifications(settings: NotificationSettings): Promise
       if (offset === 0 && wroteToday) continue;
       const when = atTimeOnDay(day, settings.eveningTime);
       if (when > now) {
-        await scheduleOnce(`warmly-e-${key}`, when, EVENING_BODY);
+        await scheduleOnce(`warmly-e-${key}`, when, nextBody(used)).catch(() => undefined);
       }
     }
   }
