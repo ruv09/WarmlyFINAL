@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { ActivityIndicator, AppState, Keyboard, Platform, View } from "react-native";
 import { Stack, router, useSegments } from "expo-router";
-import * as NavigationBar from "expo-navigation-bar";
+import { NavigationBar, addVisibilityListener } from "expo-navigation-bar";
 import { StatusBar, setStatusBarHidden } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -19,7 +19,7 @@ function useAndroidImmersive() {
 
     const hide = () => {
       setStatusBarHidden(true, "none");
-      void NavigationBar.setVisibilityAsync("hidden");
+      NavigationBar.setHidden(true);
     };
 
     hide();
@@ -28,7 +28,7 @@ function useAndroidImmersive() {
       if (state === "active") hide();
     });
     const keyboard = Keyboard.addListener("keyboardDidHide", hide);
-    const visibility = NavigationBar.addVisibilityListener(({ visibility: next }) => {
+    const visibility = addVisibilityListener(({ visibility: next }) => {
       if (next !== "visible") return;
       clearTimeout(hideTimer);
       hideTimer = setTimeout(hide, 1600);

@@ -5,7 +5,7 @@ Warmly — спокойное приложение поддержки настр
 
 ## Запуск (Expo Go)
 
-Приложение: `artifacts/warmly-v2` (Expo SDK 54).
+Приложение: `artifacts/warmly-v2` (Expo SDK 57).
 
 ```bash
 cd artifacts/warmly-v2
@@ -83,7 +83,7 @@ cd android
 ## Структура
 
 ```text
-artifacts/warmly-v2/   приложение Warmly 2.0 (Expo 54)
+artifacts/warmly-v2/   приложение Warmly 2.0 (Expo 57)
 ```
 
 Архитектурные заметки — в `artifacts/warmly-v2/*.md`

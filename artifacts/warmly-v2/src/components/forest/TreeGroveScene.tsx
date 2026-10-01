@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     position: "absolute",
   },
   sceneGrade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   stage: {
     flex: 1,

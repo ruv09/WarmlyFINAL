@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   plankStack: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   plank: {
     flex: 1,

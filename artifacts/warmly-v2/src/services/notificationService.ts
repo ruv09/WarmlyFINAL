@@ -16,7 +16,6 @@ import { buildUniqueAiPhrase, toDateKey } from "../utils";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldShowBanner: true,
     shouldShowList: true,
     shouldPlaySound: false,
