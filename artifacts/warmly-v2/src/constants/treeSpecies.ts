@@ -21,7 +21,7 @@ function toVisual(def: TreeDefinition): SpeciesVisual {
   return {
     species: def.id,
     labelRu: def.name,
-    heightScale: def.heightScale,
+    heightScale: 1,
     image: def.dayImage,
     imageDark: def.nightImage,
     imagePlanted: def.dayImage,

@@ -1,117 +1,103 @@
 import { ImageSourcePropType } from "react-native";
 import { SceneMode, TreeSpecies } from "../types";
 
-export type MeadowId = "meadow-01" | "meadow-02";
-
 export type TreeDefinition = {
   id: TreeSpecies;
   name: string;
-  heightScale: number;
-  meadow: MeadowId;
+  /** width / height нарезанной сцены из референса */
+  sceneAspect: number;
   dayImage: ImageSourcePropType;
   nightImage: ImageSourcePropType;
 };
 
 /**
- * Единственный каталог видов. Названия и картинки не размазывать по экранам.
- * Порядок — как в визуальном ТЗ.
+ * Единственный каталог видов.
+ * dayImage / nightImage — готовые сцены с референса, не вырезки.
  */
 export const TREE_DEFINITIONS: TreeDefinition[] = [
   {
     id: "pine",
     name: "Сосна",
-    heightScale: 1.18,
-    meadow: "meadow-02",
-    dayImage: require("../../assets/trees/day/pine.png"),
-    nightImage: require("../../assets/trees/night/pine.png"),
+    sceneAspect: 768 / 1064,
+    dayImage: require("../../assets/trees/scenes/pine/day.png"),
+    nightImage: require("../../assets/trees/scenes/pine/night.png"),
   },
   {
     id: "birch",
     name: "Берёза",
-    heightScale: 1.12,
-    meadow: "meadow-02",
-    dayImage: require("../../assets/trees/day/birch.png"),
-    nightImage: require("../../assets/trees/night/birch.png"),
+    sceneAspect: 768 / 1054,
+    dayImage: require("../../assets/trees/scenes/birch/day.png"),
+    nightImage: require("../../assets/trees/scenes/birch/night.png"),
   },
   {
     id: "oak",
     name: "Дуб",
-    heightScale: 1.08,
-    meadow: "meadow-01",
-    dayImage: require("../../assets/trees/day/oak.png"),
-    nightImage: require("../../assets/trees/night/oak.png"),
+    sceneAspect: 768 / 1069,
+    dayImage: require("../../assets/trees/scenes/oak/day.png"),
+    nightImage: require("../../assets/trees/scenes/oak/night.png"),
   },
   {
     id: "maple",
     name: "Клён",
-    heightScale: 1.04,
-    meadow: "meadow-01",
-    dayImage: require("../../assets/trees/day/maple.png"),
-    nightImage: require("../../assets/trees/night/maple.png"),
+    sceneAspect: 768 / 1035,
+    dayImage: require("../../assets/trees/scenes/maple/day.png"),
+    nightImage: require("../../assets/trees/scenes/maple/night.png"),
   },
   {
     id: "willow",
     name: "Ива",
-    heightScale: 1.06,
-    meadow: "meadow-02",
-    dayImage: require("../../assets/trees/day/willow.png"),
-    nightImage: require("../../assets/trees/night/willow.png"),
+    sceneAspect: 768 / 1025,
+    dayImage: require("../../assets/trees/scenes/willow/day.png"),
+    nightImage: require("../../assets/trees/scenes/willow/night.png"),
   },
   {
     id: "ash",
     name: "Ясень",
-    heightScale: 1.1,
-    meadow: "meadow-01",
-    dayImage: require("../../assets/trees/day/ash.png"),
-    nightImage: require("../../assets/trees/night/ash.png"),
+    sceneAspect: 768 / 1040,
+    dayImage: require("../../assets/trees/scenes/ash/day.png"),
+    nightImage: require("../../assets/trees/scenes/ash/night.png"),
   },
   {
     id: "rowan",
     name: "Рябина",
-    heightScale: 0.98,
-    meadow: "meadow-01",
-    dayImage: require("../../assets/trees/day/rowan.png"),
-    nightImage: require("../../assets/trees/night/rowan.png"),
+    sceneAspect: 768 / 933,
+    dayImage: require("../../assets/trees/scenes/rowan/day.png"),
+    nightImage: require("../../assets/trees/scenes/rowan/night.png"),
   },
   {
     id: "poplar",
     name: "Тополь",
-    heightScale: 1.2,
-    meadow: "meadow-02",
-    dayImage: require("../../assets/trees/day/poplar.png"),
-    nightImage: require("../../assets/trees/night/poplar.png"),
+    sceneAspect: 768 / 924,
+    dayImage: require("../../assets/trees/scenes/poplar/day.png"),
+    nightImage: require("../../assets/trees/scenes/poplar/night.png"),
   },
   {
     id: "spruce",
     name: "Ель",
-    heightScale: 1.16,
-    meadow: "meadow-02",
-    dayImage: require("../../assets/trees/day/spruce.png"),
-    nightImage: require("../../assets/trees/night/spruce.png"),
+    sceneAspect: 768 / 937,
+    dayImage: require("../../assets/trees/scenes/spruce/day.png"),
+    nightImage: require("../../assets/trees/scenes/spruce/night.png"),
   },
   {
     id: "linden",
     name: "Липа",
-    heightScale: 1.02,
-    meadow: "meadow-01",
-    dayImage: require("../../assets/trees/day/linden.png"),
-    nightImage: require("../../assets/trees/night/linden.png"),
+    sceneAspect: 768 / 805,
+    dayImage: require("../../assets/trees/scenes/linden/day.png"),
+    nightImage: require("../../assets/trees/scenes/linden/night.png"),
   },
   {
     id: "apple",
     name: "Яблоня",
-    heightScale: 0.96,
-    meadow: "meadow-01",
-    dayImage: require("../../assets/trees/day/apple.png"),
-    nightImage: require("../../assets/trees/night/apple.png"),
+    sceneAspect: 768 / 797,
+    dayImage: require("../../assets/trees/scenes/apple/day.png"),
+    nightImage: require("../../assets/trees/scenes/apple/night.png"),
   },
   {
     id: "beech",
     name: "Бук",
-    heightScale: 1.07,
-    meadow: "meadow-01",
-    dayImage: require("../../assets/trees/day/beech.png"),
-    nightImage: require("../../assets/trees/night/beech.png"),
+    sceneAspect: 768 / 808,
+    dayImage: require("../../assets/trees/scenes/beech/day.png"),
+    nightImage: require("../../assets/trees/scenes/beech/night.png"),
   },
 ];
 

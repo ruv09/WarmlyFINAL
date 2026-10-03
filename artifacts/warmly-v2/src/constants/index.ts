@@ -8,5 +8,5 @@ export {
   getTreeDefinition,
   resolveSpecies,
 } from "./treeDefinitions";
-export type { TreeDefinition, MeadowId } from "./treeDefinitions";
+export type { TreeDefinition } from "./treeDefinitions";
 export * from "./treeSpecies";
