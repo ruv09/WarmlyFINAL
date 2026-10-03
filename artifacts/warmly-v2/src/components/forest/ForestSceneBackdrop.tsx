@@ -1,7 +1,7 @@
 import React from "react";
 import { Image, ImageSourcePropType, Platform, StyleSheet, View } from "react-native";
 import { MeadowEdges } from "../../constants/groveScenes";
-import { fitStaticBackground } from "../../services/forest/backgroundFit";
+import { getContainedSceneFrame } from "../../services/forest/backgroundFit";
 
 type Props = {
   source: ImageSourcePropType;
@@ -19,9 +19,7 @@ const BLUR_RADIUS = Platform.OS === "android" ? 38 : 30;
  * Спереди тот же кадр целиком и резко. Дощечки на картинке нет.
  */
 export function ForestSceneBackdrop({ source, edges, width, height, aspect }: Props) {
-  const imageWidth = 1000;
-  const imageHeight = imageWidth / aspect;
-  const frame = fitStaticBackground(imageWidth, imageHeight, width, height);
+  const frame = getContainedSceneFrame(width, height, aspect);
   const blurW = width * BLUR_ZOOM;
   const blurH = height * BLUR_ZOOM;
 

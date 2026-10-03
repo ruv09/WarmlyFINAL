@@ -1,10 +1,11 @@
 import React from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
-import { WoodenPlaque } from "./WoodenPlaque";
+import { WoodenPlaque, PLAQUE_ASPECT } from "./WoodenPlaque";
 import { ForestSceneBackdrop } from "./ForestSceneBackdrop";
 import { CatalogItem } from "../../services/forest/catalog";
 import { getGroveEdges, getGroveScene } from "../../constants/groveScenes";
 import { getTreeDefinition } from "../../constants/treeDefinitions";
+import { getContainedSceneFrame, layoutPlaqueInScene } from "../../services/forest/backgroundFit";
 import { SceneMode } from "../../types";
 import { useTheme } from "../../theme";
 
@@ -28,8 +29,8 @@ export function TreeCatalogCard({ item, sceneMode, onPress }: Props) {
     Math.round(cardWidth / tree.sceneAspect),
     Math.round(window.height * 0.58),
   );
-  const plaqueWidth = Math.min(cardWidth - 28, 312);
-  const plaqueMaxH = Math.round(cardHeight * 0.48);
+  const sceneFrame = getContainedSceneFrame(cardWidth, cardHeight, tree.sceneAspect);
+  const plaque = layoutPlaqueInScene(sceneFrame, PLAQUE_ASPECT);
   const note = (item.entry.note ?? "").trim();
   const extra = (item.entry.smallWin ?? "").trim();
   const spoken = [note, extra].filter(Boolean).join(". ") || "Без текста";
@@ -56,13 +57,22 @@ export function TreeCatalogCard({ item, sceneMode, onPress }: Props) {
         height={cardHeight}
         aspect={tree.sceneAspect}
       />
-      <View style={styles.plaqueDock} pointerEvents="none">
+      <View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          left: plaque.left,
+          top: plaque.top,
+          width: plaque.width,
+          height: plaque.height,
+        }}
+      >
         <WoodenPlaque
           item={item}
           sceneMode={sceneMode}
           compact
-          width={plaqueWidth}
-          maxHeight={plaqueMaxH}
+          width={plaque.width}
+          maxHeight={plaque.height}
         />
       </View>
     </Pressable>
@@ -79,12 +89,5 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
     elevation: 6,
-  },
-  plaqueDock: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 8,
-    alignItems: "center",
   },
 });
