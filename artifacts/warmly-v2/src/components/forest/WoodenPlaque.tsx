@@ -37,10 +37,7 @@ function fitNote(text: string, compact: boolean): { fontSize: number; lineHeight
   return { fontSize: 17, lineHeight: 26, lines: 7 };
 }
 
-/**
- * Текст записи на дощечке референса.
- * Закрывает вшитый плейсхолдер, не рисует второе дерево.
- */
+/** Деревянная дощечка с мыслью: текстура дерева, тёмные чернила, дата внизу. */
 export function WoodenPlaque({ item, maxHeight, width, compact = false }: Props) {
   const theme = useTheme();
   const ink = "#3A2A18";
@@ -50,10 +47,10 @@ export function WoodenPlaque({ item, maxHeight, width, compact = false }: Props)
   const dateLabel = formatPlaqueDate(item.entry.date, compact ? undefined : item.entry.time);
 
   return (
-    <View style={[styles.frame, { width, height: maxHeight }]}>
+    <View style={[styles.frame, { width, maxHeight }]}>
       <ImageBackground
         source={WOOD_DAY}
-        style={styles.wood}
+        style={[styles.wood, compact ? styles.woodCompact : styles.woodFull]}
         imageStyle={styles.woodImage}
         resizeMode="cover"
       >
@@ -73,7 +70,7 @@ export function WoodenPlaque({ item, maxHeight, width, compact = false }: Props)
           </Text>
           <Text
             style={{
-              marginTop: compact ? 4 : 8,
+              marginTop: compact ? 5 : 8,
               color: muted,
               fontSize: compact ? 10 : theme.typography.sizes.caption,
               textAlign: "center",
@@ -85,30 +82,57 @@ export function WoodenPlaque({ item, maxHeight, width, compact = false }: Props)
           </Text>
         </View>
       </ImageBackground>
+      <View pointerEvents="none" style={[styles.peg, { left: compact ? 10 : 14 }]} />
+      <View pointerEvents="none" style={[styles.peg, { right: compact ? 10 : 14 }]} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   frame: {
-    borderRadius: 6,
+    borderRadius: 8,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#C4A078",
+    borderWidth: 2,
+    borderColor: "#8A6238",
+    shadowColor: "#2A1A0C",
+    shadowOpacity: 0.32,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
   },
   wood: {
-    flex: 1,
     justifyContent: "center",
   },
+  woodCompact: {
+    minHeight: 76,
+  },
+  woodFull: {
+    minHeight: 120,
+  },
   woodImage: {
-    borderRadius: 5,
+    borderRadius: 6,
   },
   inner: {
+    margin: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#C9A06AAA",
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingTop: 14,
+    paddingBottom: 12,
   },
   innerCompact: {
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingTop: 10,
+    paddingBottom: 8,
+  },
+  peg: {
+    position: "absolute",
+    top: 10,
+    zIndex: 2,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#8A6238",
   },
 });

@@ -3,14 +3,13 @@ import { LayoutChangeEvent, Pressable, StyleSheet, View, useWindowDimensions } f
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { FadeView, ScaleView } from "../animation";
-import { Text } from "../ui";
+import { WoodenPlaque } from "./WoodenPlaque";
 import { ForestSceneBackdrop } from "./ForestSceneBackdrop";
 import { CatalogItem } from "../../services/forest/catalog";
 import { getGroveEdges, getGroveScene } from "../../constants/groveScenes";
 import { getTreeDefinition } from "../../constants/treeDefinitions";
 import { resolveSceneMode } from "../../constants/sceneMode";
 import { SceneMode } from "../../types";
-import { parseDateKey } from "../../utils/date";
 import { useTheme } from "../../theme";
 
 type Props = {
@@ -19,12 +18,9 @@ type Props = {
   sceneMode?: SceneMode | null;
 };
 
-function formatDetailDate(dateKey: string, time: string): string {
-  return `${parseDateKey(dateKey).toLocaleDateString("ru-RU")}  ${time}`;
-}
-
 /**
- * Большая сцена без дощечки. Текст записи — мягкая подпись снизу.
+ * Большая сцена и наша дощечка с текстом записи.
+ * Назад справа снизу — настоящая кнопка.
  */
 export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: Props) {
   const theme = useTheme();
@@ -39,9 +35,8 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
   const tree = getTreeDefinition(item.tree.species);
   const sceneSource = getGroveScene(item.tree.species, mode);
   const edges = getGroveEdges(item.tree.species, mode);
-  const note = item.entry.note.trim() || item.entry.smallWin?.trim() || "Без текста";
-  const ink = isNight ? "#F3EDE2" : "#2C2A24";
-  const muted = isNight ? "#D4CBB8" : "#5A564C";
+  const plaqueWidth = Math.min(width * 0.82, 380);
+  const plaqueMaxH = Math.round(height * 0.26);
 
   useEffect(() => {
     setShown(true);
@@ -66,40 +61,17 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
         height={height}
         aspect={tree.sceneAspect}
       />
-      <View
-        pointerEvents="none"
-        style={[
-          styles.fade,
-          { backgroundColor: isNight ? "rgba(8,12,20,0.42)" : "rgba(245,240,230,0.28)" },
-        ]}
-      />
 
       <SafeAreaView edges={["top", "left", "right"]} style={styles.fill} pointerEvents="box-none">
         <FadeView visible={shown} duration="base" style={styles.fill} pointerEvents="box-none">
-          <ScaleView visible={shown} from={0.98} duration="base" style={styles.stage} pointerEvents="box-none">
-            <Text
-              face="serif"
-              style={{
-                color: ink,
-                fontSize: theme.typography.sizes.subtitle,
-                lineHeight: 26,
-                textAlign: "center",
-              }}
-              maxFontSizeMultiplier={theme.typography.scaleLimits.content}
-            >
-              {note}
-            </Text>
-            <Text
-              style={{
-                marginTop: 8,
-                color: muted,
-                fontSize: theme.typography.sizes.caption,
-                textAlign: "center",
-              }}
-              maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-            >
-              {formatDetailDate(item.entry.date, item.entry.time)}
-            </Text>
+          <ScaleView
+            visible={shown}
+            from={0.98}
+            duration="base"
+            style={[styles.stage, { paddingBottom: Math.max(insets.bottom, 10) + 88 }]}
+            pointerEvents="box-none"
+          >
+            <WoodenPlaque item={item} sceneMode={mode} maxHeight={plaqueMaxH} width={plaqueWidth} />
           </ScaleView>
         </FadeView>
       </SafeAreaView>
@@ -127,18 +99,11 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  fade: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: "28%",
-  },
   stage: {
     flex: 1,
     justifyContent: "flex-end",
-    paddingHorizontal: 28,
-    paddingBottom: 96,
+    alignItems: "center",
+    paddingHorizontal: 24,
   },
   backBtn: {
     position: "absolute",

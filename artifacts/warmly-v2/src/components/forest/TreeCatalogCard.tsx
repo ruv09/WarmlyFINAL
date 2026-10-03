@@ -1,12 +1,11 @@
 import React from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
-import { Text } from "../ui";
+import { WoodenPlaque } from "./WoodenPlaque";
 import { ForestSceneBackdrop } from "./ForestSceneBackdrop";
 import { CatalogItem } from "../../services/forest/catalog";
 import { getGroveEdges, getGroveScene } from "../../constants/groveScenes";
 import { getTreeDefinition } from "../../constants/treeDefinitions";
 import { SceneMode } from "../../types";
-import { parseDateKey } from "../../utils/date";
 import { useTheme } from "../../theme";
 
 type Props = {
@@ -15,12 +14,8 @@ type Props = {
   onPress: () => void;
 };
 
-function cardDate(dateKey: string): string {
-  return parseDateKey(dateKey).toLocaleDateString("ru-RU");
-}
-
 /**
- * Карточка — полнокадровая сцена. Текст записи под картиной, без дощечки.
+ * Полнокадровая сцена + наша деревянная дощечка с текстом записи.
  */
 export function TreeCatalogCard({ item, sceneMode, onPress }: Props) {
   const theme = useTheme();
@@ -29,10 +24,12 @@ export function TreeCatalogCard({ item, sceneMode, onPress }: Props) {
   const scene = getGroveScene(item.tree.species, sceneMode);
   const edges = getGroveEdges(item.tree.species, sceneMode);
   const cardWidth = Math.max(220, window.width - theme.spacing("lg") * 2);
-  const imageHeight = Math.min(
+  const cardHeight = Math.min(
     Math.round(cardWidth / tree.sceneAspect),
     Math.round(window.height * 0.58),
   );
+  const plaqueWidth = Math.min(cardWidth - 36, 300);
+  const plaqueMaxH = Math.round(cardHeight * 0.28);
   const note = item.entry.note.trim() || item.entry.smallWin?.trim() || "Без текста";
 
   return (
@@ -40,60 +37,52 @@ export function TreeCatalogCard({ item, sceneMode, onPress }: Props) {
       accessibilityRole="button"
       accessibilityLabel={`${tree.name}. ${note}`}
       onPress={onPress}
-      style={styles.wrap}
+      style={[
+        styles.card,
+        {
+          width: cardWidth,
+          height: cardHeight,
+          alignSelf: "center",
+          backgroundColor: edges.sky,
+        },
+      ]}
     >
-      <View
-        style={[
-          styles.scene,
-          {
-            width: cardWidth,
-            height: imageHeight,
-            backgroundColor: edges.sky,
-          },
-        ]}
-      >
-        <ForestSceneBackdrop
-          source={scene}
-          edges={edges}
-          width={cardWidth}
-          height={imageHeight}
-          aspect={tree.sceneAspect}
+      <ForestSceneBackdrop
+        source={scene}
+        edges={edges}
+        width={cardWidth}
+        height={cardHeight}
+        aspect={tree.sceneAspect}
+      />
+      <View style={styles.plaqueDock} pointerEvents="none">
+        <WoodenPlaque
+          item={item}
+          sceneMode={sceneMode}
+          compact
+          width={plaqueWidth}
+          maxHeight={plaqueMaxH}
         />
       </View>
-      <Text
-        face="serif"
-        numberOfLines={2}
-        style={{
-          marginTop: 10,
-          color: theme.colors.textPrimary,
-          fontSize: theme.typography.sizes.body,
-          lineHeight: 22,
-        }}
-        maxFontSizeMultiplier={theme.typography.scaleLimits.content}
-      >
-        {note}
-      </Text>
-      <Text
-        style={{
-          marginTop: 4,
-          marginBottom: 22,
-          color: theme.colors.textSecondary,
-          fontSize: theme.typography.sizes.caption,
-        }}
-        maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-      >
-        {cardDate(item.entry.date)}
-      </Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    width: "100%",
-  },
-  scene: {
+  card: {
     borderRadius: 16,
     overflow: "hidden",
+    marginBottom: 22,
+    shadowColor: "#2A1A0C",
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  plaqueDock: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 14,
+    alignItems: "center",
   },
 });
