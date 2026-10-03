@@ -1,22 +1,10 @@
-import React, { useCallback, useMemo, useState } from "react";
-import {
-  FlatList,
-  LayoutChangeEvent,
-  ListRenderItem,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native";
+import React, { useCallback, useMemo } from "react";
+import { FlatList, ListRenderItem, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "../ui";
-import { TreeIllustration } from "../tree/TreeIllustration";
+import { TreeCatalogCard } from "./TreeCatalogCard";
 import { useTheme } from "../../theme";
-import {
-  CatalogItem,
-  MonthSection,
-  groupForestByMonth,
-  layoutMonthGrove,
-} from "../../services/forest/catalog";
+import { CatalogItem, MonthSection, groupForestByMonth } from "../../services/forest/catalog";
 import { Entry, Tree } from "../../types";
 import { treesLabel } from "../../utils";
 
@@ -30,13 +18,23 @@ type Props = {
   isLoading?: boolean;
 };
 
+function numberByOldest(sections: MonthSection[]): Map<string, number> {
+  const items = sections
+    .flatMap((section) => section.items)
+    .sort((a, b) => (a.entry.createdAt < b.entry.createdAt ? -1 : 1));
+  return new Map(items.map((item, index) => [item.entry.id, index + 1]));
+}
+
 export function ForestCatalog({ entries, trees, onSelectItem, bottomInset, isLoading }: Props) {
   const theme = useTheme();
   const sections = useMemo(() => groupForestByMonth(entries, trees), [entries, trees]);
+  const numbers = useMemo(() => numberByOldest(sections), [sections]);
 
   const renderMonth = useCallback<ListRenderItem<MonthSection>>(
-    ({ item }) => <MonthGrove section={item} onSelectItem={onSelectItem} />,
-    [onSelectItem],
+    ({ item }) => (
+      <MonthCards section={item} numbers={numbers} onSelectItem={onSelectItem} />
+    ),
+    [numbers, onSelectItem],
   );
 
   if (sections.length === 0) {
@@ -139,27 +137,19 @@ function CatalogHeader() {
   );
 }
 
-function MonthGrove({
+function MonthCards({
   section,
+  numbers,
   onSelectItem,
 }: {
   section: MonthSection;
+  numbers: Map<string, number>;
   onSelectItem: (item: CatalogItem) => void;
 }) {
   const theme = useTheme();
-  const [width, setWidth] = useState(0);
-  const layout = useMemo(
-    () => (width > 0 ? layoutMonthGrove(section.items, width) : { spots: [], height: 0 }),
-    [section.items, width],
-  );
-
-  function onLayout(event: LayoutChangeEvent) {
-    const next = Math.round(event.nativeEvent.layout.width);
-    if (next > 0 && next !== width) setWidth(next);
-  }
 
   return (
-    <View style={styles.monthBlock} onLayout={onLayout}>
+    <View style={styles.monthBlock}>
       <View style={styles.monthHead}>
         <Text
           style={{
@@ -184,33 +174,15 @@ function MonthGrove({
           {treesLabel(section.count)}
         </Text>
       </View>
-      <View style={{ height: layout.height, width: "100%", overflow: "visible" }}>
-        {layout.spots.map((spot) => {
-          const hit = Math.max(56, spot.size + 16);
-          const extra = (hit - spot.size) / 2;
-          return (
-            <Pressable
-              key={spot.item.entry.id}
-              accessibilityRole="button"
-              accessibilityLabel={`Дерево записи ${spot.item.entry.date}`}
-              onPress={() => onSelectItem(spot.item)}
-              hitSlop={8}
-              style={{
-                position: "absolute",
-                left: spot.left - extra,
-                top: spot.top - extra,
-                width: hit,
-                height: hit,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <View style={{ width: spot.size, height: spot.size }}>
-                <TreeIllustration tree={spot.item.tree} fillParent />
-              </View>
-            </Pressable>
-          );
-        })}
+      <View style={styles.grid}>
+        {section.items.map((item) => (
+          <TreeCatalogCard
+            key={item.entry.id}
+            item={item}
+            index={numbers.get(item.entry.id) ?? 1}
+            onPress={() => onSelectItem(item)}
+          />
+        ))}
       </View>
     </View>
   );
@@ -239,13 +211,18 @@ const styles = StyleSheet.create({
   },
   monthBlock: {
     paddingTop: 10,
-    paddingBottom: 22,
+    paddingBottom: 8,
   },
   monthHead: {
     flexDirection: "row",
     alignItems: "baseline",
     marginBottom: 12,
     gap: 12,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
   emptyCopy: {
     flex: 1,
