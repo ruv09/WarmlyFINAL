@@ -1,18 +1,17 @@
 import React, { useMemo, useState } from "react";
-import { Image, Pressable, Switch, Text, TextInput, View } from "react-native";
+import { Image, Pressable, Switch, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Screen } from "../components/layout";
-import { Button } from "../components/ui";
+import { Button, Text, TextInput } from "../components/ui";
 import { AvatarPickerModal } from "../components/profile";
-import { useEntries, useFavorites, useSettings, useStatistics } from "../hooks";
+import { useSettings, useStatistics } from "../hooks";
 import { useTheme } from "../theme";
 import { ROUTES } from "../constants/routes";
 import { ThemeMode } from "../types";
 import { getMoodById } from "../constants/moods";
 import { getAvatarPreset } from "../constants/avatars";
-import { exportEntries } from "../services";
 import { formatHumanDate, getFallbackQuote, treesLabel } from "../utils";
 
 const THEME_OPTIONS: { label: string; value: ThemeMode; preview: [string, string] }[] = [
@@ -44,11 +43,7 @@ export function ProfileScreen() {
   const isDark = theme.mode === "dark";
   const router = useRouter();
   const { settings, updateSettings } = useSettings();
-  const { entries } = useEntries();
-  const { favorites } = useFavorites();
   const stats = useStatistics();
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportError, setExportError] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(settings.name);
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
@@ -74,18 +69,6 @@ export function ProfileScreen() {
   async function handleSelectPreset(id: string) {
     await updateSettings({ avatarId: id });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-  }
-
-  async function handleExport() {
-    setIsExporting(true);
-    setExportError(false);
-    try {
-      await exportEntries(entries);
-    } catch {
-      setExportError(true);
-    } finally {
-      setIsExporting(false);
-    }
   }
 
   async function saveName() {
@@ -317,6 +300,7 @@ export function ProfileScreen() {
           />
         </View>
         <Text
+          face="serif"
           style={{
             color: theme.colors.textPrimary,
             fontStyle: "italic",
@@ -361,36 +345,6 @@ export function ProfileScreen() {
         variant="secondary"
         onPress={() => router.push(ROUTES.profileNotifications)}
       />
-
-      {sectionLabel("Данные")}
-      <Button
-        label={isExporting ? "Подготовка…" : "Экспортировать данные"}
-        variant="secondary"
-        onPress={handleExport}
-        disabled={isExporting || entries.length === 0}
-      />
-      {favorites.length > 0 && (
-        <Text
-          style={{
-            marginTop: theme.spacing("sm"),
-            color: theme.colors.textSecondary,
-            fontSize: theme.typography.sizes.caption,
-          }}
-        >
-          Избранных фраз: {favorites.length}
-        </Text>
-      )}
-      {exportError && (
-        <Text
-          style={{
-            color: theme.colors.textSecondary,
-            marginTop: theme.spacing("sm"),
-            fontSize: theme.typography.sizes.caption,
-          }}
-        >
-          Не получилось поделиться файлом. Попробуйте ещё раз.
-        </Text>
-      )}
 
       <AvatarPickerModal
         visible={avatarPickerOpen}

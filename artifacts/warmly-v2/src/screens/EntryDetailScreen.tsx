@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Text, TextInput } from "react-native";
+import { Alert, Pressable } from "react-native";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { KeyboardScreen } from "../components/layout";
-import { Button } from "../components/ui";
+import { Button, Text, TextInput } from "../components/ui";
 import { MoodPicker } from "../components/entry";
 import { useEntries, useEntry } from "../hooks";
 import { useTheme } from "../theme";
@@ -76,11 +77,30 @@ export function EntryDetailScreen({ entryId }: EntryDetailScreenProps) {
 
   return (
     <KeyboardScreen>
+      <Pressable
+        onPress={() => router.back()}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel="Назад"
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: theme.colors.surface,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+        }}
+      >
+        <Ionicons name="chevron-back" size={20} color={theme.colors.textPrimary} />
+      </Pressable>
       {label("Настроение")}
       <MoodPicker selectedMoodId={moodId} onSelect={setMoodId} />
 
       {label("Заметка")}
       <TextInput
+        face="serif"
         value={note}
         onChangeText={setNote}
         multiline
@@ -99,6 +119,7 @@ export function EntryDetailScreen({ entryId }: EntryDetailScreenProps) {
 
       {label("Маленькая победа")}
       <TextInput
+        face="serif"
         value={smallWin}
         onChangeText={setSmallWin}
         maxFontSizeMultiplier={theme.typography.scaleLimits.content}

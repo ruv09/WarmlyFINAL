@@ -1,3 +1,4 @@
+import { resolveSpecies } from "../../constants/treeDefinitions";
 import { TREE_SPECIES_CATALOG } from "../../constants/treeSpecies";
 import { TreeSpecies } from "../../types";
 
@@ -7,7 +8,7 @@ import { TreeSpecies } from "../../types";
  */
 export function assignNextSpecies(recentSpecies: TreeSpecies[] = []): TreeSpecies {
   const all = TREE_SPECIES_CATALOG.map((visual) => visual.species);
-  const recent = recentSpecies.slice(-3);
+  const recent = recentSpecies.slice(-3).map(resolveSpecies);
   const avoid = new Set(recent);
 
   let candidates = all.filter((species) => !avoid.has(species));

@@ -3,14 +3,13 @@ import {
   Animated,
   Keyboard,
   Pressable,
-  Text,
-  TextInput,
+  TextInput as RNTextInput,
   View,
 } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { KeyboardScreen } from "../src/components/layout";
-import { Button } from "../src/components/ui";
+import { Button, Text, TextInput } from "../src/components/ui";
 import { useSettingsStore } from "../src/store";
 import { useTheme } from "../src/theme";
 
@@ -24,7 +23,7 @@ export default function WelcomeScreen() {
   const [name, setName] = useState("");
   const [focused, setFocused] = useState(false);
   const shakeAnim = useRef(new Animated.Value(0)).current;
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<RNTextInput>(null);
 
   async function handleStart() {
     if (!name.trim()) {

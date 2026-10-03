@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useColorScheme } from "react-native";
 import { useSettingsStore } from "../store";
 import { useDeviceMetrics } from "../hooks/useDeviceMetrics";
-import { darkColors, DURATIONS, EASING_CURVES, FONT_SCALE_LIMITS, FONT_SIZES, FONT_WEIGHTS, lightColors, RADIUS } from "./tokens";
+import { darkColors, DURATIONS, EASING_CURVES, FONT_SCALE_LIMITS, FONT_SIZES, FONT_WEIGHTS, UI_FONTS, lightColors, RADIUS } from "./tokens";
 import { Theme } from "./types";
 
 /**
@@ -38,6 +38,7 @@ export function useTheme(): Theme {
         sizes: FONT_SIZES,
         weights: FONT_WEIGHTS,
         scaleLimits: FONT_SCALE_LIMITS,
+        fonts: UI_FONTS,
       },
       spacing,
       radius: RADIUS,

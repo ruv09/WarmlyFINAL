@@ -1,8 +1,9 @@
 import React from "react";
-import { PressableProps, StyleProp, Text, ViewStyle } from "react-native";
+import { PressableProps, StyleProp, ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { PressableScale } from "../animation";
 import { useTheme } from "../../theme";
+import { Text } from "./Text";
 
 interface ButtonProps extends Omit<PressableProps, "style"> {
   label: string;

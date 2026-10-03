@@ -1,9 +1,10 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { MOOD_PICKER_CATALOG } from "../../constants/moods";
 import { MoodId } from "../../types";
 import { PressableScale } from "../animation";
 import { useTheme } from "../../theme";
+import { Text } from "../ui";
 
 interface MoodPickerProps {
   selectedMoodId?: MoodId;

@@ -1,4 +1,4 @@
-import * as Notifications from "expo-notifications";
+import { isRunningInExpoGo } from "expo";
 import { Platform } from "react-native";
 import { NotificationSettings } from "../types";
 import { EntryRepository } from "./repositories";
@@ -12,24 +12,44 @@ import { buildUniqueAiPhrase, toDateKey } from "../utils";
  * Это не push и не сеть: уведомления живут в AlarmManager и должны
  * приходить при закрытом приложении и без интернета. На Android 12+
  * для точного времени нужен SCHEDULE_EXACT_ALARM.
+ *
+ * С SDK 53 импорт expo-notifications в Expo Go на Android падает:
+ * пакет при загрузке регистрирует push-token listener и бросает Error.
+ * Локальные напоминания в Expo Go на Android из-за этого недоступны —
+ * грузим нативный модуль только вне Expo Go / не на Android.
  */
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
+type NotificationsModule = typeof import("expo-notifications");
+
+export const canScheduleLocalNotifications = !(
+  isRunningInExpoGo() && Platform.OS === "android"
+);
+
+function loadNotifications(): NotificationsModule | null {
+  if (!canScheduleLocalNotifications) return null;
+  // require, не import: иначе Metro выполнит модуль при старте в Expo Go.
+  return require("expo-notifications") as NotificationsModule;
+}
+
+const Notifications = loadNotifications();
+
+if (Notifications) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 const CHANNEL_ID = "warmly-reminders";
 const HORIZON_DAYS = 14;
 const MIN_GAP_MINUTES = 4 * 60;
 
 async function ensureAndroidChannel(): Promise<void> {
-  if (Platform.OS !== "android") return;
+  if (!Notifications || Platform.OS !== "android") return;
   await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
     name: "Напоминания Warmly",
     description: "Не больше двух тихих напоминаний в день",
@@ -42,6 +62,7 @@ async function ensureAndroidChannel(): Promise<void> {
 }
 
 export async function requestNotificationPermissions(): Promise<boolean> {
+  if (!Notifications) return false;
   try {
     const existing = await Notifications.getPermissionsAsync();
     if (existing.granted) return true;
@@ -79,6 +100,7 @@ function nextBody(used: string[]): string {
 }
 
 async function scheduleOnce(id: string, when: Date, body: string): Promise<void> {
+  if (!Notifications) return;
   await Notifications.scheduleNotificationAsync({
     identifier: id,
     content: {
@@ -95,6 +117,8 @@ async function scheduleOnce(id: string, when: Date, body: string): Promise<void>
 }
 
 export async function syncNotifications(settings: NotificationSettings): Promise<void> {
+  if (!Notifications) return;
+
   await ensureAndroidChannel();
 
   if (!settings.enabled) {

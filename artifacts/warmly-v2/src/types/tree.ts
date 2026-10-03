@@ -1,19 +1,22 @@
+export type SceneMode = "day" | "night";
+
 /**
- * Виды деревьев Warmly 2.0 — живописные PNG в фас.
+ * 12 видов Warmly 2.0 — живописные PNG в фас.
  * Без стадий роста: одна запись = одно полноценное дерево.
  */
 export type TreeSpecies =
-  | "oak"
-  | "birch"
   | "pine"
-  | "spruce"
+  | "birch"
+  | "oak"
   | "maple"
-  | "linden"
-  | "sakura"
-  | "apple"
-  | "bush"
   | "willow"
-  | "rowan";
+  | "ash"
+  | "rowan"
+  | "poplar"
+  | "spruce"
+  | "linden"
+  | "apple"
+  | "beech";
 
 export interface TreePosition {
   /** Зарезервировано для вариации раскладки; каталог не использует мировую карту. */

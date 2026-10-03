@@ -11,3 +11,7 @@ export function pluralRu(n: number, one: string, few: string, many: string): str
 export function treesLabel(n: number): string {
   return `${n} ${pluralRu(n, "дерево", "дерева", "деревьев")}`;
 }
+
+export function entriesLabel(n: number): string {
+  return `${n} ${pluralRu(n, "запись", "записи", "записей")}`;
+}

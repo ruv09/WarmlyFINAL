@@ -3,7 +3,7 @@
 Рабочее приложение на базе архитектуры [Warmly2.0](https://github.com/ruv09/Warmly2.0)
 с сильными сторонами продукта из Warmly v1 (этот монорепозиторий).
 
-Пакет **намеренно вне root pnpm workspace**: Expo 54 / React 19.1
+Пакет **намеренно вне root pnpm workspace**: Expo 57 / React 19.2
 ставится через `pnpm install --ignore-workspace`, чтобы не смешивать
 lockfile с корневым workspace.
 

@@ -23,6 +23,49 @@ export const FONT_WEIGHTS = {
 
 export type FontWeightToken = keyof typeof FONT_WEIGHTS;
 
+/** Nunito — интерфейс. Literata — мысль дня, записи, дощечка. */
+export const UI_FONTS = {
+  regular: "Nunito_400Regular",
+  medium: "Nunito_500Medium",
+  semibold: "Nunito_600SemiBold",
+  bold: "Nunito_700Bold",
+} as const;
+
+export const SERIF_FONTS = {
+  regular: "Literata_400Regular",
+  medium: "Literata_500Medium",
+  semibold: "Literata_600SemiBold",
+  bold: "Literata_700Bold",
+} as const;
+
+export const SERIF_ITALIC_FONTS = {
+  regular: "Literata_400Regular_Italic",
+  medium: "Literata_500Medium_Italic",
+  semibold: "Literata_600SemiBold_Italic",
+  bold: "Literata_700Bold_Italic",
+} as const;
+
+export type TypefaceKind = "ui" | "serif";
+
+export function mapFontWeight(value: unknown): FontWeightToken {
+  const raw = String(value ?? "400");
+  if (raw === "500" || raw === "medium") return "medium";
+  if (raw === "600" || raw === "semibold") return "semibold";
+  if (raw === "700" || raw === "800" || raw === "900" || raw === "bold") return "bold";
+  return "regular";
+}
+
+export function resolveTypeface(
+  kind: TypefaceKind,
+  weight: FontWeightToken = "regular",
+  italic = false,
+): string {
+  if (kind === "serif") {
+    return italic ? SERIF_ITALIC_FONTS[weight] : SERIF_FONTS[weight];
+  }
+  return UI_FONTS[weight];
+}
+
 /**
  * Межстрочный интервал как множитель к размеру шрифта (а не
  * абсолютное число) — так соотношение остаётся верным при системном

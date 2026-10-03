@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Switch, Text, TextInput, View } from "react-native";
+import { Switch, View } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { KeyboardScreen } from "../components/layout";
-import { Button } from "../components/ui";
+import { Button, Text, TextInput } from "../components/ui";
 import { useSettings } from "../hooks";
+import { canScheduleLocalNotifications } from "../services";
 import { useTheme } from "../theme";
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -70,6 +71,18 @@ export function NotificationsScreen() {
         Самое большее два тихих напоминания в день, без звука. Вечернее не придёт, если день уже
         записан.
       </Text>
+      {!canScheduleLocalNotifications ? (
+        <Text
+          style={{
+            color: theme.colors.textSecondary,
+            lineHeight: 22,
+            marginTop: theme.spacing("md"),
+          }}
+        >
+          В Expo Go на Android системные напоминания недоступны. Они заработают в собранном
+          приложении (APK).
+        </Text>
+      ) : null}
 
       {row("Утром", morningEnabled, setMorningEnabled)}
       <TextInput

@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Screen } from "../components/layout";
-import { Button } from "../components/ui";
+import { Button, Text } from "../components/ui";
 import { EntryCard } from "../components/entry";
 import { FadeView } from "../components/animation";
 import { useEntries, useFavorites } from "../hooks";
@@ -92,6 +92,7 @@ export function HomeScreen() {
           Мысль дня
         </Text>
         <Text
+          face="serif"
           style={{
             fontSize: 26,
             lineHeight: 34,

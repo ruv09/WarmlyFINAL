@@ -25,7 +25,7 @@ export const lightColors: ColorPalette = {
   border: "#DDD4C2",
   overlay: "#F6F1E4EE",
   tabBar: "#F6F1E4F5",
-  groveSky: "#C5D4E2",
+  groveSky: "#EBE6D4",
 };
 
 export const darkColors: ColorPalette = {

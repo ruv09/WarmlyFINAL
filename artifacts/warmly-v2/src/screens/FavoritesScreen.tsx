@@ -1,14 +1,17 @@
 import React from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Screen } from "../components/layout";
+import { Text } from "../components/ui";
 import { useFavorites } from "../hooks";
 import { useTheme } from "../theme";
 import { pluralRu } from "../utils";
 
 export function FavoritesScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { favorites, removeFavorite } = useFavorites();
 
   async function handleRemove(quote: string) {
@@ -18,6 +21,25 @@ export function FavoritesScreen() {
 
   return (
     <Screen>
+      <Pressable
+        onPress={() => router.back()}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel="Назад"
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: theme.colors.surface,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          marginBottom: theme.spacing("sm"),
+        }}
+      >
+        <Ionicons name="chevron-back" size={20} color={theme.colors.textPrimary} />
+      </Pressable>
       <Text
         style={{
           fontSize: theme.typography.sizes.title,
@@ -64,6 +86,7 @@ export function FavoritesScreen() {
               }}
             >
               <Text
+                face="serif"
                 style={{
                   fontSize: theme.typography.sizes.body,
                   color: theme.colors.textPrimary,

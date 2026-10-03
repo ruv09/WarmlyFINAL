@@ -5,6 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { ForestCatalog, TreeGroveScene } from "../components/forest";
 import { useEntries, useForest } from "../hooks";
 import { useTheme } from "../theme";
+import { resolveSceneMode } from "../constants/sceneMode";
 import { CatalogItem } from "../services/forest/catalog";
 
 /**
@@ -19,6 +20,7 @@ export function ForestScreen() {
   const { trees, isLoading: treesLoading } = useForest();
   const { entries, isLoading: entriesLoading } = useEntries();
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const sceneMode = resolveSceneMode();
 
   const selectedItem = useMemo(() => {
     if (!selectedEntryId) return null;
@@ -45,7 +47,7 @@ export function ForestScreen() {
   useEffect(() => {
     navigation.setOptions({
       tabBarStyle: selectedItem
-        ? { display: "none" }
+        ? { display: "none", height: 0, overflow: "hidden", position: "absolute" }
         : {
             backgroundColor: theme.colors.tabBar,
             borderTopWidth: 0,
@@ -80,12 +82,17 @@ export function ForestScreen() {
           onSelectItem={onSelectItem}
           bottomInset={insets.bottom}
           isLoading={treesLoading || entriesLoading}
+          sceneMode={sceneMode}
         />
       </SafeAreaView>
 
       {selectedItem ? (
-        <View style={StyleSheet.absoluteFill} pointerEvents="auto">
-          <TreeGroveScene item={selectedItem} onClose={() => setSelectedEntryId(null)} />
+        <View style={[StyleSheet.absoluteFill, styles.groveLayer]} pointerEvents="auto">
+          <TreeGroveScene
+            item={selectedItem}
+            sceneMode={sceneMode}
+            onClose={() => setSelectedEntryId(null)}
+          />
         </View>
       ) : null}
     </View>
@@ -94,4 +101,8 @@ export function ForestScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  groveLayer: {
+    zIndex: 40,
+    elevation: 40,
+  },
 });
