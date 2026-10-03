@@ -47,7 +47,7 @@ export function TreeGroveScene({ item, onClose }: Props) {
 
   return (
     <View
-      style={[styles.fill, { backgroundColor: theme.colors.groveSky }]}
+      style={[styles.fill, { backgroundColor: theme.colors.background }]}
       accessibilityViewIsModal
     >
       <Image

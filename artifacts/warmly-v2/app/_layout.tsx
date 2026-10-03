@@ -91,15 +91,17 @@ function Bootstrap() {
   return (
     <>
       <StatusBar hidden={Platform.OS === "android"} style={barStyle} />
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: theme.colors.background },
+        }}
+      >
         <Stack.Screen name="welcome" />
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="entry/[id]" options={{ headerShown: true, title: "Запись" }} />
-        <Stack.Screen
-          name="entry/new"
-          options={{ presentation: "modal", headerShown: true, title: "Новая запись" }}
-        />
-        <Stack.Screen name="favorites" options={{ headerShown: true, title: "Избранное" }} />
+        <Stack.Screen name="entry/[id]" />
+        <Stack.Screen name="entry/new" options={{ presentation: "modal" }} />
+        <Stack.Screen name="favorites" />
       </Stack>
     </>
   );

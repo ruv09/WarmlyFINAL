@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { KeyboardScreen } from "../components/layout";
 import { Button } from "../components/ui";
@@ -24,6 +25,27 @@ export function NewEntryScreen() {
   const [supportPhrase, setSupportPhrase] = useState<string | null>(null);
 
   const canSave = Boolean(moodId) && note.trim().length > 0 && !isSaving;
+
+  const backButton = (
+    <Pressable
+      onPress={() => router.back()}
+      hitSlop={10}
+      accessibilityRole="button"
+      accessibilityLabel="Назад"
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: theme.colors.surface,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+      }}
+    >
+      <Ionicons name="chevron-back" size={20} color={theme.colors.textPrimary} />
+    </Pressable>
+  );
 
   async function handleSave() {
     if (!moodId || !note.trim()) return;
@@ -58,7 +80,14 @@ export function NewEntryScreen() {
   if (supportPhrase) {
     return (
       <KeyboardScreen>
-        <Text style={{ color: theme.colors.accent, fontWeight: theme.typography.weights.semibold }}>
+        {backButton}
+        <Text
+          style={{
+            color: theme.colors.accent,
+            fontWeight: theme.typography.weights.semibold,
+            marginTop: theme.spacing("md"),
+          }}
+        >
           Warmly рядом
         </Text>
         <Text style={{ marginTop: 8, color: theme.colors.textPrimary, fontSize: theme.typography.sizes.subtitle }}>
@@ -70,6 +99,7 @@ export function NewEntryScreen() {
 
   return (
     <KeyboardScreen>
+      {backButton}
       {label("Как ты себя чувствуешь?")}
       <MoodPicker selectedMoodId={moodId} onSelect={setMoodId} />
 
