@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { LayoutChangeEvent, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FadeView, ScaleView } from "../animation";
 import { WoodenPlaque, PLAQUE_ASPECT } from "./WoodenPlaque";
 import { ForestSceneBackdrop } from "./ForestSceneBackdrop";
 import { CatalogItem } from "../../services/forest/catalog";
@@ -20,8 +19,7 @@ type Props = {
 };
 
 /**
- * Большая сцена и наша дощечка с текстом записи.
- * Назад справа снизу — настоящая кнопка.
+ * Большая сцена: картина целиком, маленькая дощечка в траве, кнопка Назад.
  */
 export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: Props) {
   const theme = useTheme();
@@ -30,7 +28,6 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
   const insets = useSafeAreaInsets();
   const window = useWindowDimensions();
   const [box, setBox] = useState({ width: 0, height: 0 });
-  const [shown, setShown] = useState(false);
   const width = box.width || window.width;
   const height = box.height || window.height;
   const tree = getTreeDefinition(item.tree.species);
@@ -38,10 +35,6 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
   const edges = getGroveEdges(item.tree.species, mode);
   const sceneFrame = getContainedSceneFrame(width, height, tree.sceneAspect);
   const plaque = layoutPlaqueInScene(sceneFrame, PLAQUE_ASPECT);
-
-  useEffect(() => {
-    setShown(true);
-  }, []);
 
   function onBoxLayout(event: LayoutChangeEvent) {
     const next = event.nativeEvent.layout;
@@ -63,31 +56,25 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
         aspect={tree.sceneAspect}
       />
 
-      <FadeView visible={shown} duration="base" style={styles.overlay} pointerEvents="box-none">
-        <ScaleView
-          visible={shown}
-          from={0.98}
-          duration="base"
-          style={[
-            styles.plaqueSlot,
-            {
-              left: plaque.left,
-              top: plaque.top,
-              width: plaque.width,
-              height: plaque.height,
-            },
-          ]}
-          pointerEvents="box-none"
-        >
-            <WoodenPlaque
-              item={item}
-              sceneMode={mode}
-              compact
-              maxHeight={plaque.height}
-              width={plaque.width}
-            />
-        </ScaleView>
-      </FadeView>
+      <View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          left: plaque.left,
+          top: plaque.top,
+          width: plaque.width,
+          height: plaque.height,
+          overflow: "hidden",
+        }}
+      >
+        <WoodenPlaque
+          item={item}
+          sceneMode={mode}
+          compact
+          maxHeight={plaque.height}
+          width={plaque.width}
+        />
+      </View>
 
       <Pressable
         onPress={onClose}
@@ -112,14 +99,6 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  overlay: {
-    ...StyleSheet.absoluteFill,
-  },
-  plaqueSlot: {
-    position: "absolute",
-    alignItems: "center",
-    justifyContent: "center",
-  },
   backBtn: {
     position: "absolute",
     zIndex: 30,

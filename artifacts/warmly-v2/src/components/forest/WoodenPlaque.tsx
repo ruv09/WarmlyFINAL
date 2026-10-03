@@ -8,7 +8,7 @@ import { useTheme } from "../../theme";
 
 const PLAQUE_SIGN = require("../../../assets/forest/plaque-sign.png");
 
-/** Вырез таблички со стойками, без обрезки скруглением. */
+/** Вырез таблички со стойками. Высота считается только от этих чисел. */
 export const PLAQUE_ASPECT = 851 / 623;
 
 type Props = {
@@ -33,74 +33,52 @@ function formatPlaqueDate(dateKey: string, time?: string): string {
   return time ? `${date}  ${time}` : date;
 }
 
-function typeScale(width: number): number {
-  if (width < 120) return 0.78;
-  if (width < 150) return 0.86;
-  if (width < 190) return 0.94;
-  return 1;
-}
-
-function fitNote(
-  text: string,
-  compact: boolean,
-  hasExtra: boolean,
-  width: number,
-): { fontSize: number; lineHeight: number; lines: number } {
-  const scale = typeScale(width);
-  const len = text.length;
-  if (compact || width < 200) {
-    const lines = hasExtra ? 2 : 3;
-    if (len > 90) return { fontSize: Math.round(10 * scale), lineHeight: Math.round(13 * scale), lines };
-    if (len > 50) return { fontSize: Math.round(11 * scale), lineHeight: Math.round(14 * scale), lines };
-    return { fontSize: Math.round(12 * scale), lineHeight: Math.round(15 * scale), lines };
-  }
-  const lines = hasExtra ? 3 : 4;
-  if (len > 220) return { fontSize: Math.round(13 * scale), lineHeight: Math.round(18 * scale), lines };
-  if (len > 140) return { fontSize: Math.round(14 * scale), lineHeight: Math.round(19 * scale), lines };
-  return { fontSize: Math.round(15 * scale), lineHeight: Math.round(20 * scale), lines };
-}
-
 /**
- * Дощечка из готового выреза: доска и стойки как на фото,
- * текст только на самой доске.
+ * Дощечка фиксированного размера: картинка никогда не берёт
+ * исходные 851×623, текст только на доске.
  */
 export function WoodenPlaque({ item, width, maxHeight, compact = false }: Props) {
   const theme = useTheme();
   const ink = "#2A1C10";
   const muted = "#6A4A2C";
   const { note, extra } = plaqueCopy(item);
-  let plaqueWidth = width;
-  let height = Math.round(plaqueWidth / PLAQUE_ASPECT);
-  if (maxHeight > 0 && height > maxHeight) {
-    height = maxHeight;
-    plaqueWidth = Math.round(height * PLAQUE_ASPECT);
+
+  const plaqueWidth = Math.max(72, Math.round(width));
+  let plaqueHeight = Math.max(52, Math.round(plaqueWidth / PLAQUE_ASPECT));
+  if (maxHeight > 0 && plaqueHeight > maxHeight) {
+    plaqueHeight = Math.max(52, Math.round(maxHeight));
   }
-  const fit = fitNote(note, compact, Boolean(extra), plaqueWidth);
-  const dateLabel = formatPlaqueDate(item.entry.date, compact || plaqueWidth < 200 ? undefined : item.entry.time);
-  const scale = typeScale(plaqueWidth);
-  const padX = Math.round(plaqueWidth * 0.12);
-  const padTop = Math.round(height * 0.2);
-  const padBottom = Math.round(height * 0.26);
+
+  const dateLabel = formatPlaqueDate(item.entry.date, compact ? undefined : item.entry.time);
+  const noteSize = plaqueWidth < 140 ? 10 : plaqueWidth < 180 ? 11 : 13;
+  const extraSize = Math.max(9, noteSize - 1);
 
   return (
-    <View style={[styles.frame, { width: plaqueWidth, height }]} collapsable={false}>
+    <View style={[styles.frame, { width: plaqueWidth, height: plaqueHeight }]} collapsable={false}>
       <Image
         source={PLAQUE_SIGN}
-        style={styles.sign}
-        resizeMode="stretch"
+        style={{ width: plaqueWidth, height: plaqueHeight }}
+        resizeMode="contain"
         accessibilityIgnoresInvertColors
       />
       <View
-        style={[styles.inner, { paddingHorizontal: padX, paddingTop: padTop, paddingBottom: padBottom }]}
-        collapsable={false}
+        pointerEvents="none"
+        style={[
+          styles.copy,
+          {
+            paddingHorizontal: Math.round(plaqueWidth * 0.12),
+            paddingTop: Math.round(plaqueHeight * 0.2),
+            paddingBottom: Math.round(plaqueHeight * 0.26),
+          },
+        ]}
       >
         <Text
           face="serif"
-          numberOfLines={fit.lines}
+          numberOfLines={extra ? 2 : 3}
           style={{
             color: ink,
-            fontSize: fit.fontSize,
-            lineHeight: fit.lineHeight,
+            fontSize: noteSize,
+            lineHeight: noteSize + 3,
             textAlign: "center",
           }}
           maxFontSizeMultiplier={theme.typography.scaleLimits.content}
@@ -110,12 +88,12 @@ export function WoodenPlaque({ item, width, maxHeight, compact = false }: Props)
         {extra ? (
           <Text
             face="serif"
-            numberOfLines={compact ? 2 : 3}
+            numberOfLines={2}
             style={{
-              marginTop: Math.max(3, Math.round(4 * scale)),
+              marginTop: 2,
               color: ink,
-              fontSize: Math.max(9, Math.round((compact ? 10 : 12) * scale)),
-              lineHeight: Math.max(12, Math.round((compact ? 13 : 16) * scale)),
+              fontSize: extraSize,
+              lineHeight: extraSize + 3,
               textAlign: "center",
               fontStyle: "italic",
             }}
@@ -126,11 +104,10 @@ export function WoodenPlaque({ item, width, maxHeight, compact = false }: Props)
         ) : null}
         <Text
           style={{
-            marginTop: Math.max(3, Math.round(4 * scale)),
+            marginTop: 2,
             color: muted,
-            fontSize: Math.max(8, Math.round(10 * scale)),
+            fontSize: Math.max(8, extraSize - 1),
             textAlign: "center",
-            letterSpacing: 0.2,
           }}
           maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
         >
@@ -143,13 +120,11 @@ export function WoodenPlaque({ item, width, maxHeight, compact = false }: Props)
 
 const styles = StyleSheet.create({
   frame: {
+    overflow: "hidden",
     backgroundColor: "transparent",
   },
-  sign: {
+  copy: {
     ...StyleSheet.absoluteFill,
-  },
-  inner: {
-    flex: 1,
     justifyContent: "center",
   },
 });

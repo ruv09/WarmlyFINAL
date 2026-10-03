@@ -65,6 +65,7 @@ export function TreeCatalogCard({ item, sceneMode, onPress }: Props) {
           top: plaque.top,
           width: plaque.width,
           height: plaque.height,
+          overflow: "hidden",
         }}
       >
         <WoodenPlaque
