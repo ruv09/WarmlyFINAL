@@ -18,9 +18,13 @@ export function sceneModeFromTime(time: string): SceneMode | null {
   return sceneModeFromHour(hour);
 }
 
+export function sceneModeFromTheme(themeMode: "light" | "dark"): SceneMode {
+  return themeMode === "dark" ? "night" : "day";
+}
+
 /**
  * Состояние сцены можно задать вручную, независимо от системного времени.
- * Без override берётся текущий час — так лес встречает утро и вечер сам.
+ * Без override — текущий час. В лесу обычно передаём тему: dark → night.
  */
 export function resolveSceneMode(override?: SceneMode | null, now: Date = new Date()): SceneMode {
   if (override === "day" || override === "night") return override;

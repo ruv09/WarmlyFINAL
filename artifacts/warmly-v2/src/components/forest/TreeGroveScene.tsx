@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Image, LayoutChangeEvent, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import { LayoutChangeEvent, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { FadeView, ScaleView } from "../animation";
 import { TreeIllustration } from "../tree/TreeIllustration";
 import { WoodenPlaque } from "./WoodenPlaque";
+import { ForestSceneBackdrop } from "./ForestSceneBackdrop";
 import { CatalogItem } from "../../services/forest/catalog";
 import { fitStaticBackground } from "../../services/forest/backgroundFit";
-import { GROVE_SCENE_PIXELS, getGroveScene } from "../../constants/groveScenes";
+import { GROVE_SCENE_PIXELS, getGroveEdges, getGroveScene } from "../../constants/groveScenes";
 import { resolveSceneMode } from "../../constants/sceneMode";
 import { SceneMode } from "../../types";
 import { useTheme } from "../../theme";
@@ -20,11 +21,11 @@ type Props = {
 
 /**
  * Полноэкранная сцена записи: небо, целое дерево, дощечка, назад справа снизу.
- * Без камеры, жестов и джойстика.
+ * Поляна вписывается целиком — без зума и обрезки.
  */
 export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: Props) {
   const theme = useTheme();
-  const mode = resolveSceneMode(sceneModeOverride);
+  const mode = resolveSceneMode(sceneModeOverride ?? (theme.mode === "dark" ? "night" : "day"));
   const isNight = mode === "night";
   const insets = useSafeAreaInsets();
   const window = useWindowDimensions();
@@ -33,17 +34,18 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
   const width = box.width || window.width;
   const height = box.height || window.height;
   const sceneSource = getGroveScene(item.tree.species, mode);
+  const edges = getGroveEdges(item.tree.species, mode);
   const sceneFrame = fitStaticBackground(
     GROVE_SCENE_PIXELS.width,
     GROVE_SCENE_PIXELS.height,
     width,
     height,
   );
-  const treeSize = Math.round(Math.min(width * 0.48, height * 0.34, 280));
-  const plaqueMaxH = Math.round(height * 0.26);
+  const treeSize = Math.round(Math.min(sceneFrame.width * 0.4, sceneFrame.height * 0.3, 240));
+  const plaqueMaxH = Math.round(height * 0.24);
   const plaqueWidth = Math.min(width * 0.86, 400);
   const stageBottom = Math.max(insets.bottom, 10) + 86;
-  const treeTop = Math.round(sceneFrame.top + sceneFrame.height * 0.7 - treeSize);
+  const treeTop = Math.round(sceneFrame.top + sceneFrame.height * 0.66 - treeSize);
   const treeLeft = Math.round(sceneFrame.left + (sceneFrame.width - treeSize) / 2);
 
   useEffect(() => {
@@ -58,25 +60,11 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
 
   return (
     <View
-      style={[styles.fill, { backgroundColor: theme.colors.background }]}
+      style={[styles.fill, { backgroundColor: edges.sky }]}
       accessibilityViewIsModal
       onLayout={onBoxLayout}
     >
-      <Image
-        source={sceneSource}
-        style={styles.sceneFill}
-        resizeMode="cover"
-        accessibilityIgnoresInvertColors
-      />
-      <View
-        pointerEvents="none"
-        style={[
-          styles.sceneGrade,
-          {
-            backgroundColor: isNight ? "rgba(16, 14, 32, 0.08)" : "rgba(236, 226, 200, 0.06)",
-          },
-        ]}
-      />
+      <ForestSceneBackdrop source={sceneSource} edges={edges} width={width} height={height} />
 
       <SafeAreaView edges={["top", "left", "right"]} style={styles.fill} pointerEvents="box-none">
         <FadeView visible={shown} duration="base" style={styles.fill} pointerEvents="box-none">
@@ -132,12 +120,6 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  sceneFill: {
-    ...StyleSheet.absoluteFill,
-  },
-  sceneGrade: {
-    ...StyleSheet.absoluteFill,
-  },
   stage: {
     flex: 1,
     justifyContent: "flex-end",

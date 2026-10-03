@@ -1,7 +1,7 @@
 /**
- * Статичный фон сцены дерева: масштаб только от исходного JPG и экрана.
- * Не камера и не зум выбранного дерева. Картина закрывает экран целиком,
- * чтобы сверху и снизу не оставалось чужой заливки.
+ * Вписывает поляну целиком (contain), без зума cover.
+ * Картина остаётся резкой: масштаб только вниз, края экрана
+ * закрывает небо/земля той же поляны, а не обрезка кадра.
  */
 export function fitStaticBackground(
   imageWidth: number,
@@ -13,7 +13,7 @@ export function fitStaticBackground(
     return { width: screenWidth, height: screenHeight, left: 0, top: 0 };
   }
 
-  const scale = Math.max(screenWidth / imageWidth, screenHeight / imageHeight);
+  const scale = Math.min(screenWidth / imageWidth, screenHeight / imageHeight);
   const width = imageWidth * scale;
   const height = imageHeight * scale;
   return {

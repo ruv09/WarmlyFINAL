@@ -1,10 +1,11 @@
 import React from "react";
-import { Image, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { TreeIllustration } from "../tree/TreeIllustration";
 import { WoodenPlaque } from "./WoodenPlaque";
+import { ForestSceneBackdrop } from "./ForestSceneBackdrop";
 import { CatalogItem } from "../../services/forest/catalog";
-import { getGroveScene } from "../../constants/groveScenes";
+import { GROVE_SCENE_PIXELS, getGroveEdges, getGroveScene } from "../../constants/groveScenes";
 import { getTreeDefinition } from "../../constants/treeDefinitions";
 import { SceneMode } from "../../types";
 import { useTheme } from "../../theme";
@@ -15,20 +16,26 @@ type Props = {
   onPress: () => void;
 };
 
+const SCENE_ASPECT = GROVE_SCENE_PIXELS.width / GROVE_SCENE_PIXELS.height;
+
 /**
- * Карточка записи как маленькая лесная сцена:
- * поляна, целое дерево, деревянная дощечка с мыслью.
+ * Карточка записи как маленькая лесная сцена.
+ * Поляна целиком, без cover-зума.
  */
 export function TreeCatalogCard({ item, sceneMode, onPress }: Props) {
   const theme = useTheme();
   const window = useWindowDimensions();
   const tree = getTreeDefinition(item.tree.species);
   const meadow = getGroveScene(item.tree.species, sceneMode);
+  const edges = getGroveEdges(item.tree.species, sceneMode);
   const isNight = sceneMode === "night";
   const cardWidth = Math.max(220, window.width - theme.spacing("lg") * 2);
-  const cardHeight = Math.min(Math.round(cardWidth / 0.72), Math.round(window.height * 0.56));
+  const cardHeight = Math.min(
+    Math.round(cardWidth / SCENE_ASPECT),
+    Math.round(window.height * 0.64),
+  );
   const plaqueWidth = Math.min(cardWidth - 36, 320);
-  const plaqueMaxH = Math.round(cardHeight * 0.3);
+  const plaqueMaxH = Math.round(cardHeight * 0.28);
   const note = item.entry.note.trim() || item.entry.smallWin?.trim() || "Без текста";
 
   return (
@@ -42,10 +49,11 @@ export function TreeCatalogCard({ item, sceneMode, onPress }: Props) {
           width: cardWidth,
           height: cardHeight,
           alignSelf: "center",
+          backgroundColor: edges.sky,
         },
       ]}
     >
-      <Image source={meadow} style={styles.meadow} resizeMode="cover" accessibilityIgnoresInvertColors />
+      <ForestSceneBackdrop source={meadow} edges={edges} width={cardWidth} height={cardHeight} />
       {isNight ? (
         <View style={styles.skyMark} pointerEvents="none">
           <Ionicons name="moon" size={16} color="#F6E7C3" />
@@ -82,9 +90,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 7,
   },
-  meadow: {
-    ...StyleSheet.absoluteFill,
-  },
   skyMark: {
     position: "absolute",
     top: 14,
@@ -99,10 +104,10 @@ const styles = StyleSheet.create({
   },
   treeSlot: {
     position: "absolute",
-    left: "18%",
-    right: "18%",
-    top: "8%",
-    bottom: "32%",
+    left: "22%",
+    right: "22%",
+    top: "14%",
+    bottom: "34%",
   },
   plaqueDock: {
     position: "absolute",

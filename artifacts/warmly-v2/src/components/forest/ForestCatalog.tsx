@@ -3,7 +3,7 @@ import { FlatList, ListRenderItem, StyleSheet, View } from "react-native";
 import { Text } from "../ui";
 import { TreeCatalogCard } from "./TreeCatalogCard";
 import { useTheme } from "../../theme";
-import { resolveSceneMode } from "../../constants/sceneMode";
+import { resolveSceneMode, sceneModeFromTheme } from "../../constants/sceneMode";
 import { CatalogItem, MonthSection, groupForestByMonth } from "../../services/forest/catalog";
 import { Entry, SceneMode, Tree } from "../../types";
 import { entriesLabel } from "../../utils";
@@ -48,7 +48,7 @@ export function ForestCatalog({
   sceneMode: sceneModeOverride,
 }: Props) {
   const theme = useTheme();
-  const sceneMode = resolveSceneMode(sceneModeOverride);
+  const sceneMode = resolveSceneMode(sceneModeOverride ?? sceneModeFromTheme(theme.mode));
   const sections = useMemo(() => groupForestByMonth(entries, trees), [entries, trees]);
   const rows = useMemo(() => flattenSections(sections), [sections]);
 
