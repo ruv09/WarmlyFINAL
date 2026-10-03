@@ -6,7 +6,10 @@ import { SceneMode } from "../../types";
 import { parseDateKey } from "../../utils/date";
 import { useTheme } from "../../theme";
 
-const WOOD_DAY = require("../../../assets/forest/plaque-wood-light.jpg");
+const PLAQUE_SIGN = require("../../../assets/forest/plaque-sign.png");
+
+/** Вырез таблички со стойками, без обрезки скруглением. */
+export const PLAQUE_ASPECT = 851 / 623;
 
 type Props = {
   item: CatalogItem;
@@ -38,25 +41,45 @@ function fitNote(text: string, compact: boolean, hasExtra: boolean): { fontSize:
     if (len > 50) return { fontSize: 12, lineHeight: 16, lines };
     return { fontSize: 13, lineHeight: 17, lines };
   }
-  const lines = hasExtra ? 5 : 7;
-  if (len > 220) return { fontSize: 15, lineHeight: 23, lines };
-  if (len > 140) return { fontSize: 16, lineHeight: 25, lines };
-  return { fontSize: 17, lineHeight: 26, lines };
+  const lines = hasExtra ? 4 : 5;
+  if (len > 220) return { fontSize: 15, lineHeight: 22, lines };
+  if (len > 140) return { fontSize: 16, lineHeight: 24, lines };
+  return { fontSize: 17, lineHeight: 25, lines };
 }
 
-/** Деревянная дощечка: запись и заметка, текстура дерева, тёмные чернила. */
-export function WoodenPlaque({ item, width, compact = false }: Props) {
+/**
+ * Дощечка из готового выреза: доска и стойки как на фото,
+ * текст только на самой доске.
+ */
+export function WoodenPlaque({ item, width, maxHeight, compact = false }: Props) {
   const theme = useTheme();
   const ink = "#2A1C10";
   const muted = "#6A4A2C";
   const { note, extra } = plaqueCopy(item);
   const fit = fitNote(note, compact, Boolean(extra));
   const dateLabel = formatPlaqueDate(item.entry.date, compact ? undefined : item.entry.time);
+  let plaqueWidth = width;
+  let height = Math.round(plaqueWidth / PLAQUE_ASPECT);
+  if (maxHeight > 0 && height > maxHeight) {
+    height = maxHeight;
+    plaqueWidth = Math.round(height * PLAQUE_ASPECT);
+  }
+  const padX = Math.round(plaqueWidth * (compact ? 0.1 : 0.11));
+  const padTop = Math.round(height * (compact ? 0.19 : 0.18));
+  const padBottom = Math.round(height * (compact ? 0.26 : 0.25));
 
   return (
-    <View style={[styles.frame, { width }]} collapsable={false}>
-      <Image source={WOOD_DAY} style={styles.woodImage} resizeMode="cover" accessibilityIgnoresInvertColors />
-      <View style={[styles.inner, compact ? styles.innerCompact : null]} collapsable={false}>
+    <View style={[styles.frame, { width: plaqueWidth, height }]} collapsable={false}>
+      <Image
+        source={PLAQUE_SIGN}
+        style={styles.sign}
+        resizeMode="stretch"
+        accessibilityIgnoresInvertColors
+      />
+      <View
+        style={[styles.inner, { paddingHorizontal: padX, paddingTop: padTop, paddingBottom: padBottom }]}
+        collapsable={false}
+      >
         <Text
           face="serif"
           numberOfLines={fit.lines}
@@ -75,10 +98,10 @@ export function WoodenPlaque({ item, width, compact = false }: Props) {
             face="serif"
             numberOfLines={compact ? 2 : 3}
             style={{
-              marginTop: compact ? 6 : 8,
+              marginTop: compact ? 5 : 7,
               color: ink,
               fontSize: compact ? 11 : 14,
-              lineHeight: compact ? 15 : 21,
+              lineHeight: compact ? 15 : 20,
               textAlign: "center",
               fontStyle: "italic",
             }}
@@ -89,7 +112,7 @@ export function WoodenPlaque({ item, width, compact = false }: Props) {
         ) : null}
         <Text
           style={{
-            marginTop: compact ? 6 : 8,
+            marginTop: compact ? 5 : 7,
             color: muted,
             fontSize: compact ? 10 : theme.typography.sizes.caption,
             textAlign: "center",
@@ -100,49 +123,19 @@ export function WoodenPlaque({ item, width, compact = false }: Props) {
           {dateLabel}
         </Text>
       </View>
-      <View pointerEvents="none" style={[styles.peg, { left: compact ? 10 : 14 }]} />
-      <View pointerEvents="none" style={[styles.peg, { right: compact ? 10 : 14 }]} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   frame: {
-    borderRadius: 8,
-    overflow: "hidden",
-    borderWidth: 2,
-    borderColor: "#8A6238",
-    shadowColor: "#2A1A0C",
-    shadowOpacity: 0.32,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
-    backgroundColor: "#D8B07A",
+    backgroundColor: "transparent",
   },
-  woodImage: {
+  sign: {
     ...StyleSheet.absoluteFill,
   },
   inner: {
-    margin: 4,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#C9A06AAA",
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 12,
-  },
-  innerCompact: {
-    paddingHorizontal: 10,
-    paddingTop: 10,
-    paddingBottom: 8,
-  },
-  peg: {
-    position: "absolute",
-    top: 10,
-    zIndex: 2,
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: "#8A6238",
+    flex: 1,
+    justifyContent: "center",
   },
 });

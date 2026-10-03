@@ -28,8 +28,8 @@ export function TreeCatalogCard({ item, sceneMode, onPress }: Props) {
     Math.round(cardWidth / tree.sceneAspect),
     Math.round(window.height * 0.58),
   );
-  const plaqueWidth = Math.min(cardWidth - 36, 300);
-  const plaqueMaxH = Math.round(cardHeight * 0.4);
+  const plaqueWidth = Math.min(cardWidth - 28, 312);
+  const plaqueMaxH = Math.round(cardHeight * 0.48);
   const note = (item.entry.note ?? "").trim();
   const extra = (item.entry.smallWin ?? "").trim();
   const spoken = [note, extra].filter(Boolean).join(". ") || "Без текста";
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: 14,
+    bottom: 8,
     alignItems: "center",
   },
 });
