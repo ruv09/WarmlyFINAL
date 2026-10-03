@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { LayoutChangeEvent, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import { BackHandler, LayoutChangeEvent, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WoodenPlaque, PLAQUE_ASPECT } from "./WoodenPlaque";
+import { PlaqueReading } from "./PlaqueReading";
 import { ForestSceneBackdrop } from "./ForestSceneBackdrop";
 import { CatalogItem } from "../../services/forest/catalog";
 import { getGroveEdges, getGroveScene } from "../../constants/groveScenes";
@@ -19,7 +20,8 @@ type Props = {
 };
 
 /**
- * Большая сцена: картина целиком, маленькая дощечка в траве, кнопка Назад.
+ * Большая сцена: картина целиком, маленькая дощечка в траве.
+ * Тап по дощечке открывает полный текст записи.
  */
 export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: Props) {
   const theme = useTheme();
@@ -28,6 +30,7 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
   const insets = useSafeAreaInsets();
   const window = useWindowDimensions();
   const [box, setBox] = useState({ width: 0, height: 0 });
+  const [reading, setReading] = useState(false);
   const width = box.width || window.width;
   const height = box.height || window.height;
   const tree = getTreeDefinition(item.tree.species);
@@ -35,6 +38,18 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
   const edges = getGroveEdges(item.tree.species, mode);
   const sceneFrame = getContainedSceneFrame(width, height, tree.sceneAspect);
   const plaque = layoutPlaqueInScene(sceneFrame, PLAQUE_ASPECT);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (reading) {
+        setReading(false);
+        return true;
+      }
+      onClose();
+      return true;
+    });
+    return () => sub.remove();
+  }, [onClose, reading]);
 
   function onBoxLayout(event: LayoutChangeEvent) {
     const next = event.nativeEvent.layout;
@@ -56,8 +71,11 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
         aspect={tree.sceneAspect}
       />
 
-      <View
-        pointerEvents="none"
+      <Pressable
+        onPress={() => setReading(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Открыть запись"
+        hitSlop={16}
         style={{
           position: "absolute",
           left: plaque.left,
@@ -74,7 +92,7 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
           maxHeight={plaque.height}
           width={plaque.width}
         />
-      </View>
+      </Pressable>
 
       <Pressable
         onPress={onClose}
@@ -93,6 +111,8 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
       >
         <Ionicons name="arrow-back" size={22} color={isNight ? "#F0E8DC" : "#3C3A32"} />
       </Pressable>
+
+      {reading ? <PlaqueReading item={item} onClose={() => setReading(false)} /> : null}
     </View>
   );
 }

@@ -4,4 +4,5 @@ export * from "./ForestSceneBackdrop";
 export * from "./TreeCatalogCard";
 export * from "./TreeGroveScene";
 export * from "./WoodenPlaque";
+export * from "./PlaqueReading";
 export * from "./GroveFairyLights";
