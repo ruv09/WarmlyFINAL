@@ -5,6 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { ForestCatalog, TreeGroveScene } from "../components/forest";
 import { useEntries, useForest } from "../hooks";
 import { useTheme } from "../theme";
+import { resolveSceneMode } from "../constants/sceneMode";
 import { CatalogItem } from "../services/forest/catalog";
 
 /**
@@ -19,6 +20,7 @@ export function ForestScreen() {
   const { trees, isLoading: treesLoading } = useForest();
   const { entries, isLoading: entriesLoading } = useEntries();
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const sceneMode = resolveSceneMode();
 
   const selectedItem = useMemo(() => {
     if (!selectedEntryId) return null;
@@ -80,12 +82,17 @@ export function ForestScreen() {
           onSelectItem={onSelectItem}
           bottomInset={insets.bottom}
           isLoading={treesLoading || entriesLoading}
+          sceneMode={sceneMode}
         />
       </SafeAreaView>
 
       {selectedItem ? (
         <View style={[StyleSheet.absoluteFill, styles.groveLayer]} pointerEvents="auto">
-          <TreeGroveScene item={selectedItem} onClose={() => setSelectedEntryId(null)} />
+          <TreeGroveScene
+            item={selectedItem}
+            sceneMode={sceneMode}
+            onClose={() => setSelectedEntryId(null)}
+          />
         </View>
       ) : null}
     </View>

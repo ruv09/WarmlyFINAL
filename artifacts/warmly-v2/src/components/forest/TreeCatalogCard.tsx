@@ -1,145 +1,114 @@
 import React from "react";
-import { Image, ImageBackground, Pressable, StyleSheet, View } from "react-native";
+import { Image, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Text } from "../ui";
 import { TreeIllustration } from "../tree/TreeIllustration";
+import { WoodenPlaque } from "./WoodenPlaque";
 import { CatalogItem } from "../../services/forest/catalog";
 import { getGroveScene } from "../../constants/groveScenes";
-import { getSpeciesVisual } from "../../constants/treeSpecies";
-import { parseDateKey } from "../../utils/date";
+import { getTreeDefinition } from "../../constants/treeDefinitions";
+import { SceneMode } from "../../types";
 import { useTheme } from "../../theme";
-
-const WOOD_LIGHT = require("../../../assets/forest/plaque-wood-light.jpg");
-const WOOD_DARK = require("../../../assets/forest/plaque-wood-dark.jpg");
 
 type Props = {
   item: CatalogItem;
-  index: number;
+  sceneMode: SceneMode;
   onPress: () => void;
 };
 
-function formatCardDate(dateKey: string): string {
-  return parseDateKey(dateKey).toLocaleDateString("ru-RU");
-}
-
 /**
- * Карточка каталога как на референсе: поляна, дерево, маленькая табличка.
- * День/ночь берётся из темы, не дублируем пару карточек на одну запись.
+ * Карточка записи как маленькая лесная сцена:
+ * поляна, целое дерево, деревянная дощечка с мыслью.
  */
-export function TreeCatalogCard({ item, index, onPress }: Props) {
+export function TreeCatalogCard({ item, sceneMode, onPress }: Props) {
   const theme = useTheme();
-  const isDark = theme.mode === "dark";
-  const visual = getSpeciesVisual(item.tree.species);
-  const meadow = getGroveScene(item.tree.species, isDark);
-  const ink = isDark ? "#F3E6D2" : "#3A2A18";
-  const muted = isDark ? "#D4C4A8" : "#6A4A2C";
+  const window = useWindowDimensions();
+  const tree = getTreeDefinition(item.tree.species);
+  const meadow = getGroveScene(item.tree.species, sceneMode);
+  const isNight = sceneMode === "night";
+  const cardWidth = Math.max(220, window.width - theme.spacing("lg") * 2);
+  const cardHeight = Math.min(Math.round(cardWidth / 0.72), Math.round(window.height * 0.56));
+  const plaqueWidth = Math.min(cardWidth - 36, 320);
+  const plaqueMaxH = Math.round(cardHeight * 0.3);
   const note = item.entry.note.trim() || item.entry.smallWin?.trim() || "Без текста";
 
   return (
-    <View style={styles.wrap}>
-      <Text
-        style={{
-          marginBottom: 6,
-          fontSize: theme.typography.sizes.caption,
-          fontWeight: theme.typography.weights.semibold,
-          color: theme.colors.textPrimary,
-        }}
-        maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-        numberOfLines={1}
-      >
-        {index}. {visual.labelRu}
-      </Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${visual.labelRu}, запись ${item.entry.date}`}
-        onPress={onPress}
-        style={[
-          styles.card,
-          {
-            backgroundColor: theme.colors.surface,
-            borderColor: theme.colors.border,
-            borderRadius: theme.radius.md,
-          },
-        ]}
-      >
-        <Image source={meadow} style={styles.meadow} resizeMode="cover" accessibilityIgnoresInvertColors />
-        {isDark ? (
-          <View style={styles.moon}>
-            <Ionicons name="moon" size={12} color="#F6E7C3" />
-          </View>
-        ) : null}
-        <View style={styles.treeSlot} pointerEvents="none">
-          <TreeIllustration tree={item.tree} fillParent planted />
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${tree.name}. ${note}`}
+      onPress={onPress}
+      style={[
+        styles.card,
+        {
+          width: cardWidth,
+          height: cardHeight,
+          alignSelf: "center",
+        },
+      ]}
+    >
+      <Image source={meadow} style={styles.meadow} resizeMode="cover" accessibilityIgnoresInvertColors />
+      {isNight ? (
+        <View style={styles.skyMark} pointerEvents="none">
+          <Ionicons name="moon" size={16} color="#F6E7C3" />
         </View>
-        <ImageBackground
-          source={isDark ? WOOD_DARK : WOOD_LIGHT}
-          style={styles.plaque}
-          imageStyle={styles.plaqueImage}
-          resizeMode="cover"
-        >
-          <Text
-            face="serif"
-            numberOfLines={2}
-            style={{
-              color: ink,
-              fontSize: 10,
-              lineHeight: 13,
-            }}
-            maxFontSizeMultiplier={theme.typography.scaleLimits.content}
-          >
-            {note}
-          </Text>
-          <Text
-            style={{
-              marginTop: 3,
-              color: muted,
-              fontSize: 9,
-            }}
-            maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-          >
-            {formatCardDate(item.entry.date)}
-          </Text>
-        </ImageBackground>
-      </Pressable>
-    </View>
+      ) : (
+        <View style={styles.skyMark} pointerEvents="none">
+          <Ionicons name="sunny" size={16} color="#F3D9A4" />
+        </View>
+      )}
+      <View style={styles.treeSlot} pointerEvents="none">
+        <TreeIllustration tree={item.tree} fillParent planted sceneMode={sceneMode} />
+      </View>
+      <View style={styles.plaqueDock} pointerEvents="none">
+        <WoodenPlaque
+          item={item}
+          sceneMode={sceneMode}
+          compact
+          width={plaqueWidth}
+          maxHeight={plaqueMaxH}
+        />
+      </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    width: "48%",
-    marginBottom: 16,
-  },
   card: {
-    aspectRatio: 0.78,
+    borderRadius: 18,
     overflow: "hidden",
-    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: 22,
+    shadowColor: "#2A1A0C",
+    shadowOpacity: 0.24,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 7,
   },
   meadow: {
     ...StyleSheet.absoluteFill,
   },
-  moon: {
+  skyMark: {
     position: "absolute",
-    top: 8,
-    right: 8,
+    top: 14,
+    right: 14,
     zIndex: 2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.18)",
   },
   treeSlot: {
     position: "absolute",
-    left: "16%",
-    right: "16%",
-    top: "10%",
-    bottom: "28%",
+    left: "18%",
+    right: "18%",
+    top: "8%",
+    bottom: "32%",
   },
-  plaque: {
+  plaqueDock: {
     position: "absolute",
-    left: 10,
-    right: 10,
-    bottom: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-  },
-  plaqueImage: {
-    borderRadius: 4,
+    left: 0,
+    right: 0,
+    bottom: 14,
+    alignItems: "center",
   },
 });

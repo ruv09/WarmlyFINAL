@@ -1,38 +1,54 @@
 import React from "react";
-import { ImageBackground, ScrollView, StyleSheet, View } from "react-native";
+import { ImageBackground, StyleSheet, View } from "react-native";
 import { Text } from "../ui";
 import { CatalogItem } from "../../services/forest/catalog";
-import { getMoodById } from "../../constants/moods";
+import { SceneMode } from "../../types";
 import { parseDateKey } from "../../utils/date";
 import { useTheme } from "../../theme";
 
-const WOOD_LIGHT = require("../../../assets/forest/plaque-wood-light.jpg");
-const WOOD_DARK = require("../../../assets/forest/plaque-wood-dark.jpg");
+const WOOD_DAY = require("../../../assets/forest/plaque-wood-light.jpg");
 
 type Props = {
   item: CatalogItem;
   maxHeight: number;
   width: number;
+  sceneMode: SceneMode;
+  compact?: boolean;
 };
 
-function formatPlaqueDate(dateKey: string): string {
-  return parseDateKey(dateKey).toLocaleDateString("ru-RU", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+function plaqueNote(item: CatalogItem): string {
+  return item.entry.note.trim() || item.entry.smallWin?.trim() || "Без текста";
 }
 
-/** Табличка из горизонтальных досок — как на референсах сцены дерева. */
-export function WoodenPlaque({ item, maxHeight, width }: Props) {
+function formatPlaqueDate(dateKey: string, time?: string): string {
+  const date = parseDateKey(dateKey).toLocaleDateString("ru-RU");
+  return time ? `${date}  ${time}` : date;
+}
+
+function fitNote(text: string, compact: boolean): { fontSize: number; lineHeight: number; lines: number } {
+  const len = text.length;
+  if (compact) {
+    if (len > 110) return { fontSize: 12, lineHeight: 16, lines: 4 };
+    if (len > 70) return { fontSize: 13, lineHeight: 18, lines: 4 };
+    return { fontSize: 14, lineHeight: 20, lines: 4 };
+  }
+  if (len > 220) return { fontSize: 15, lineHeight: 24, lines: 10 };
+  if (len > 140) return { fontSize: 16, lineHeight: 26, lines: 10 };
+  return { fontSize: 17, lineHeight: 27, lines: 10 };
+}
+
+/**
+ * Деревянная дощечка: текст мысли сверху, дата снизу.
+ * Не системная карточка — текстура доски и тёплые чернила.
+ */
+export function WoodenPlaque({ item, maxHeight, width, sceneMode, compact = false }: Props) {
   const theme = useTheme();
-  const isDark = theme.mode === "dark";
-  const mood = getMoodById(item.entry.moodId);
-  const ink = isDark ? "#F3E6D2" : "#3A2A18";
-  const muted = isDark ? "#D4C4A8" : "#6A4A2C";
-  const planks = isDark
-    ? ["#4A3728", "#3F2F22", "#53402E", "#3A2B1F", "#4C3826"]
-    : ["#E2C08A", "#D4B07A", "#E8C994", "#CFA66E", "#DDB888"];
+  const isNight = sceneMode === "night";
+  const ink = "#3A2A18";
+  const muted = "#6A4A2C";
+  const note = plaqueNote(item);
+  const fit = fitNote(note, compact);
+  const dateLabel = formatPlaqueDate(item.entry.date, compact ? undefined : item.entry.time);
 
   return (
     <View
@@ -41,100 +57,57 @@ export function WoodenPlaque({ item, maxHeight, width }: Props) {
         {
           width,
           maxHeight,
-          borderColor: isDark ? "#2A1C10" : "#8A6238",
+          borderColor: isNight ? "#2A1C10" : "#8A6238",
         },
       ]}
     >
-      <View style={styles.plankStack} pointerEvents="none">
-        {planks.map((color, index) => (
-          <View
-            key={color + String(index)}
-            style={[
-              styles.plank,
-              {
-                backgroundColor: color,
-                borderBottomColor: isDark ? "#24180F" : "#A07848",
-              },
-            ]}
-          />
-        ))}
-      </View>
       <ImageBackground
-        source={isDark ? WOOD_DARK : WOOD_LIGHT}
-        style={styles.wood}
+        source={WOOD_DAY}
+        style={[styles.wood, compact ? styles.woodCompact : null]}
         imageStyle={styles.woodImage}
         resizeMode="cover"
       >
-        <View style={[styles.inner, { borderColor: isDark ? "#5A4030AA" : "#C9A06AAA" }]}>
-          <View style={styles.header}>
-            <Text
-              style={[styles.date, { color: muted, fontSize: theme.typography.sizes.caption }]}
-              maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-            >
-              {formatPlaqueDate(item.entry.date)}
-            </Text>
-            {mood ? (
-              <View style={styles.moodRow}>
-                <View style={[styles.moodDot, { backgroundColor: mood.color }]} />
-                <Text
-                  style={{
-                    color: ink,
-                    fontSize: theme.typography.sizes.caption,
-                    fontWeight: theme.typography.weights.medium,
-                  }}
-                  maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-                >
-                  {mood.label}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-
-          <ScrollView
-            style={{ maxHeight: maxHeight - 78 }}
-            contentContainerStyle={styles.notePad}
-            nestedScrollEnabled
-            showsVerticalScrollIndicator={false}
+        <View
+          style={[
+            styles.inner,
+            compact ? styles.innerCompact : null,
+            { borderColor: isNight ? "#5A4030AA" : "#C9A06AAA" },
+          ]}
+        >
+          <Text
+            face="serif"
+            numberOfLines={fit.lines}
+            style={{
+              color: ink,
+              fontSize: fit.fontSize,
+              lineHeight: fit.lineHeight,
+              textAlign: "center",
+            }}
+            maxFontSizeMultiplier={theme.typography.scaleLimits.content}
           >
-            {item.entry.note.length > 0 ? (
-              <Text
-                face="serif"
-                style={{
-                  fontSize: theme.typography.sizes.body,
-                  color: ink,
-                  lineHeight: theme.typography.sizes.body * 1.5,
-                }}
-                maxFontSizeMultiplier={theme.typography.scaleLimits.content}
-              >
-                {item.entry.note}
-              </Text>
-            ) : null}
-            {item.entry.smallWin ? (
-              <Text
-                face="serif"
-                style={{
-                  marginTop: 10,
-                  color: ink,
-                  fontStyle: "italic",
-                  fontSize: theme.typography.sizes.body,
-                  lineHeight: theme.typography.sizes.body * 1.45,
-                  fontWeight: theme.typography.weights.medium,
-                }}
-                maxFontSizeMultiplier={theme.typography.scaleLimits.content}
-              >
-                ✦ {item.entry.smallWin}
-              </Text>
-            ) : null}
-          </ScrollView>
+            {note}
+          </Text>
+          <Text
+            style={{
+              marginTop: compact ? 6 : 10,
+              color: muted,
+              fontSize: compact ? 11 : theme.typography.sizes.caption,
+              textAlign: "center",
+              letterSpacing: 0.2,
+            }}
+            maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
+          >
+            {dateLabel}
+          </Text>
         </View>
       </ImageBackground>
       <View
         pointerEvents="none"
-        style={[styles.peg, { left: 14, backgroundColor: isDark ? "#2A1C10" : "#8A6238" }]}
+        style={[styles.peg, { left: compact ? 10 : 14, backgroundColor: isNight ? "#2A1C10" : "#8A6238" }]}
       />
       <View
         pointerEvents="none"
-        style={[styles.peg, { right: 14, backgroundColor: isDark ? "#2A1C10" : "#8A6238" }]}
+        style={[styles.peg, { right: compact ? 10 : 14, backgroundColor: isNight ? "#2A1C10" : "#8A6238" }]}
       />
     </View>
   );
@@ -151,15 +124,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
   },
-  plankStack: {
-    ...StyleSheet.absoluteFill,
-  },
-  plank: {
-    flex: 1,
-    borderBottomWidth: 1,
-  },
   wood: {
     minHeight: 128,
+  },
+  woodCompact: {
+    minHeight: 78,
   },
   woodImage: {
     borderRadius: 5,
@@ -169,8 +138,13 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 1,
     paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
+  },
+  innerCompact: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 10,
   },
   peg: {
     position: "absolute",
@@ -180,28 +154,5 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     opacity: 0.9,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  date: {
-    flexShrink: 1,
-    textTransform: "capitalize",
-  },
-  moodRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  moodDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  notePad: {
-    paddingTop: 12,
   },
 });

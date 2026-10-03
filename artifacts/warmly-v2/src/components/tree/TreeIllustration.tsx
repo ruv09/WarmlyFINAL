@@ -1,8 +1,8 @@
 import React, { memo } from "react";
 import { Image, StyleSheet, View } from "react-native";
-import { Tree } from "../../types";
+import { SceneMode, Tree } from "../../types";
 import { getTreeImage, getSpeciesVisual } from "../../constants/treeSpecies";
-import { useTheme } from "../../theme";
+import { resolveSceneMode } from "../../constants/sceneMode";
 
 interface TreeIllustrationProps {
   tree: Tree;
@@ -11,11 +11,12 @@ interface TreeIllustrationProps {
   fillParent?: boolean;
   /** Ствол без собственной лужайки — сажаем в нарисованную землю сцены. */
   planted?: boolean;
+  sceneMode?: SceneMode;
 }
 
 /**
- * Акварельный спрайт из assets/trees/day|night.
- * Одна кисть с полянами; без собственной лужайки.
+ * Акварельный спрайт из TREE_DEFINITIONS.
+ * День/ночь задаётся SceneMode, а не темой приложения.
  */
 export const TreeIllustration = memo(function TreeIllustration({
   tree,
@@ -23,9 +24,9 @@ export const TreeIllustration = memo(function TreeIllustration({
   depthFade = 1,
   fillParent = false,
   planted = false,
+  sceneMode,
 }: TreeIllustrationProps) {
-  const theme = useTheme();
-  const isDark = theme.mode === "dark";
+  const mode = resolveSceneMode(sceneMode);
   const visual = getSpeciesVisual(tree.species);
   const side = fillParent ? ("100%" as const) : Math.round(size * visual.heightScale);
 
@@ -38,7 +39,7 @@ export const TreeIllustration = memo(function TreeIllustration({
       ]}
     >
       <Image
-        source={getTreeImage(tree.species, isDark, planted)}
+        source={getTreeImage(tree.species, mode, planted)}
         style={fillParent ? styles.fillImage : { width: side, height: side }}
         resizeMode="contain"
         accessibilityLabel={visual.labelRu}

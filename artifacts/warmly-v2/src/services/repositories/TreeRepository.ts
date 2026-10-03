@@ -1,6 +1,7 @@
 import { FOREST_LAYOUT_VERSION, Tree, normalizeTree } from "../../types";
 import { StorageClient } from "../storage/StorageClient";
 import { STORAGE_KEYS } from "../../constants/storageKeys";
+import { resolveSpecies } from "../../constants/treeDefinitions";
 import { placeNextTree, placementMeta } from "../forest/placement";
 
 type RawTree = Partial<Tree> & Pick<Tree, "id" | "species" | "position" | "createdAt">;
@@ -24,7 +25,7 @@ export class TreeRepository {
     );
 
     if (!needsRelayout) {
-      return raw.map((tree) => normalizeTree(tree));
+      return raw.map((tree) => normalizeTree({ ...tree, species: resolveSpecies(tree.species) }));
     }
 
     const ordered = [...raw].sort((a, b) =>
@@ -37,6 +38,7 @@ export class TreeRepository {
       placed.push(
         normalizeTree({
           ...tree,
+          species: resolveSpecies(tree.species),
           position: { x: planted.x, y: planted.y },
           scale: meta.scale,
           depth: meta.depth,
@@ -59,7 +61,13 @@ export class TreeRepository {
 
   async add(tree: Tree): Promise<void> {
     const trees = await this.getAll();
-    trees.push(normalizeTree({ ...tree, layoutVersion: FOREST_LAYOUT_VERSION }));
+    trees.push(
+      normalizeTree({
+        ...tree,
+        species: resolveSpecies(tree.species),
+        layoutVersion: FOREST_LAYOUT_VERSION,
+      }),
+    );
     await this.saveAll(trees);
   }
 

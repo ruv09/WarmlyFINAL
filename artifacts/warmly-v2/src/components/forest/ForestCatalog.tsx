@@ -1,14 +1,18 @@
 import React, { useCallback, useMemo } from "react";
 import { FlatList, ListRenderItem, StyleSheet, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { Text } from "../ui";
 import { TreeCatalogCard } from "./TreeCatalogCard";
 import { useTheme } from "../../theme";
+import { resolveSceneMode } from "../../constants/sceneMode";
 import { CatalogItem, MonthSection, groupForestByMonth } from "../../services/forest/catalog";
-import { Entry, Tree } from "../../types";
-import { treesLabel } from "../../utils";
+import { Entry, SceneMode, Tree } from "../../types";
+import { entriesLabel } from "../../utils";
 
 const TAB_BAR_CLEARANCE = 66;
+
+type CatalogRow =
+  | { type: "month"; key: string; title: string; count: number }
+  | { type: "card"; key: string; item: CatalogItem };
 
 type Props = {
   entries: Entry[];
@@ -16,28 +20,49 @@ type Props = {
   onSelectItem: (item: CatalogItem) => void;
   bottomInset: number;
   isLoading?: boolean;
+  sceneMode?: SceneMode | null;
 };
 
-function numberByOldest(sections: MonthSection[]): Map<string, number> {
-  const items = sections
-    .flatMap((section) => section.items)
-    .sort((a, b) => (a.entry.createdAt < b.entry.createdAt ? -1 : 1));
-  return new Map(items.map((item, index) => [item.entry.id, index + 1]));
+function flattenSections(sections: MonthSection[]): CatalogRow[] {
+  const rows: CatalogRow[] = [];
+  for (const section of sections) {
+    rows.push({
+      type: "month",
+      key: `month-${section.key}`,
+      title: section.title,
+      count: section.count,
+    });
+    for (const item of section.items) {
+      rows.push({ type: "card", key: item.entry.id, item });
+    }
+  }
+  return rows;
 }
 
-export function ForestCatalog({ entries, trees, onSelectItem, bottomInset, isLoading }: Props) {
+export function ForestCatalog({
+  entries,
+  trees,
+  onSelectItem,
+  bottomInset,
+  isLoading,
+  sceneMode: sceneModeOverride,
+}: Props) {
   const theme = useTheme();
+  const sceneMode = resolveSceneMode(sceneModeOverride);
   const sections = useMemo(() => groupForestByMonth(entries, trees), [entries, trees]);
-  const numbers = useMemo(() => numberByOldest(sections), [sections]);
+  const rows = useMemo(() => flattenSections(sections), [sections]);
 
-  const renderMonth = useCallback<ListRenderItem<MonthSection>>(
-    ({ item }) => (
-      <MonthCards section={item} numbers={numbers} onSelectItem={onSelectItem} />
-    ),
-    [numbers, onSelectItem],
+  const renderRow = useCallback<ListRenderItem<CatalogRow>>(
+    ({ item }) => {
+      if (item.type === "month") {
+        return <MonthDivider title={item.title} count={item.count} />;
+      }
+      return <TreeCatalogCard item={item.item} sceneMode={sceneMode} onPress={() => onSelectItem(item.item)} />;
+    },
+    [onSelectItem, sceneMode],
   );
 
-  if (sections.length === 0) {
+  if (rows.length === 0) {
     return (
       <View style={[styles.flex, { backgroundColor: theme.colors.background }]}>
         <CatalogHeader />
@@ -64,7 +89,7 @@ export function ForestCatalog({ entries, trees, onSelectItem, bottomInset, isLoa
               }}
               maxFontSizeMultiplier={theme.typography.scaleLimits.content}
             >
-              Каждая запись станет деревом в твоём лесу.
+              Каждая мысль оставляет после себя дерево.
             </Text>
           </View>
         ) : null}
@@ -75,12 +100,12 @@ export function ForestCatalog({ entries, trees, onSelectItem, bottomInset, isLoa
   return (
     <View style={[styles.flex, { backgroundColor: theme.colors.background }]}>
       <FlatList
-        data={sections}
-        keyExtractor={(section) => section.key}
-        renderItem={renderMonth}
+        data={rows}
+        keyExtractor={(row) => row.key}
+        renderItem={renderRow}
         showsVerticalScrollIndicator={false}
         removeClippedSubviews
-        initialNumToRender={3}
+        initialNumToRender={4}
         windowSize={5}
         maxToRenderPerBatch={3}
         contentContainerStyle={{
@@ -95,134 +120,90 @@ export function ForestCatalog({ entries, trees, onSelectItem, bottomInset, isLoa
 
 function CatalogHeader() {
   const theme = useTheme();
-  const isDark = theme.mode === "dark";
 
   return (
-    <View style={styles.headerRow}>
-      <View style={styles.headerCopy}>
-        <Text
-          style={{
-            fontSize: theme.typography.sizes.largeTitle,
-            lineHeight: 32,
-            fontWeight: theme.typography.weights.bold,
-            color: theme.colors.textPrimary,
-          }}
-          maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-        >
-          Мой лес
-        </Text>
-        <Text
-          style={{
-            marginTop: 4,
-            fontSize: theme.typography.sizes.body,
-            color: theme.colors.textSecondary,
-          }}
-          maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-        >
-          твоя коллекция моментов
-        </Text>
-      </View>
-      <View
-        style={[
-          styles.leafBtn,
-          {
-            backgroundColor: theme.colors.surface,
-            borderColor: theme.colors.border,
-          },
-        ]}
+    <View style={styles.headerCopy}>
+      <Text
+        style={{
+          fontSize: theme.typography.sizes.largeTitle,
+          lineHeight: 32,
+          fontWeight: theme.typography.weights.bold,
+          color: theme.colors.textPrimary,
+        }}
+        maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
       >
-        <Ionicons name="leaf" size={18} color={isDark ? theme.colors.accentWarm : theme.colors.accent} />
-      </View>
+        Мой лес
+      </Text>
+      <Text
+        face="serif"
+        style={{
+          marginTop: 6,
+          fontSize: theme.typography.sizes.body,
+          color: theme.colors.textSecondary,
+          lineHeight: 22,
+        }}
+        maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
+      >
+        каждая мысль оставляет дерево
+      </Text>
     </View>
   );
 }
 
-function MonthCards({
-  section,
-  numbers,
-  onSelectItem,
-}: {
-  section: MonthSection;
-  numbers: Map<string, number>;
-  onSelectItem: (item: CatalogItem) => void;
-}) {
+function MonthDivider({ title, count }: { title: string; count: number }) {
   const theme = useTheme();
 
   return (
     <View style={styles.monthBlock}>
-      <View style={styles.monthHead}>
-        <Text
-          style={{
-            flex: 1,
-            fontSize: theme.typography.sizes.title,
-            lineHeight: 26,
-            letterSpacing: 1.2,
-            fontWeight: theme.typography.weights.bold,
-            color: theme.colors.textPrimary,
-          }}
-          maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-        >
-          {section.title}
-        </Text>
-        <Text
-          style={{
-            fontSize: theme.typography.sizes.body,
-            color: theme.colors.textSecondary,
-          }}
-          maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-        >
-          {treesLabel(section.count)}
-        </Text>
-      </View>
-      <View style={styles.grid}>
-        {section.items.map((item) => (
-          <TreeCatalogCard
-            key={item.entry.id}
-            item={item}
-            index={numbers.get(item.entry.id) ?? 1}
-            onPress={() => onSelectItem(item)}
-          />
-        ))}
-      </View>
+      <View style={[styles.monthRule, { backgroundColor: theme.colors.accentWarm }]} />
+      <Text
+        face="serif"
+        style={{
+          marginTop: 14,
+          fontSize: theme.typography.sizes.title,
+          lineHeight: 28,
+          letterSpacing: 1.6,
+          fontWeight: theme.typography.weights.semibold,
+          color: theme.colors.textPrimary,
+          textAlign: "center",
+        }}
+        maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
+      >
+        {title}
+      </Text>
+      <Text
+        style={{
+          marginTop: 4,
+          marginBottom: 16,
+          fontSize: theme.typography.sizes.caption,
+          letterSpacing: 0.4,
+          color: theme.colors.textSecondary,
+          textAlign: "center",
+        }}
+        maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
+      >
+        {entriesLabel(count)}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1, overflow: "hidden" },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    paddingTop: 6,
-    paddingBottom: 22,
-  },
   headerCopy: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  leafBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingTop: 6,
+    paddingBottom: 18,
   },
   monthBlock: {
-    paddingTop: 10,
-    paddingBottom: 8,
+    paddingTop: 8,
+    paddingBottom: 4,
+    alignItems: "center",
   },
-  monthHead: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    marginBottom: 12,
-    gap: 12,
-  },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
+  monthRule: {
+    width: 72,
+    height: 2,
+    borderRadius: 1,
+    opacity: 0.7,
   },
   emptyCopy: {
     flex: 1,
