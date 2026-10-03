@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from "react";
-import { Image, Pressable, Switch, Text, TextInput, View } from "react-native";
+import { Image, Pressable, Switch, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Screen } from "../components/layout";
-import { Button } from "../components/ui";
+import { Button, Text, TextInput } from "../components/ui";
 import { AvatarPickerModal } from "../components/profile";
 import { useSettings, useStatistics } from "../hooks";
 import { useTheme } from "../theme";
@@ -300,6 +300,7 @@ export function ProfileScreen() {
           />
         </View>
         <Text
+          face="serif"
           style={{
             color: theme.colors.textPrimary,
             fontStyle: "italic",

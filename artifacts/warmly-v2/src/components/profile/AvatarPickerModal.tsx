@@ -1,9 +1,9 @@
 import React from "react";
-import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AVATAR_PRESETS } from "../../constants/avatars";
 import { useTheme } from "../../theme";
-import { Button } from "../ui";
+import { Button, Text } from "../ui";
 
 interface AvatarPickerModalProps {
   visible: boolean;

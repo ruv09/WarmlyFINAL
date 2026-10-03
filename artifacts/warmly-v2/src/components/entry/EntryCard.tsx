@@ -1,9 +1,10 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { Entry } from "../../types";
 import { getMoodById } from "../../constants/moods";
 import { useTheme } from "../../theme";
 import { PressableScale } from "../animation";
+import { Text } from "../ui";
 
 interface EntryCardProps {
   entry: Entry;

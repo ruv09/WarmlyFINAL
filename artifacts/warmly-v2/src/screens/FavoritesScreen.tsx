@@ -1,9 +1,10 @@
 import React from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Screen } from "../components/layout";
+import { Text } from "../components/ui";
 import { useFavorites } from "../hooks";
 import { useTheme } from "../theme";
 import { pluralRu } from "../utils";
@@ -85,6 +86,7 @@ export function FavoritesScreen() {
               }}
             >
               <Text
+                face="serif"
                 style={{
                   fontSize: theme.typography.sizes.body,
                   color: theme.colors.textPrimary,

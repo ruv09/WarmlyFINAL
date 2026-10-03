@@ -7,7 +7,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
 import { useSettingsStore } from "../src/store";
-import { useTheme } from "../src/theme";
+import { useTheme, useWarmlyFonts } from "../src/theme";
 
 /**
  * Настоящий fullscreen на Android: скрываем системный Status Bar и Navigation Bar.
@@ -108,7 +108,24 @@ function Bootstrap() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useWarmlyFonts();
   const theme = useTheme();
+
+  if (!fontsLoaded) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: theme.colors.background,
+        }}
+      >
+        <ActivityIndicator color={theme.colors.accent} />
+      </View>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <SafeAreaProvider>

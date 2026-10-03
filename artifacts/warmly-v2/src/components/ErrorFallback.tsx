@@ -1,6 +1,7 @@
 import React from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useTheme } from "../theme";
+import { Text } from "./ui";
 
 export type ErrorFallbackProps = {
   error: Error;

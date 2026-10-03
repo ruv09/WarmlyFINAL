@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Pressable, Text, TextInput } from "react-native";
+import { Alert, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { KeyboardScreen } from "../components/layout";
-import { Button } from "../components/ui";
+import { Button, Text, TextInput } from "../components/ui";
 import { MoodPicker } from "../components/entry";
 import { useEntries, useEntry } from "../hooks";
 import { useTheme } from "../theme";
@@ -100,6 +100,7 @@ export function EntryDetailScreen({ entryId }: EntryDetailScreenProps) {
 
       {label("Заметка")}
       <TextInput
+        face="serif"
         value={note}
         onChangeText={setNote}
         multiline
@@ -118,6 +119,7 @@ export function EntryDetailScreen({ entryId }: EntryDetailScreenProps) {
 
       {label("Маленькая победа")}
       <TextInput
+        face="serif"
         value={smallWin}
         onChangeText={setSmallWin}
         maxFontSizeMultiplier={theme.typography.scaleLimits.content}

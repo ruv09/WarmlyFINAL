@@ -1,8 +1,9 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { FlatList, Pressable, Text, View } from "react-native";
+import { FlatList, Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../components/layout";
+import { Text } from "../components/ui";
 import { EntryCard } from "../components/entry";
 import { useEntries } from "../hooks";
 import { useTheme } from "../theme";

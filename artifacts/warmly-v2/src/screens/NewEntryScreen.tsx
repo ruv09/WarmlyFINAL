@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { KeyboardScreen } from "../components/layout";
-import { Button } from "../components/ui";
+import { Button, Text, TextInput } from "../components/ui";
 import { MoodPicker } from "../components/entry";
 import { useEntries } from "../hooks";
 import { useTheme } from "../theme";
@@ -90,7 +90,10 @@ export function NewEntryScreen() {
         >
           Warmly рядом
         </Text>
-        <Text style={{ marginTop: 8, color: theme.colors.textPrimary, fontSize: theme.typography.sizes.subtitle }}>
+        <Text
+          face="serif"
+          style={{ marginTop: 8, color: theme.colors.textPrimary, fontSize: theme.typography.sizes.subtitle }}
+        >
           {supportPhrase}
         </Text>
       </KeyboardScreen>
@@ -105,6 +108,7 @@ export function NewEntryScreen() {
 
       {label("Что произошло?")}
       <TextInput
+        face="serif"
         value={note}
         onChangeText={(text) => setNote(text.slice(0, ENTRY_TEXT_MAX))}
         multiline
@@ -128,6 +132,7 @@ export function NewEntryScreen() {
 
       {label("Добавить заметку")}
       <TextInput
+        face="serif"
         value={extraNote}
         onChangeText={(text) => setExtraNote(text.slice(0, ENTRY_TEXT_MAX))}
         multiline

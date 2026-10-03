@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { Text, TextInput, View } from "react-native";
+import { View } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { Screen } from "../components/layout";
-import { Button } from "../components/ui";
+import { Button, Text, TextInput } from "../components/ui";
 import { MoodPicker } from "../components/entry";
 import { useEntries } from "../hooks";
 import { useTheme } from "../theme";
@@ -100,6 +100,7 @@ export function JournalScreen() {
             Warmly рядом
           </Text>
           <Text
+            face="serif"
             style={{
               fontSize: theme.typography.sizes.subtitle,
               color: theme.colors.textPrimary,
@@ -140,6 +141,7 @@ export function JournalScreen() {
 
       <FieldLabel>Что произошло?</FieldLabel>
       <TextInput
+        face="serif"
         value={note}
         onChangeText={(text) => setNote(text.slice(0, ENTRY_TEXT_MAX))}
         multiline
@@ -163,6 +165,7 @@ export function JournalScreen() {
 
       <FieldLabel>Добавить заметку</FieldLabel>
       <TextInput
+        face="serif"
         value={extraNote}
         onChangeText={(text) => setExtraNote(text.slice(0, ENTRY_TEXT_MAX))}
         multiline

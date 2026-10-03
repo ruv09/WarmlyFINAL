@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { Switch, Text, TextInput, View } from "react-native";
+import { Switch, View } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { KeyboardScreen } from "../components/layout";
-import { Button } from "../components/ui";
+import { Button, Text, TextInput } from "../components/ui";
 import { useSettings } from "../hooks";
 import { canScheduleLocalNotifications } from "../services";
 import { useTheme } from "../theme";

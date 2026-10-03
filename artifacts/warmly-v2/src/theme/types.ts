@@ -5,6 +5,7 @@ import {
   FONT_SCALE_LIMITS,
   FONT_SIZES,
   FONT_WEIGHTS,
+  UI_FONTS,
   RADIUS,
   SpacingToken,
 } from "./tokens";
@@ -21,6 +22,7 @@ export interface Theme {
     sizes: typeof FONT_SIZES;
     weights: typeof FONT_WEIGHTS;
     scaleLimits: typeof FONT_SCALE_LIMITS;
+    fonts: typeof UI_FONTS;
   };
   /** Отступ по имени токена, уже адаптированный под текущее устройство. */
   spacing: (token: SpacingToken) => number;

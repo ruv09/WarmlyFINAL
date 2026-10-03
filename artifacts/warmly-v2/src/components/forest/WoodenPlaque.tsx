@@ -1,5 +1,6 @@
 import React from "react";
-import { ImageBackground, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ImageBackground, ScrollView, StyleSheet, View } from "react-native";
+import { Text } from "../ui";
 import { CatalogItem } from "../../services/forest/catalog";
 import { getMoodById } from "../../constants/moods";
 import { parseDateKey } from "../../utils/date";
@@ -97,6 +98,7 @@ export function WoodenPlaque({ item, maxHeight, width }: Props) {
           >
             {item.entry.note.length > 0 ? (
               <Text
+                face="serif"
                 style={{
                   fontSize: theme.typography.sizes.body,
                   color: ink,
@@ -109,6 +111,7 @@ export function WoodenPlaque({ item, maxHeight, width }: Props) {
             ) : null}
             {item.entry.smallWin ? (
               <Text
+                face="serif"
                 style={{
                   marginTop: 10,
                   color: ink,
