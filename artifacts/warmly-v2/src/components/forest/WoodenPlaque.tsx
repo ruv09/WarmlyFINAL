@@ -111,9 +111,11 @@ export function WoodenPlaque({ item, maxHeight, width }: Props) {
               <Text
                 style={{
                   marginTop: 10,
-                  color: theme.colors.accentWarm,
+                  color: ink,
                   fontStyle: "italic",
-                  fontSize: theme.typography.sizes.caption,
+                  fontSize: theme.typography.sizes.body,
+                  lineHeight: theme.typography.sizes.body * 1.45,
+                  fontWeight: theme.typography.weights.medium,
                 }}
                 maxFontSizeMultiplier={theme.typography.scaleLimits.content}
               >
