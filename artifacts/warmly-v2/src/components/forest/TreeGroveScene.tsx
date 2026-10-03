@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Image, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import { Image, LayoutChangeEvent, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScaleView, WindSwayView } from "../animation";
@@ -23,8 +23,11 @@ export function TreeGroveScene({ item, onClose }: Props) {
   const theme = useTheme();
   const isDark = theme.mode === "dark";
   const insets = useSafeAreaInsets();
-  const { height, width } = useWindowDimensions();
+  const window = useWindowDimensions();
+  const [box, setBox] = useState({ width: 0, height: 0 });
   const [shown, setShown] = useState(false);
+  const width = box.width || window.width;
+  const height = box.height || window.height;
   const sceneSource = getGroveScene(item.tree.species, isDark);
   const sceneFrame = fitStaticBackground(
     GROVE_SCENE_PIXELS.width,
@@ -45,15 +48,22 @@ export function TreeGroveScene({ item, onClose }: Props) {
     setShown(true);
   }, []);
 
+  function onBoxLayout(event: LayoutChangeEvent) {
+    const next = event.nativeEvent.layout;
+    if (next.width === box.width && next.height === box.height) return;
+    setBox({ width: next.width, height: next.height });
+  }
+
   return (
     <View
       style={[styles.fill, { backgroundColor: theme.colors.background }]}
       accessibilityViewIsModal
+      onLayout={onBoxLayout}
     >
       <Image
         source={sceneSource}
-        style={[styles.sceneImage, sceneFrame]}
-        resizeMode="contain"
+        style={styles.sceneFill}
+        resizeMode="cover"
         accessibilityIgnoresInvertColors
       />
       <View
@@ -140,8 +150,8 @@ export function TreeGroveScene({ item, onClose }: Props) {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  sceneImage: {
-    position: "absolute",
+  sceneFill: {
+    ...StyleSheet.absoluteFill,
   },
   sceneGrade: {
     ...StyleSheet.absoluteFill,

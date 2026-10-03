@@ -45,7 +45,7 @@ export function ForestScreen() {
   useEffect(() => {
     navigation.setOptions({
       tabBarStyle: selectedItem
-        ? { display: "none" }
+        ? { display: "none", height: 0, overflow: "hidden", position: "absolute" }
         : {
             backgroundColor: theme.colors.tabBar,
             borderTopWidth: 0,
@@ -84,7 +84,7 @@ export function ForestScreen() {
       </SafeAreaView>
 
       {selectedItem ? (
-        <View style={StyleSheet.absoluteFill} pointerEvents="auto">
+        <View style={[StyleSheet.absoluteFill, styles.groveLayer]} pointerEvents="auto">
           <TreeGroveScene item={selectedItem} onClose={() => setSelectedEntryId(null)} />
         </View>
       ) : null}
@@ -94,4 +94,8 @@ export function ForestScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  groveLayer: {
+    zIndex: 40,
+    elevation: 40,
+  },
 });
