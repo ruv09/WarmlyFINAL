@@ -3,14 +3,14 @@ import { LayoutChangeEvent, Pressable, StyleSheet, View, useWindowDimensions } f
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { FadeView, ScaleView } from "../animation";
-import { WoodenPlaque } from "./WoodenPlaque";
+import { Text } from "../ui";
 import { ForestSceneBackdrop } from "./ForestSceneBackdrop";
 import { CatalogItem } from "../../services/forest/catalog";
-import { fitStaticBackground } from "../../services/forest/backgroundFit";
 import { getGroveEdges, getGroveScene } from "../../constants/groveScenes";
 import { getTreeDefinition } from "../../constants/treeDefinitions";
 import { resolveSceneMode } from "../../constants/sceneMode";
 import { SceneMode } from "../../types";
+import { parseDateKey } from "../../utils/date";
 import { useTheme } from "../../theme";
 
 type Props = {
@@ -19,9 +19,12 @@ type Props = {
   sceneMode?: SceneMode | null;
 };
 
+function formatDetailDate(dateKey: string, time: string): string {
+  return `${parseDateKey(dateKey).toLocaleDateString("ru-RU")}  ${time}`;
+}
+
 /**
- * Большая сцена с референса. Меняется только текст на дощечке.
- * Назад справа снизу — настоящая кнопка.
+ * Большая сцена без дощечки. Текст записи — мягкая подпись снизу.
  */
 export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: Props) {
   const theme = useTheme();
@@ -36,11 +39,9 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
   const tree = getTreeDefinition(item.tree.species);
   const sceneSource = getGroveScene(item.tree.species, mode);
   const edges = getGroveEdges(item.tree.species, mode);
-  const sceneFrame = fitStaticBackground(1000, 1000 / tree.sceneAspect, width, height);
-  const plaqueWidth = Math.round(sceneFrame.width * 0.68);
-  const plaqueHeight = Math.round(sceneFrame.height * 0.2);
-  const plaqueLeft = Math.round(sceneFrame.left + (sceneFrame.width - plaqueWidth) / 2);
-  const plaqueTop = Math.round(sceneFrame.top + sceneFrame.height * 0.705);
+  const note = item.entry.note.trim() || item.entry.smallWin?.trim() || "Без текста";
+  const ink = isNight ? "#F3EDE2" : "#2C2A24";
+  const muted = isNight ? "#D4CBB8" : "#5A564C";
 
   useEffect(() => {
     setShown(true);
@@ -65,22 +66,40 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
         height={height}
         aspect={tree.sceneAspect}
       />
+      <View
+        pointerEvents="none"
+        style={[
+          styles.fade,
+          { backgroundColor: isNight ? "rgba(8,12,20,0.42)" : "rgba(245,240,230,0.28)" },
+        ]}
+      />
 
       <SafeAreaView edges={["top", "left", "right"]} style={styles.fill} pointerEvents="box-none">
         <FadeView visible={shown} duration="base" style={styles.fill} pointerEvents="box-none">
-          <ScaleView visible={shown} from={0.98} duration="base" style={styles.fill} pointerEvents="box-none">
-            <View
-              pointerEvents="none"
+          <ScaleView visible={shown} from={0.98} duration="base" style={styles.stage} pointerEvents="box-none">
+            <Text
+              face="serif"
               style={{
-                position: "absolute",
-                left: plaqueLeft,
-                top: plaqueTop,
-                width: plaqueWidth,
-                height: plaqueHeight,
+                color: ink,
+                fontSize: theme.typography.sizes.subtitle,
+                lineHeight: 26,
+                textAlign: "center",
               }}
+              maxFontSizeMultiplier={theme.typography.scaleLimits.content}
             >
-              <WoodenPlaque item={item} sceneMode={mode} maxHeight={plaqueHeight} width={plaqueWidth} />
-            </View>
+              {note}
+            </Text>
+            <Text
+              style={{
+                marginTop: 8,
+                color: muted,
+                fontSize: theme.typography.sizes.caption,
+                textAlign: "center",
+              }}
+              maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
+            >
+              {formatDetailDate(item.entry.date, item.entry.time)}
+            </Text>
           </ScaleView>
         </FadeView>
       </SafeAreaView>
@@ -108,6 +127,19 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  fade: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: "28%",
+  },
+  stage: {
+    flex: 1,
+    justifyContent: "flex-end",
+    paddingHorizontal: 28,
+    paddingBottom: 96,
+  },
   backBtn: {
     position: "absolute",
     zIndex: 30,

@@ -15,6 +15,6 @@ export function getGroveScene(species: string, mode: SceneMode | boolean): Image
 /** Поля вокруг contain-сцены — цвет «бумаги» референса, не обрезка картины. */
 export function getGroveEdges(_species: string, mode: SceneMode | boolean): MeadowEdges {
   return resolveMode(mode) === "night"
-    ? { sky: "#070B16", ground: "#070B16" }
-    : { sky: "#F4F2EE", ground: "#F4F2EE" };
+    ? { sky: "#0B1424", ground: "#0B1424" }
+    : { sky: "#C5D8EA", ground: "#C5D8EA" };
 }

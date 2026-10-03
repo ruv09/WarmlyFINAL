@@ -1,11 +1,12 @@
 import React from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
-import { WoodenPlaque } from "./WoodenPlaque";
+import { Text } from "../ui";
 import { ForestSceneBackdrop } from "./ForestSceneBackdrop";
 import { CatalogItem } from "../../services/forest/catalog";
 import { getGroveEdges, getGroveScene } from "../../constants/groveScenes";
 import { getTreeDefinition } from "../../constants/treeDefinitions";
 import { SceneMode } from "../../types";
+import { parseDateKey } from "../../utils/date";
 import { useTheme } from "../../theme";
 
 type Props = {
@@ -14,8 +15,12 @@ type Props = {
   onPress: () => void;
 };
 
+function cardDate(dateKey: string): string {
+  return parseDateKey(dateKey).toLocaleDateString("ru-RU");
+}
+
 /**
- * Карточка = картина с референса. Меняется только текст на дощечке.
+ * Карточка — полнокадровая сцена. Текст записи под картиной, без дощечки.
  */
 export function TreeCatalogCard({ item, sceneMode, onPress }: Props) {
   const theme = useTheme();
@@ -24,12 +29,10 @@ export function TreeCatalogCard({ item, sceneMode, onPress }: Props) {
   const scene = getGroveScene(item.tree.species, sceneMode);
   const edges = getGroveEdges(item.tree.species, sceneMode);
   const cardWidth = Math.max(220, window.width - theme.spacing("lg") * 2);
-  const cardHeight = Math.min(
+  const imageHeight = Math.min(
     Math.round(cardWidth / tree.sceneAspect),
-    Math.round(window.height * 0.64),
+    Math.round(window.height * 0.58),
   );
-  const plaqueWidth = Math.round(cardWidth * 0.68);
-  const plaqueHeight = Math.round(cardHeight * 0.2);
   const note = item.entry.note.trim() || item.entry.smallWin?.trim() || "Без текста";
 
   return (
@@ -37,59 +40,60 @@ export function TreeCatalogCard({ item, sceneMode, onPress }: Props) {
       accessibilityRole="button"
       accessibilityLabel={`${tree.name}. ${note}`}
       onPress={onPress}
-      style={[
-        styles.card,
-        {
-          width: cardWidth,
-          height: cardHeight,
-          alignSelf: "center",
-          backgroundColor: edges.sky,
-        },
-      ]}
+      style={styles.wrap}
     >
-      <ForestSceneBackdrop
-        source={scene}
-        edges={edges}
-        width={cardWidth}
-        height={cardHeight}
-        aspect={tree.sceneAspect}
-      />
       <View
         style={[
-          styles.plaqueDock,
+          styles.scene,
           {
-            bottom: cardHeight * 0.095,
+            width: cardWidth,
+            height: imageHeight,
+            backgroundColor: edges.sky,
           },
         ]}
-        pointerEvents="none"
       >
-        <WoodenPlaque
-          item={item}
-          sceneMode={sceneMode}
-          compact
-          width={plaqueWidth}
-          maxHeight={plaqueHeight}
+        <ForestSceneBackdrop
+          source={scene}
+          edges={edges}
+          width={cardWidth}
+          height={imageHeight}
+          aspect={tree.sceneAspect}
         />
       </View>
+      <Text
+        face="serif"
+        numberOfLines={2}
+        style={{
+          marginTop: 10,
+          color: theme.colors.textPrimary,
+          fontSize: theme.typography.sizes.body,
+          lineHeight: 22,
+        }}
+        maxFontSizeMultiplier={theme.typography.scaleLimits.content}
+      >
+        {note}
+      </Text>
+      <Text
+        style={{
+          marginTop: 4,
+          marginBottom: 22,
+          color: theme.colors.textSecondary,
+          fontSize: theme.typography.sizes.caption,
+        }}
+        maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
+      >
+        {cardDate(item.entry.date)}
+      </Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 18,
-    overflow: "hidden",
-    marginBottom: 22,
-    shadowColor: "#2A1A0C",
-    shadowOpacity: 0.24,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 7,
+  wrap: {
+    width: "100%",
   },
-  plaqueDock: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    alignItems: "center",
+  scene: {
+    borderRadius: 16,
+    overflow: "hidden",
   },
 });
