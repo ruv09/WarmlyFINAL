@@ -34,18 +34,23 @@ export function getContainedSceneFrame(width: number, height: number, aspect: nu
 }
 
 /**
- * Дощечка как на референсе: ~56% ширины сцены, в траве,
- * снизу запас ~8% высоты картины — не на переднем плане.
+ * Дощечка как на референсе: маленький знак в траве,
+ * дерево читается целиком, табличка не на переднем плане.
  */
-export const PLAQUE_SCENE_WIDTH = 0.56;
-export const PLAQUE_SCENE_BOTTOM = 0.08;
+export const PLAQUE_SCENE_WIDTH = 0.34;
+export const PLAQUE_SCENE_BOTTOM = 0.16;
 
 export function layoutPlaqueInScene(
   scene: SceneFrame,
   plaqueAspect: number,
 ): SceneFrame {
-  const width = Math.round(scene.width * PLAQUE_SCENE_WIDTH);
-  const height = Math.max(1, Math.round(width / plaqueAspect));
+  let width = Math.round(scene.width * PLAQUE_SCENE_WIDTH);
+  let height = Math.max(1, Math.round(width / plaqueAspect));
+  const maxHeight = Math.round(scene.height * 0.22);
+  if (height > maxHeight) {
+    height = Math.max(1, maxHeight);
+    width = Math.round(height * plaqueAspect);
+  }
   const bottomGap = Math.round(scene.height * PLAQUE_SCENE_BOTTOM);
   const left = scene.left + (scene.width - width) / 2;
   const top = scene.top + scene.height - bottomGap - height;

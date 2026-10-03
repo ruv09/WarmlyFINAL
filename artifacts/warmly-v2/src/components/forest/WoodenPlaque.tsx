@@ -33,18 +33,31 @@ function formatPlaqueDate(dateKey: string, time?: string): string {
   return time ? `${date}  ${time}` : date;
 }
 
-function fitNote(text: string, compact: boolean, hasExtra: boolean): { fontSize: number; lineHeight: number; lines: number } {
+function typeScale(width: number): number {
+  if (width < 120) return 0.78;
+  if (width < 150) return 0.86;
+  if (width < 190) return 0.94;
+  return 1;
+}
+
+function fitNote(
+  text: string,
+  compact: boolean,
+  hasExtra: boolean,
+  width: number,
+): { fontSize: number; lineHeight: number; lines: number } {
+  const scale = typeScale(width);
   const len = text.length;
-  if (compact) {
+  if (compact || width < 200) {
     const lines = hasExtra ? 2 : 3;
-    if (len > 90) return { fontSize: 11, lineHeight: 15, lines };
-    if (len > 50) return { fontSize: 12, lineHeight: 16, lines };
-    return { fontSize: 13, lineHeight: 17, lines };
+    if (len > 90) return { fontSize: Math.round(10 * scale), lineHeight: Math.round(13 * scale), lines };
+    if (len > 50) return { fontSize: Math.round(11 * scale), lineHeight: Math.round(14 * scale), lines };
+    return { fontSize: Math.round(12 * scale), lineHeight: Math.round(15 * scale), lines };
   }
-  const lines = hasExtra ? 4 : 5;
-  if (len > 220) return { fontSize: 15, lineHeight: 22, lines };
-  if (len > 140) return { fontSize: 16, lineHeight: 24, lines };
-  return { fontSize: 17, lineHeight: 25, lines };
+  const lines = hasExtra ? 3 : 4;
+  if (len > 220) return { fontSize: Math.round(13 * scale), lineHeight: Math.round(18 * scale), lines };
+  if (len > 140) return { fontSize: Math.round(14 * scale), lineHeight: Math.round(19 * scale), lines };
+  return { fontSize: Math.round(15 * scale), lineHeight: Math.round(20 * scale), lines };
 }
 
 /**
@@ -56,17 +69,18 @@ export function WoodenPlaque({ item, width, maxHeight, compact = false }: Props)
   const ink = "#2A1C10";
   const muted = "#6A4A2C";
   const { note, extra } = plaqueCopy(item);
-  const fit = fitNote(note, compact, Boolean(extra));
-  const dateLabel = formatPlaqueDate(item.entry.date, compact ? undefined : item.entry.time);
   let plaqueWidth = width;
   let height = Math.round(plaqueWidth / PLAQUE_ASPECT);
   if (maxHeight > 0 && height > maxHeight) {
     height = maxHeight;
     plaqueWidth = Math.round(height * PLAQUE_ASPECT);
   }
-  const padX = Math.round(plaqueWidth * (compact ? 0.1 : 0.11));
-  const padTop = Math.round(height * (compact ? 0.19 : 0.18));
-  const padBottom = Math.round(height * (compact ? 0.26 : 0.25));
+  const fit = fitNote(note, compact, Boolean(extra), plaqueWidth);
+  const dateLabel = formatPlaqueDate(item.entry.date, compact || plaqueWidth < 200 ? undefined : item.entry.time);
+  const scale = typeScale(plaqueWidth);
+  const padX = Math.round(plaqueWidth * 0.12);
+  const padTop = Math.round(height * 0.2);
+  const padBottom = Math.round(height * 0.26);
 
   return (
     <View style={[styles.frame, { width: plaqueWidth, height }]} collapsable={false}>
@@ -98,10 +112,10 @@ export function WoodenPlaque({ item, width, maxHeight, compact = false }: Props)
             face="serif"
             numberOfLines={compact ? 2 : 3}
             style={{
-              marginTop: compact ? 5 : 7,
+              marginTop: Math.max(3, Math.round(4 * scale)),
               color: ink,
-              fontSize: compact ? 11 : 14,
-              lineHeight: compact ? 15 : 20,
+              fontSize: Math.max(9, Math.round((compact ? 10 : 12) * scale)),
+              lineHeight: Math.max(12, Math.round((compact ? 13 : 16) * scale)),
               textAlign: "center",
               fontStyle: "italic",
             }}
@@ -112,9 +126,9 @@ export function WoodenPlaque({ item, width, maxHeight, compact = false }: Props)
         ) : null}
         <Text
           style={{
-            marginTop: compact ? 5 : 7,
+            marginTop: Math.max(3, Math.round(4 * scale)),
             color: muted,
-            fontSize: compact ? 10 : theme.typography.sizes.caption,
+            fontSize: Math.max(8, Math.round(10 * scale)),
             textAlign: "center",
             letterSpacing: 0.2,
           }}

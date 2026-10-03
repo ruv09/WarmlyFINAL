@@ -79,12 +79,13 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
           ]}
           pointerEvents="box-none"
         >
-          <WoodenPlaque
-            item={item}
-            sceneMode={mode}
-            maxHeight={plaque.height}
-            width={plaque.width}
-          />
+            <WoodenPlaque
+              item={item}
+              sceneMode={mode}
+              compact
+              maxHeight={plaque.height}
+              width={plaque.width}
+            />
         </ScaleView>
       </FadeView>
 
