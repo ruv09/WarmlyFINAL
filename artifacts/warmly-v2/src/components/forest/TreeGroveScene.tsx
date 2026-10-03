@@ -36,7 +36,7 @@ export function TreeGroveScene({ item, onClose, sceneMode: sceneModeOverride }: 
   const sceneSource = getGroveScene(item.tree.species, mode);
   const edges = getGroveEdges(item.tree.species, mode);
   const plaqueWidth = Math.min(width * 0.82, 380);
-  const plaqueMaxH = Math.round(height * 0.26);
+  const plaqueMaxH = Math.round(height * 0.34);
 
   useEffect(() => {
     setShown(true);

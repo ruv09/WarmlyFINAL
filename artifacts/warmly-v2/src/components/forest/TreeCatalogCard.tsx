@@ -29,13 +29,15 @@ export function TreeCatalogCard({ item, sceneMode, onPress }: Props) {
     Math.round(window.height * 0.58),
   );
   const plaqueWidth = Math.min(cardWidth - 36, 300);
-  const plaqueMaxH = Math.round(cardHeight * 0.28);
-  const note = item.entry.note.trim() || item.entry.smallWin?.trim() || "Без текста";
+  const plaqueMaxH = Math.round(cardHeight * 0.4);
+  const note = (item.entry.note ?? "").trim();
+  const extra = (item.entry.smallWin ?? "").trim();
+  const spoken = [note, extra].filter(Boolean).join(". ") || "Без текста";
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${tree.name}. ${note}`}
+      accessibilityLabel={`${tree.name}. ${spoken}`}
       onPress={onPress}
       style={[
         styles.card,

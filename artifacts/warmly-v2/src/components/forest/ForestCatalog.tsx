@@ -104,7 +104,7 @@ export function ForestCatalog({
         keyExtractor={(row) => row.key}
         renderItem={renderRow}
         showsVerticalScrollIndicator={false}
-        removeClippedSubviews
+        removeClippedSubviews={false}
         initialNumToRender={4}
         windowSize={5}
         maxToRenderPerBatch={3}

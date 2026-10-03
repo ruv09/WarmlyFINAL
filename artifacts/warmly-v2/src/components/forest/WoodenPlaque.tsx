@@ -1,5 +1,5 @@
 import React from "react";
-import { ImageBackground, StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import { Text } from "../ui";
 import { CatalogItem } from "../../services/forest/catalog";
 import { SceneMode } from "../../types";
@@ -16,8 +16,13 @@ type Props = {
   compact?: boolean;
 };
 
-function plaqueNote(item: CatalogItem): string {
-  return item.entry.note.trim() || item.entry.smallWin?.trim() || "Без текста";
+function plaqueCopy(item: CatalogItem): { note: string; extra?: string } {
+  const note = (item.entry.note ?? "").trim();
+  const extra = (item.entry.smallWin ?? "").trim();
+  if (note && extra) return { note, extra };
+  if (note) return { note };
+  if (extra) return { note: extra };
+  return { note: "Без текста" };
 }
 
 function formatPlaqueDate(dateKey: string, time?: string): string {
@@ -25,63 +30,76 @@ function formatPlaqueDate(dateKey: string, time?: string): string {
   return time ? `${date}  ${time}` : date;
 }
 
-function fitNote(text: string, compact: boolean): { fontSize: number; lineHeight: number; lines: number } {
+function fitNote(text: string, compact: boolean, hasExtra: boolean): { fontSize: number; lineHeight: number; lines: number } {
   const len = text.length;
   if (compact) {
-    if (len > 90) return { fontSize: 11, lineHeight: 15, lines: 3 };
-    if (len > 50) return { fontSize: 12, lineHeight: 16, lines: 3 };
-    return { fontSize: 13, lineHeight: 17, lines: 3 };
+    const lines = hasExtra ? 2 : 3;
+    if (len > 90) return { fontSize: 11, lineHeight: 15, lines };
+    if (len > 50) return { fontSize: 12, lineHeight: 16, lines };
+    return { fontSize: 13, lineHeight: 17, lines };
   }
-  if (len > 220) return { fontSize: 15, lineHeight: 23, lines: 7 };
-  if (len > 140) return { fontSize: 16, lineHeight: 25, lines: 7 };
-  return { fontSize: 17, lineHeight: 26, lines: 7 };
+  const lines = hasExtra ? 5 : 7;
+  if (len > 220) return { fontSize: 15, lineHeight: 23, lines };
+  if (len > 140) return { fontSize: 16, lineHeight: 25, lines };
+  return { fontSize: 17, lineHeight: 26, lines };
 }
 
-/** Деревянная дощечка с мыслью: текстура дерева, тёмные чернила, дата внизу. */
-export function WoodenPlaque({ item, maxHeight, width, compact = false }: Props) {
+/** Деревянная дощечка: запись и заметка, текстура дерева, тёмные чернила. */
+export function WoodenPlaque({ item, width, compact = false }: Props) {
   const theme = useTheme();
-  const ink = "#3A2A18";
+  const ink = "#2A1C10";
   const muted = "#6A4A2C";
-  const note = plaqueNote(item);
-  const fit = fitNote(note, compact);
+  const { note, extra } = plaqueCopy(item);
+  const fit = fitNote(note, compact, Boolean(extra));
   const dateLabel = formatPlaqueDate(item.entry.date, compact ? undefined : item.entry.time);
 
   return (
-    <View style={[styles.frame, { width, maxHeight }]}>
-      <ImageBackground
-        source={WOOD_DAY}
-        style={[styles.wood, compact ? styles.woodCompact : styles.woodFull]}
-        imageStyle={styles.woodImage}
-        resizeMode="cover"
-      >
-        <View style={[styles.inner, compact ? styles.innerCompact : null]}>
+    <View style={[styles.frame, { width }]} collapsable={false}>
+      <Image source={WOOD_DAY} style={styles.woodImage} resizeMode="cover" accessibilityIgnoresInvertColors />
+      <View style={[styles.inner, compact ? styles.innerCompact : null]} collapsable={false}>
+        <Text
+          face="serif"
+          numberOfLines={fit.lines}
+          style={{
+            color: ink,
+            fontSize: fit.fontSize,
+            lineHeight: fit.lineHeight,
+            textAlign: "center",
+          }}
+          maxFontSizeMultiplier={theme.typography.scaleLimits.content}
+        >
+          {note}
+        </Text>
+        {extra ? (
           <Text
             face="serif"
-            numberOfLines={fit.lines}
+            numberOfLines={compact ? 2 : 3}
             style={{
+              marginTop: compact ? 6 : 8,
               color: ink,
-              fontSize: fit.fontSize,
-              lineHeight: fit.lineHeight,
+              fontSize: compact ? 11 : 14,
+              lineHeight: compact ? 15 : 21,
               textAlign: "center",
+              fontStyle: "italic",
             }}
             maxFontSizeMultiplier={theme.typography.scaleLimits.content}
           >
-            {note}
+            {extra}
           </Text>
-          <Text
-            style={{
-              marginTop: compact ? 5 : 8,
-              color: muted,
-              fontSize: compact ? 10 : theme.typography.sizes.caption,
-              textAlign: "center",
-              letterSpacing: 0.2,
-            }}
-            maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
-          >
-            {dateLabel}
-          </Text>
-        </View>
-      </ImageBackground>
+        ) : null}
+        <Text
+          style={{
+            marginTop: compact ? 6 : 8,
+            color: muted,
+            fontSize: compact ? 10 : theme.typography.sizes.caption,
+            textAlign: "center",
+            letterSpacing: 0.2,
+          }}
+          maxFontSizeMultiplier={theme.typography.scaleLimits.ui}
+        >
+          {dateLabel}
+        </Text>
+      </View>
       <View pointerEvents="none" style={[styles.peg, { left: compact ? 10 : 14 }]} />
       <View pointerEvents="none" style={[styles.peg, { right: compact ? 10 : 14 }]} />
     </View>
@@ -99,18 +117,10 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
     elevation: 8,
-  },
-  wood: {
-    justifyContent: "center",
-  },
-  woodCompact: {
-    minHeight: 76,
-  },
-  woodFull: {
-    minHeight: 120,
+    backgroundColor: "#D8B07A",
   },
   woodImage: {
-    borderRadius: 6,
+    ...StyleSheet.absoluteFill,
   },
   inner: {
     margin: 4,
